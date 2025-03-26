@@ -6,7 +6,7 @@ my $file_in  = 'src/imgui.v';
 my $file_out = 'src/imgui.v';
 
 # Only available after generate_imgui_v.sh ran at least once
-my $dcimgui_header_file                         = 'imgui/dcimgui.h';
+my $dcimgui_header_file                         = 'include/dcimgui.h';
 my $max_enum_member_alias_to_base_value_runs    = 10;
 my $enum_member_alias_to_base_value_run_counter = 0;
 my $got_struct_scope_content                    = 0;
@@ -38,8 +38,6 @@ close($in);
 # // #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 # }
 #### Or could be just const on root level: const ( = 3 ) with no name
-# TODO: ImGuiFocusedFlags_.root_and_child_windows is missing after v translate. It's
-#       ImGuiFocusedFlags_RootAndChildWindows = ImGuiFocusedFlags_RootWindow | ImGuiFocusedFlags_ChildWindows
 
 #### Empty name without corresponding member in dcimgui.h
 #### Example
@@ -103,7 +101,7 @@ enum_member_alias_to_base_value();
 
 #### Alias to base for top level types
 #### Example
-# // 8-bit signed integer
+# // 8-bit unsigned integer
 # type ImU8 = u8
 # type ImGuiSortDirection = ImU8
 # ->
@@ -133,7 +131,6 @@ sub refresh_enum_scope_content() {
   $got_enum_scope_content = 1;
 }
 
-# Can stay the same over multiple runs, as the first run is exhaustive
 sub refresh_needs_c_prefix_array {
   @needs_c_prefix_array = ();
 
@@ -143,12 +140,13 @@ sub refresh_needs_c_prefix_array {
   my %struct_member_types;
 
   my $typedef_regex = qr/type\s(\w+)\s=\s(.*)\n/;
+
+  #print join ", ", @typedef_names;
   my %typedef_map;
   if ( not $got_struct_scope_content ) { refresh_struct_scope_content(); }
   my @struct_names = keys %struct_scope_content;
   if ( not $got_enum_scope_content ) { refresh_enum_scope_content(); }
 
-  #print join ", ", @typedef_names;
   # All function parameter types and return types.
   my @func_param_content = $content =~ /(?:[^\/]fn\s\w+\()(.*)/g;
 
@@ -170,7 +168,7 @@ sub refresh_needs_c_prefix_array {
     # Remove end, starting from last )
     $func_params =~ s/\)[^\)]*$//;
 
-    if ( $func_params eq "" ) { next; }
+    if ( $func_params eq "()" ) { next; }
 
     foreach my $possibly_fn ($func_params) {
       if ( $possibly_fn =~ /\sfn\s/ ) {
@@ -178,7 +176,17 @@ sub refresh_needs_c_prefix_array {
         #print "Param Pre $possibly_fn\n";
 
 # Get fn ( (params) ) (\w+), so it can be appended to @func_param_content and processed again
-        $possibly_fn =~ /(?:(?:fn\s)\((.*)(?:\))\s([^,]*)|(?:fn\s\()(.*))/;
+        $possibly_fn =~ /
+        (?:                      # Start non capture group
+        (?:fn\s)                 # Has "fn "
+        \(                       # Literal (
+        (.*)                     # Capture group 1, anything except new line
+        (?:\))                   # Literal )
+        \s([^,]*)|(?:fn\s\()     # Capture group 2
+                                 # Not ", " or positive "fn (", to capture function types 
+        (.*)                     # Capture group 3, anything inside function parameters
+        )                        # End non capture group
+        /x;
         my $inline_fn_params = $3 ? $3 : "$1, $2";
         if ( $inline_fn_params eq "" ) { next; }
 
@@ -186,6 +194,7 @@ sub refresh_needs_c_prefix_array {
         use List::Util 1.33 'any';
         if ( not any { /\Q$inline_fn_params\E/ } @func_param_content ) {
           push @func_param_content, $inline_fn_params;
+
           #print "Pushed $inline_fn_params to func_param_content.\n";
         }
       }
@@ -207,7 +216,6 @@ sub refresh_needs_c_prefix_array {
 
   #print "FUNC_PARAM_TYPES:\n";
   #print join( ", ", ( keys %func_param_types ) );
-
   foreach my $struct_content ( values %struct_scope_content ) {
     my @lines = split( "\n", $struct_content );
     foreach my $line (@lines) {
@@ -220,8 +228,17 @@ sub refresh_needs_c_prefix_array {
 
     # Ignore fn ( .. struct member types. These are found in @func_param_content
     #print "$line\|processing single struct member\n";
-      $line =~
-/(?:\w+\s(?!fn\s\()(?:[&\[\]\d]?)*(\w+))(?{ @struct_member_types{$1} = 1 })/;
+      $line =~ /
+      (?:                # Start non capture group
+      \w+\s              # Whatever struct member name
+      (?!fn\s\()         # Not "fn", because we deal with function types in structs later
+      (?:[&\[\]\d]?)*    # Whatever prefix the struct member type might have,
+                         # we don't want to capture it 
+      (\w+)              # Capture group 1 for the member type
+      )                  # End non capture group and add result to map of struct member types
+                         # to just 1, to deduplicate
+      (?{ @struct_member_types{$1} = 1 })
+      /x;
     }
   }
 
@@ -269,7 +286,18 @@ sub refresh_needs_c_prefix_array {
 sub basic_cleanup {
 
   # Clean up last comment
-  $content =~ s/(\/\/[^\n]*\s?\n(?!\s\w+)\s?\n?)(?>\})/\}/g;
+  $content =~ s/
+  (               # Start capture group 1
+  \/\/[^\n]*      # Starts with a comment in same line
+  \s?\n           # Optional space, mandatory new line
+  (?!\s\w+)       # Not a word
+  \s?\n?          # Optional space and new line
+  )               # End capture group 1
+  (?>\})          # Positive look ahead
+                  # to make sure the } scope is closed
+  /\}/gx;
+
+  # Same as above for ")"
   $content =~ s/(\/\/[^\n]*\s?\n(?!\s\w+)\s?\n?)(?>\))/\)/g;
 
   # Clean up empty name
@@ -284,8 +312,7 @@ sub basic_cleanup {
   my $not_in = join "|", @needs_c_prefix_array;
 
   #print "####NOT_IN:\n$not_in\n";
-  #$content =~ s/(\bImGui)(?=\w+)//g;
-  $content =~ s/(?!$not_in)(\bImGui)(?=\w+)//g;
+  $content =~ s/[^'\/](?!$not_in)(\bImGui_?)(?=\w+)/ /g;
 
   # Remove tailing _t from struct names
   $content =~ s/(struct\s\w+)(_t)(\s\{)/$1$3/g;
@@ -327,20 +354,8 @@ sub append_static_strings {
   }
   my $static_string =
       "\nmodule imgui\n"
-    . "\n#flag -I \@VMODROOT/imgui\n#include <dcimgui.h>\n#include <dcimgui_impl_glfw.h\n#include <dcimgui_impl_vulkan.h\n"
-    . $version_v
-
-# // Callback and functions types
-# typedef int (*ImGuiInputTextCallback)(ImGuiInputTextCallbackData* data);  // Callback function for ImGui::InputText()
-# typedef void (*ImGuiSizeCallback)(ImGuiSizeCallbackData* data);           // Callback function for ImGui::SetNextWindowSizeConstraints()
-# typedef void* (*ImGuiMemAllocFunc)(size_t sz, void* user_data);           // Function signature for ImGui::SetAllocatorFunctions()
-# typedef void (*ImGuiMemFreeFunc)(void* ptr, void* user_data);             // Function signature for ImGui::SetAllocatorFunctions()
-# Get them from dcimgui.h and translate automatically, at some later time, maybe
-#. "\npub type InputTextCallback = fn(data &InputTextCallbackData) int"
-#. "\npub type SizeCallback = fn(data &SizeCallbackData)"
-#. "\npub type MemAllocFunc = fn(sz usize, user_data voidptr) voidptr"
-#. "\npub type MemFreeFunc = fn(ptr voidptr, user_data voidptr)\n"
-    ;
+    . "\n#flag -I \@VMODROOT/include\n#include <dcimgui.h>\n#include \"backends/dcimgui_impl_glfw.h\"\n#include \"backends/dcimgui_impl_vulkan.h\"\n"
+    . $version_v;
 
   if ( not $got_needs_c_prefix_array ) { refresh_needs_c_prefix_array(); }
   foreach my $type_need_c_prefix (@needs_c_prefix_array) {
@@ -391,8 +406,15 @@ sub get_enum_base_value {
      # Append each name&value to enum_member_name_value, where it's a base value
       my @lines = split( '\n', $enum_scope_content{$cur_enum_name} );
       foreach my $line (@lines) {
-        $line =~
-/[^\/]([a-z0-9_]+)\s=\s([0-9\s<\|xABCDEF]+)(?{ push @{$enum_member_name_value{$cur_enum_name}}, ($1, $2); })/gc;
+        $line =~ /
+        [^\/]                  # Not a comment
+        ([a-z0-9_]+)           # Capture a1b2_c3, member name in group 1
+        \s=\s                  # = 
+        ([0-9\s<\|\-xABCDEF]+) # Capture the full value " 123 << 456 | 0x1A2B3 | 789" in group 2
+                               # Note that w, "abc_", alias is not captured here
+                               # Then add to map of enum_name to [member_name, base_value]
+        (?{ push @{$enum_member_name_value{$cur_enum_name}}, ($1, $2); })
+        /gcx;
       }
     }
 
@@ -404,11 +426,6 @@ sub get_enum_base_value {
   if ( exists $enum_member_name_value{$enum_name}
     and defined $enum_member_name_value{$enum_name} )
   {
-    if ( $enum_name eq "HoveredFlags_" ) {
-      print
-"\n####HoveredFlags_ member_value: @{$enum_member_name_value{$enum_name}}\n";
-    }
-
     # Make sure to keep @{} around to dereference to array
     my @names_values_arr = @{ $enum_member_name_value{$enum_name} };
     my $cur_name;
@@ -440,7 +457,7 @@ sub get_enum_base_value {
     . $enum_name
     . " member: "
     . $member_name
-    . "\nFine, if there is no explitcit value.\n";
+    . "\nThis is OK.\n";
 
   return "";
 }    # sub
@@ -453,24 +470,31 @@ sub enum_member_alias_to_base_value {
       if ( $line =~ /\/\// ) { next; }
 
       # Has to be a while
-      while ( $line =~ /(?:[\s\|0-9<]+)(?:=\s|\|\s)([^0-9][a-z0-9_]+)/g ) {
+      while (
+        $line =~ /
+      (?:[\s\|0-9<]+)    # Non capture group of " 123 << 456 | "
+      (?:=\s|\|\s|\-\s)  # Non capture group of " " or "| " or "- "
+                         # - because some values maybe -1, which are still base values
+      ([^0-9][a-z0-9_]+) # Capture group of "a1b2_c3", alias not starting with a number
+      /gx
+        )
+      {
         my $alias = $1;
 
-        print "\n##ALIAS: $alias\n";
+        # print "\n##ALIAS: $alias\n";
         if (
           not( my $base_value = get_enum_base_value( $enum_name, $alias ) ) eq
           "" )
         {
-          $base_value =~ s/(^\s+|\s+$)//g;
+          $base_value =~ s/(^\s+|\s+$)//g;    # Trim white space at start/end
           $alias      =~ s/(^\s+|\s+$)//g;
-          print "\n#### Found base val: $base_value\nFor enum member $alias\n";
-          print "PRE base val:\n$line\n";
-          my $orig = $line;
 
-          # pos($line) does not have to be reset
-          #pos($line) = 0;
+          #print "\n#### Found base val: $base_value\nFor enum member $alias\n";
+          #print "PRE: $line\n";
+          my $orig = $line;
           $line =~ s/\b\Q$alias\E\b/$base_value/;
-          print "POST base val:\n$line\n";
+
+          #print "POST: $line\n";
           $enum_content =~ s/\Q$orig\E/$line/;
         }
       }
@@ -485,12 +509,36 @@ sub enum_member_alias_to_base_value {
 
   }    # for
 
+  # If there are enum members with alias values, run again
   $enum_member_alias_to_base_value_run_counter += 1;
-  if ( $content =~ /[^\/][a-z0-9_]+\s=\s(.*[a-z_]+)/
+  my $got_work_to_do = 0;
+  for my $e_name ( keys %enum_scope_content ) {
+    if (
+      $enum_scope_content{$e_name} =~ /
+      (                 # Capture start, to print the thing later
+      ^                 # From line start
+      [^\/]             # If it's not a commented line
+      [a-z_0-9]+        # Something like a1b2c3_d4e5f6 to make sure it's a member name
+      \s=\s             #  =
+      (?=[\s\d<\|\-]+)? # Optional base values and separators " 123 << 456 | 789 "
+      [a-z_]+           # Alias member value, like abc_def.
+                        # Not the same as a1b2c3_d4e5f6, because I don't distinguish between
+                        # d and wd 
+      )                 # Capture end
+      /mx
+      )
+    {
+      print "Got work to do in $e_name: $1\n";
+      $got_work_to_do = 1;
+      last;    # It's break; for perl
+    }
+  }
+
+  if ( $got_work_to_do
     and not $enum_member_alias_to_base_value_run_counter >=
     $max_enum_member_alias_to_base_value_runs )
   {
-    pos($content) = 0;
+    pos($content) = 0;    # Reset /gc search position
     $get_enum_base_value_first_run = 1;
     refresh_struct_scope_content();
     refresh_enum_scope_content();
@@ -501,7 +549,8 @@ sub enum_member_alias_to_base_value {
   }
   else {
     print
-"DONE after $enum_member_alias_to_base_value_run_counter enum base value translation levels.\n";
+"DONE after $enum_member_alias_to_base_value_run_counter enum base value translation",
+      $enum_member_alias_to_base_value_run_counter > 1 ? "s" : "", ".\n";
   }
 }    # sub
 
@@ -512,27 +561,23 @@ sub type_alias_to_base_value {
   # Hash map of name, type
   my %name_type_map;
 
-  #my $alias_names_regex_group = "(";
   while ( $content =~ /$alias_name_regex/g ) {
     my $cur_name = $1;
     if ( defined $name_type_map{$cur_name} ) {
       next;
     }
     $name_type_map{$cur_name} = $2;
-
-    #$alias_names_regex_group = $alias_names_regex_group . $cur_name . "|";
   }
-  print "\nname_type_map for replacing top level type alias:\n";
-  use Data::Dumper;
-  print Dumper( \%name_type_map );
 
-  # Replace last | with )
-  #$alias_names_regex_group =~ s/\|$/\)/;
+  # print "\nname_type_map for replacing top level type alias:\n";
+  # use Data::Dumper;
+  # print Dumper( \%name_type_map );
   my $alias_names_regex_group = join( "|", keys %name_type_map );
-  print "################ alias names regex group START #############\n";
-  print $alias_names_regex_group;
-  print "################ alias names regex group END #############\n";
-  if ( $alias_names_regex_group ne "()" ) {
+
+  # print "################ alias names regex group START #############\n";
+  # print $alias_names_regex_group;
+  # print "################ alias names regex group END #############\n";
+  if ( $alias_names_regex_group ne "" ) {
 
     # Get 3 groups, concat them back together,
     # with type alias replaced by $name_type_map
@@ -544,7 +589,8 @@ sub type_alias_to_base_value {
       # Also, no \Q \E to escape here
       $content =~
 s/(type\s\w+\s=\s)($alias_names_regex_group)(\n)/$1$name_type_map{$2}$3/gs;
-      print "#### Replaced top level type: $1$name_type_map{$2}$3";
+
+      #print "#### Replaced top level type: $1$name_type_map{$2}$3";
       pos($content) = 0;
     }
   }

@@ -1,5 +1,4 @@
 cleanup_imgui.perl.tdy
 tmp.txt
 NOTES.txt
-.imgui/*
-.dear_bindings/*
+tmp.perl
