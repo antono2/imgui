@@ -63,14 +63,28 @@ close($in);
 #   none = 0
 #   child_windows = 1 << 0
 ####
+
+#### Remove everything in { } scope after "// Obsolete names"
+#### Example
+# enum x {
+#   non_obsolete_member
+#   // Obsolete names
+#   // some commented code { };
+#   obsolete_member
+# }
+# ->
+# enum x {
+#   non_obsolete_member
+# }
+####
 basic_cleanup();
 
-#### Append static strings, like callback defintions and version
+#### Append static strings, like version
 #### Example
 # module main
 # ->
 # module imgui
-# #flag -I \@VMODROOT/imgui
+# #flag -I @VMODROOT/include
 # #include <dcimgui.h>
 # pub const version = '1.91.9 WIP'
 # pub const version_num = 19187
@@ -286,7 +300,7 @@ sub refresh_needs_c_prefix_array {
 sub basic_cleanup {
 
   # Clean up last comment
-  $content =~ s/
+  $content =~ s/  # Replace
   (               # Start capture group 1
   \/\/[^\n]*      # Starts with a comment in same line
   \s?\n           # Optional space, mandatory new line
@@ -302,7 +316,13 @@ sub basic_cleanup {
 
   # Clean up empty name
   $content =~ s/\n\s+\=\s[0-9]//g;
-
+  
+  # Remove everything in { } scope after "// Obsolete names"
+  ## First the ones with some commented code and "}"
+  $content =~ s/(\/\/\sObsolete\snames\n(?:\/\/[^\n]*\n)*\})/\n\}/gs;
+  ## Then the ones without
+  $content =~ s/\/\/\sObsolete\snames\n[^\}]*//gs;
+    
   # Remove im_gui_ from members
   $content =~ s/(\sim_gui_)(?=\w+)/ /g;
 
