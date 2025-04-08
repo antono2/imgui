@@ -6,7 +6,7 @@ my $file_in  = 'src/imgui.v';
 my $file_out = 'src/imgui.v';
 
 # Only available after generate_imgui_v.sh ran at least once
-my $dcimgui_header_file                         = 'include/dcimgui.h';
+my $header_file                                 = 'include/cimgui.h';
 my $max_enum_member_alias_to_base_value_runs    = 10;
 my $enum_member_alias_to_base_value_run_counter = 0;
 my $got_struct_scope_content                    = 0;
@@ -23,13 +23,13 @@ my @basetypes = (
   "voidptr", "usize", "isize"
 );
 
-open my $in_header, '<', $dcimgui_header_file
-  or die "Can not read ${dcimgui_header_file}: $!";
-my $dcimgui_header = do { local $/; <$in_header> };    # slurp!
+open my $in_header, '<', $header_file
+  or die "Can not read ${header_file}: $!";
+my $header = do { local $/; <$in_header> };    # slurp!
 close($in_header);
 
 open my $in, '<', $file_in or die "Can not read ${file_in}: $!";
-my $content = do { local $/; <$in> };                  # slurp!
+my $content = do { local $/; <$in> };          # slurp!
 close($in);
 
 #### Last comment causes issues
@@ -76,6 +76,18 @@ close($in);
 # enum x {
 #   non_obsolete_member
 # }
+####
+
+#### Example
+# 123 = 456
+# ->
+# _123 = 456
+####
+
+#### Example
+# [155 KeyData
+# ->
+# [155]KeyData
 ####
 basic_cleanup();
 
@@ -204,24 +216,34 @@ sub refresh_needs_c_prefix_array {
         my $inline_fn_params = $3 ? $3 : "$1, $2";
         if ( $inline_fn_params eq "" ) { next; }
 
-        #print "Param Post $inline_fn_params\n";
-        use List::Util 1.33 'any';
-        if ( not any { /\Q$inline_fn_params\E/ } @func_param_content ) {
-          push @func_param_content, $inline_fn_params;
+# Note these don't contain param names, only types in a function defintion
+        #print "Got inline_fn_params: $inline_fn_params\n";
+        # To prepare for split by "," remove all prefixes and ()
+        $inline_fn_params =~ s/\s?fn\s\(//;
+        $inline_fn_params =~ s/&*(?:\[\d*\])*//;
+        $func_params .= ", " . $inline_fn_params;
 
-          #print "Pushed $inline_fn_params to func_param_content.\n";
-        }
       }
-    }
-    my @params = split( ",", $func_params );
+    }    # foreach func params
+    my @params = split( ", ", $func_params );
+
+    #print "\nProcessing all fn params:\n";
+    #use Data::Dumper;
+    #print Dumper( \@params );
     foreach my $param (@params) {
       $param =~ s/^\s+|\s+$//g;
+      if ( $param =~ /\s?\bfn\b\s\(/ ) { next; }
 
-      #print "$param processing single func param\n";
-      foreach ( $param =~ /(?:\w+\s(?:&?)*)(\w+)/gc ) {
+      #pos($param) = 0;
+      if ( $param eq "" or $param =~ /^\bC\./ ) { next; }
+
+      #@func_param_types{$param} = 1;
+      #foreach ( $param =~ /(?:(?:\w+)?\s?(?:&)*)(\w+)/gc ) {
+      foreach ( $param =~ /(\w+)/gc ) {
         if ( $1 eq "fn" ) {
           next;
         }
+        #print "Adding single func param to func_param_types: $1 \n";
         @func_param_types{$1} = 1;
       }
       pos($param) = 0;    # reset the search location, because /c is used
@@ -240,22 +262,25 @@ sub refresh_needs_c_prefix_array {
       $line =~ s/^\s+|\s+$//g;
       if ( $line eq "" ) { next; }
 
-    # Ignore fn ( .. struct member types. These are found in @func_param_content
-    #print "$line\|processing single struct member\n";
-      $line =~ /
-      (?:                # Start non capture group
-      \w+\s              # Whatever struct member name
-      (?!fn\s\()         # Not "fn", because we deal with function types in structs later
-      (?:[&\[\]\d]?)*    # Whatever prefix the struct member type might have,
-                         # we don't want to capture it 
-      (\w+)              # Capture group 1 for the member type
-      )                  # End non capture group and add result to map of struct member types
-                         # to just 1, to deduplicate
-      (?{ @struct_member_types{$1} = 1 })
-      /x;
+# Ignore fn ( .. struct member types. These are found in @func_param_content
+#print "$line\|processing single struct member\n";
+#  $line =~ /
+#  (?:                # Start non capture group
+#  [a-z0-9_]+\s       # Whatever struct member name
+#  (?!fn\s\()         # Not "fn", because we deal with function types in structs earlier
+#  (?:[&\[\]\d]?)*    # Whatever prefix the struct member type might have,
+#                     # we don't want to capture it
+#  \s?(\w+)           # Capture group 1 for the member type
+#  )                  # End non capture group and add result to map of struct member types
+#                     # to just 1, to deduplicate
+#  (?{ @struct_member_types{$1} = 1 })
+#  /x;
+      $line =~
+/(?:^\s*[^\s]+\s+(?!fn\s)(?:[&\[\]\d])*([^\s]+)$)(?{ @struct_member_types{$1} = 1 })/gm;
     }
   }
 
+  # Build map of "type abc = 123" on root level
   while ( $content =~ /$typedef_regex/g ) {
     my $cur_name = $1;
     if ( defined $typedef_map{$cur_name} ) {
@@ -275,7 +300,7 @@ sub refresh_needs_c_prefix_array {
       and not( exists $enum_scope_content{$param_type} )
       and not( exists $typedef_map{$param_type} ) )
     {
-      # print $param_type . "\n";
+      #print $param_type . "\n";
       push @needs_c_prefix_array, $param_type;
     }
   }
@@ -287,6 +312,26 @@ sub refresh_needs_c_prefix_array {
     {
       #print $param_type . "\n";
       push @needs_c_prefix_array, $param_type;
+    }
+  }
+
+  # Type alias on root level may also have a value that's unknown,
+  # but it can not be a voidptr alias, like C.name
+  foreach my $param_type ( values %typedef_map ) {
+
+    # Ignore fn and C. types
+    if ( $param_type =~ /fn\s\(/ or $param_type =~ /\bC\./ ) { next; }
+    if (  not( "@basetypes" =~ /\b\Q$param_type\E\b/ )
+      and not( "@struct_names" =~ /\b\Q$param_type\E\b/ )
+      and not( exists $enum_scope_content{$param_type} )
+      and not( exists $typedef_map{$param_type} ) )
+    {
+      #print $param_type . "\n";
+      my @matching_keys =
+        grep { $typedef_map{$_} eq $param_type } keys %typedef_map;
+      my $key_tmp = $matching_keys[0];
+      $typedef_map{$key_tmp} = "voidptr";
+      $content =~ s/^(.*type\s+\Q$key_tmp\E\s+=\s+).*$/$1voidptr/m;
     }
   }
 
@@ -316,15 +361,22 @@ sub basic_cleanup {
 
   # Clean up empty name
   $content =~ s/\n\s+\=\s[0-9]//g;
-  
+
   # Remove everything in { } scope after "// Obsolete names"
   ## First the ones with some commented code and "}"
   $content =~ s/(\/\/\sObsolete\snames\n(?:\/\/[^\n]*\n)*\})/\n\}/gs;
   ## Then the ones without
   $content =~ s/\/\/\sObsolete\snames\n[^\}]*//gs;
-    
+
   # Remove im_gui_ from members
-  $content =~ s/(\sim_gui_)(?=\w+)/ /g;
+  $content =~ s/(\sim_gui_)(?=\w+)?/ /g;
+
+  # Remove im_gui_ from values
+  $content =~ s/(\b\.im_gui_)(?=\w+)?/\./g;
+  refresh_enum_scope_content();
+
+  # ImPlot functions are in the same namespace as imgui; need to keep im_plot
+  #$content =~ s/(\sim_plot_)(?=\w+)/ /g;
 
   if ( not $got_needs_c_prefix_array ) { refresh_needs_c_prefix_array(); }
 
@@ -332,69 +384,108 @@ sub basic_cleanup {
   my $not_in = join "|", @needs_c_prefix_array;
 
   #print "####NOT_IN:\n$not_in\n";
-  $content =~ s/[^'\/](?!$not_in)(\bImGui_?)(?=\w+)/ /g;
+  $content =~ s/             # Replace
+          [^'\/]             # Not a commented line
+          \K                 # Ignore everything to the left, otherwise it would replace "]"
+          (?!$not_in)    # Any type that shouldn't be touched
+          (\bImGui_?)(?=\w+) # The thing to remove
+          //gx;
 
   # Remove tailing _t from struct names
   $content =~ s/(struct\s\w+)(_t)(\s\{)/$1$3/g;
 
+  #open my $outtmp, '>', 'tmp_implot.v' or die "Can not write tmp_implot.v: $!";
+  #print $outtmp $content;
+  #close($outtmp);
+
+  # Remove int(...) cast
+  if ( $content =~ /\bint\([^\)]+/ ) {
+    $content =~ s/\bint\(([^\)]+)\)/$1/g;
+  }
+
+  # ~0 to int(~0)
+  if ( $content =~ /\s(\~\b0\b)/ ) {
+    $content =~ s/\s(\~\b0\b)/int($1)/g;
+  }
+
   # Remove enum name from members
+  # Also refix members names that are just \d+ with _\d+
   refresh_enum_scope_content();
   while ( my ( $enum_name, $scope_content ) = each %enum_scope_content ) {
-
-    #print "Pre snake case $enum_name\n";
-    my @upper_words     = $enum_name =~ /([A-Z][a-z0-9]*)/g;
-    my $enum_name_snake = join( "_", map { lc } @upper_words );
-
-    #print "Post snake case $enum_name\n";
-    my $scope_content_clean = $scope_content;
-    $scope_content_clean =~ s/\Q$enum_name_snake\E[_]?//g;
+    my $scope_content_clean =
+      remove_enum_member_prefix( $enum_name, $scope_content );
 
 #print "Removed enum $enum_name as $enum_name_snake from members: $scope_content_clean\n";
 
+    # Remove enum name from member name
+    my @lines = split( /\n/, $scope_content_clean );
+    for my $line (@lines) {
+      my $line_orig = $line;
+      if ( $line =~ /^\/\// or $line !~ /\s=\s/ ) { next; }
+      $line =~ /([^\s]+)\s*=\s*/;
+      my $member_name = $1;
+      #print "Got member_name: $member_name\n";
+      my $member_name_clean =
+        remove_enum_member_prefix( $enum_name, $member_name );
+      if ( $member_name_clean ne "" ) {
+        #print "Got member_name_clean: $member_name_clean\n";
+        $line =~ s/\Q$member_name\E/$member_name_clean/;
+        #print "Clean line: $line\n";
+        $scope_content_clean =~ s/\Q$line_orig\E/$line/;
+      }
+    }
     $content =~ s/\Q$scope_content\E/$scope_content_clean/g;
   }
+
+  # After all replacements/removals prefix numbers that are member names with _
+  $content =~ s/\b(\d+)\s+=\s+([[:print:]]+)\s*\n/_$1 = $2\n/sg;
+
+  #$get_enum_base_value_first_run = 1;
   refresh_enum_scope_content();
   refresh_struct_scope_content();
   refresh_needs_c_prefix_array();
 }    # sub
 
 sub append_static_strings {
-  $dcimgui_header =~ qr/^#define\sIMGUI_VERSION\s+"([[:print:]]+)"$/m;
+  $header =~
+    /^\/\/based\son\simgui.h\sfile\sversion\s"([^"]+)"\s(\d+)\sfrom\s/m;
   my $version_str = $1;
-  $dcimgui_header =~ qr/^#define\sIMGUI_VERSION_NUM\s+([[:print:]]+)$/m;
-  my $version_num = $1;
-
+  my $version_num = $2;
+  #print "### Found Version: $1 $2\n";
   my $version_v = "";
-  if ( length $version_str ) {
-    $version_v = "pub const version = '" . $version_str . "'\n";
-    if ( length $version_num and $version_num ne $version_str ) {
-      $version_v =
-        $version_v . "pub const version_num = " . $version_num . "\n";
-    }
+  if ( length $version_str and length $version_num ) {
+    $version_v =
+"\npub const version = \"$version_str\"\npub const version_num = $version_num\n";
   }
+
   my $static_string =
       "\nmodule imgui\n"
-    . "\n#flag -I \@VMODROOT/include\n#include <dcimgui.h>\n#include \"backends/dcimgui_impl_glfw.h\"\n#include \"backends/dcimgui_impl_vulkan.h\"\n"
-    . $version_v;
+    . "\n#flag -I \@VMODROOT/include\n"
+    . "#include <cimgui.h>\n"
+    . "#flag -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS\n"
+    . "#flag -DIMGUI_USE_WCHAR32\n"
+    . $version_v
+    . "// Placeholder for appending static strings\n";
 
-  if ( not $got_needs_c_prefix_array ) { refresh_needs_c_prefix_array(); }
+  # Apply static string
+  $content =~ s/\nmodule main\n/$static_string/;
+
+  # Refresh some things to make InputMap not get a C. prefix
+  refresh_struct_scope_content();
+  refresh_needs_c_prefix_array();
+
+  $static_string = "";
+
+  #if ( not $got_needs_c_prefix_array ) {refresh_needs_c_prefix_array(); }
   foreach my $type_need_c_prefix (@needs_c_prefix_array) {
     $static_string .= "pub type C.$type_need_c_prefix = voidptr\n";
   }
 
-  $content =~ s/\nmodule main\n/$static_string/;
+  # Apply static string
+  $content =~ s/\/\/ Placeholder for appending static strings\n/$static_string/;
 
-  # Remove deprecated enum members, which don't need a basetype translation
-  my $to_remove = q( tab_active = tab_selected
-// [renamed in 1.90.9]
- tab_unfocused = tab_dimmed
-// [renamed in 1.90.9]
- tab_unfocused_active = tab_dimmed_selected
-// [renamed in 1.90.9]
- nav_highlight = nav_cursor
-// [renamed in 1.91.4]);
-  $content =~ s/\Q$to_remove\E//;
-
+# Replace C.Time_t -> C.time_t
+# Replace C.Tm -> C.tm, as they are both coming from time.h and are not translated correctly
   refresh_enum_scope_content();
   refresh_needs_c_prefix_array();
 }    # sub
@@ -407,13 +498,15 @@ sub find_unknowns_and_set_c_prefix {
 
 # Unmatched ( in regex; marked by <-- HERE in m/(?<!(&?)C\.)\b&?( <-- HERE ...
 # Should be an issue with needs_c_prefix_search. Something went wrong at collecting types in func_param_types or struct_member_types
+# Note: No \Q \E here, as text to replace can not be escaped
   $content =~ s/(?<!C\.)\b($needs_c_prefix_search)\b/C\.$1/g;    # [\[\]\d&]*
       #print join ",", $needs_c_prefix_search;
 }    # sub
 
 sub get_enum_base_value {
-  my $enum_name   = $_[0];
-  my $member_name = $_[1];
+  my $enum_name                       = $_[0];
+  my $member_name                     = $_[1];
+  my $enum_base_value_already_updated = $_[2];
   if ($get_enum_base_value_first_run) {
     $get_enum_base_value_first_run = 0;
     %enum_member_name_value        = ();
@@ -426,22 +519,37 @@ sub get_enum_base_value {
      # Append each name&value to enum_member_name_value, where it's a base value
       my @lines = split( '\n', $enum_scope_content{$cur_enum_name} );
       foreach my $line (@lines) {
-        $line =~ /
-        [^\/]                  # Not a comment
-        ([a-z0-9_]+)           # Capture a1b2_c3, member name in group 1
-        \s=\s                  # = 
-        ([0-9\s<\|\-xABCDEF]+) # Capture the full value " 123 << 456 | 0x1A2B3 | 789" in group 2
-                               # Note that w, "abc_", alias is not captured here
-                               # Then add to map of enum_name to [member_name, base_value]
-        (?{ push @{$enum_member_name_value{$cur_enum_name}}, ($1, $2); })
-        /gcx;
-      }
-    }
+        $line =~ s/(^\s+|\s+$)//g;    # Trim white space at start/end
+        if ( $line eq "" ) { next; }
+        #if ( $enum_name eq "HoveredFlagsPrivate_" ) {
+        #  print "checking line for HoveredFlagsPrivate_:\n$line\n";
+        #}
+
+       # !~ is true for non match. To skip enum members without value assignment
+        if ( $line !~ /([a-z0-9_]+)\s+=\s+([[:print:]\s]+)/ ) { next; }
+        my $member_name    = $1;
+        my $val_complete   = $2;
+        my @val_parts      = split( /\|/, $val_complete );
+        my $contains_alias = 0;
+        for my $val_part (@val_parts) {
+          $val_part =~ s/(^\s+|\s+$)//g;    # Trim white space at start/end
+       # Ignore alias values
+          if ( $val_part =~ /[^0-9][a-zA-Z_\.]+/ ) {
+            $contains_alias = 1;
+            last;
+          }
+        }
+        if ( not $contains_alias ) {
+          push @{ $enum_member_name_value{$cur_enum_name} },
+            ( $member_name, $val_complete );
+        }
+      }    # for line
+    }    # for enum_content
 
     #print "\nenum_member_name_value\n";
     #use Data::Dumper;
     #print Dumper( \%enum_member_name_value );
-  }
+  }    # if first run
 
   if ( exists $enum_member_name_value{$enum_name}
     and defined $enum_member_name_value{$enum_name} )
@@ -470,16 +578,103 @@ sub get_enum_base_value {
     }
   }
   else {
-    print
-"$enum_name not found in enum_scope_content map. Reset get_enum_base_value_first_run to 1 after each iteration, to fetch the translated base values.\n";
-  }
-  print "RETURNING EMPTY base_value for enum: "
-    . $enum_name
-    . " member: "
-    . $member_name
-    . "\nThis is OK.\n";
+    if ( not $enum_base_value_already_updated ) {
 
+      # Update name value map and try again
+      $get_enum_base_value_first_run = 1;
+      return get_enum_base_value( $enum_name, $member_name, 1 );
+    }
+    else {
+      print
+"$enum_name not found in enum_scope_content map. Reset get_enum_base_value_first_run with no effect.\n";
+    }
+  }
+  print
+    "RETURNING EMPTY base_value for enum: $enum_name\nmember: $member_name\n";
   return "";
+}    # sub
+
+# enum_name:   TabItemFlags_
+# member name: im_gui_tab_item_flags_leading -> leading
+# remove_dot: DataType_.im_gui_data_type_count -> data_type_count
+sub remove_enum_member_prefix {
+  my $enum_name                    = $_[0];
+  my $member_name_or_scope_content = $_[1];
+  my $is_in_another_enum           = $_[2];
+
+  # if parameter is not passed to this sub, default to 0
+  $is_in_another_enum //= 0;
+
+  #print "Processing remove_enum_member_prefix enum_name: $enum_name\n";
+  #print "is_in_another_enum: $is_in_another_enum\n";
+  # Remove im_gui_ and enum name from members
+  if (  $is_in_another_enum
+    and $is_in_another_enum == 1
+    and $member_name_or_scope_content =~ /im_gui_/ )
+  {
+    # Single line and value contains "."
+    $member_name_or_scope_content =~ s/\b(.+)\.(im_gui_)(.+)/$1.$3/g;
+    $enum_name = $1;
+    #print "\nAfter removing im_plot: $member_name_or_scope_content\n";
+  }
+  else {
+    # Whole enum scope
+    #$member_name_or_scope_content =~ s/\b(im_plot_)(?=\w+)?//g;
+    $member_name_or_scope_content =~ s/\b(im_gui_)(?=\w+)?//g;
+  }
+
+  # Remove "ImGui" pre snake case, because "im_gui_" was removed for each member
+  $enum_name =~ s/ImGui//;
+
+  #print "Pre snake case $enum_name\n";
+  my @upper_words     = $enum_name =~ /([A-Z][a-z0-9_]*)/g;
+  my $enum_name_snake = join( "_", map { lc } @upper_words );
+  #print "Post snake case $enum_name_snake\n";
+  my $scope_content_clean = $member_name_or_scope_content;
+  $scope_content_clean =~ s/\Q$enum_name_snake\E[_]?//g;
+
+# enum: ButtonFlagsPrivate_ member: button_flags_pressed_on_click -> pressed_on_click
+# They all seem to end with "Private_"
+# Could use the 2nd last _ to remove from, but rather hard code "_private_" for now,
+# as it might break member names otherwise
+  if ( $enum_name_snake =~ /_private_$/m ) {
+
+    #print "\nPre _private_ removal: $scope_content_clean\n";
+    $enum_name_snake     =~ s/private_$//m;
+    $scope_content_clean =~ s/\Q$enum_name_snake\E[_]?//g;
+
+    #print "\nPost _private_ removal: $scope_content_clean\n"
+  }
+
+# Remove until first _ in enum name and try to remove it from member name start.
+  my @enum_name_snake_split = split( /_/, $enum_name_snake );
+  my $first_part            = "";
+  my $enum_name_to_remove   = $enum_name_snake;
+  for ( my $i = length @enum_name_snake_split - 1 ; $i >= 0 ; $i-- ) {
+    if ( $enum_name_to_remove =~ /^(?:\s*(_?[^_\W]+)_)/ ) {
+      $first_part = $1;
+      if ( $first_part eq "_" or $first_part eq "" ) { last; }
+
+      $enum_name_to_remove =~ s/\Q$first_part\E//;
+      #print "Enum name first_part snake: $first_part\n";
+
+# Still not clean, because only the last part of the enum name is in member name.
+# The member name begins with the last part of enum name
+      if ( $scope_content_clean =~ /$enum_name_to_remove/ ) {
+        #print "scope_content_clean contains: $first_part\n";
+
+        #print "\nPre _private_ removal: $scope_content_clean\n";
+        $scope_content_clean =~ s/^\s*\Q$enum_name_to_remove\E//m;
+
+        #print "\nPost _private_ removal: $scope_content_clean\n"
+      }
+
+    }
+  }    # for enum name part
+       #if ($is_in_another_enum and $is_in_another_enum == 1) {
+       #  print "\nAfter scope_content_clean: $scope_content_clean\n"
+       #}
+  return $scope_content_clean;
 }    # sub
 
 sub enum_member_alias_to_base_value {
@@ -487,38 +682,126 @@ sub enum_member_alias_to_base_value {
     my $enum_content = $enum_scope_content{$enum_name};
     my @lines        = split( "\n", $enum_content );
     foreach my $line (@lines) {
-      if ( $line =~ /\/\// ) { next; }
-
-      # Has to be a while
-      while (
-        $line =~ /
-      (?:[\s\|0-9<]+)    # Non capture group of " 123 << 456 | "
-      (?:=\s|\|\s|\-\s)  # Non capture group of " " or "| " or "- "
-                         # - because some values maybe -1, which are still base values
-      ([^0-9][a-z0-9_]+) # Capture group of "a1b2_c3", alias not starting with a number
-      /gx
-        )
-      {
-        my $alias = $1;
-
-        # print "\n##ALIAS: $alias\n";
-        if (
-          not( my $base_value = get_enum_base_value( $enum_name, $alias ) ) eq
-          "" )
-        {
-          $base_value =~ s/(^\s+|\s+$)//g;    # Trim white space at start/end
-          $alias      =~ s/(^\s+|\s+$)//g;
-
-          #print "\n#### Found base val: $base_value\nFor enum member $alias\n";
-          #print "PRE: $line\n";
-          my $orig = $line;
-          $line =~ s/\b\Q$alias\E\b/$base_value/;
-
-          #print "POST: $line\n";
-          $enum_content =~ s/\Q$orig\E/$line/;
-        }
+      if ( $line =~ /^\/\// or $line !~ /\s=\s/ ) { next; }
+      #if ( $line =~ /pressed_on_click \| pressed_on_click_release/ ) {
+      #  print "Processing\n$line\n";
+      #}
+      my $line_orig = $line;
+      
+      $line =~ /([a-z0-9_]+)\s+=\s(.*)/;
+      my $member_name = $1;
+      if ( not $2 ) { next; }
+      my $val_complete = $2;
+      if ( $line =~ /pressed_on_click \| pressed_on_click_release/ ) {
+        print "After member_name: $member_name\nval_complete: $val_complete\n";
       }
-    }    # foreach
+      my $val_complete_clean = $val_complete;
+      my @val_parts          = split( /\|/, $val_complete );
+      for my $val_part (@val_parts)
+      {
+        $val_part =~ s/(^\s+|\s+$)//g; # Trim white space at start/end
+        # Ignore non alias values
+        if ( $val_part !~ /[A-Za-z]/ ) { next; }
+        #print "Enum name: $enum_name\n";
+        #print "Line: $line\n";
+        #print "val_complete: $val_complete\n";
+        #print "val_part: $val_part\n";
+        #if (  $enum_name eq "HoveredFlagsPrivate_"
+        #  and $member_name eq "allowed_mask_for_is_item_hovered" )
+        #{
+        #  print
+#"processing: HoveredFlagsPrivate_.allowed_mask_for_is_item_hovered\n";
+        #}
+
+        #my $alias = $1;
+        my $enum_name_to_find_in = $enum_name;
+
+# Check if it's referencing a value of another enum
+#dock_node_flags_local_flags_transfer_mask_ = int(DockNodeFlags_.im_gui_dock_node_flags_no_docking_split) | dock_node_flags_no_resize_flags_mask_ | int(DockNodeFlags_.im_gui_dock_node_flags_auto_hide_tab_bar) | dock_node_flags_central_node | dock_node_flags_no_tab_bar | dock_node_flags_hidden_tab_bar | dock_node_flags_no_window_menu_button | dock_node_flags_no_close_button
+# Remove ItemFlags_.im_gui_item_flags_auto_close_popups -> ItemFlags_.auto_close_popups
+#if ( $enum_name eq "ItemFlagsPrivate_" ) {
+#  print "Cur alias pre . check $alias\n";
+#}
+        my $is_in_another_enum = 0;
+        my $val_part_to_find   = $val_part;
+        my $is_minus_operation = 0;
+        my $has_operand2       = 0;
+
+        if ( $val_part =~ /([^\.\(\)]+)\.([^\.\(\)]+)/ ) {
+          $is_in_another_enum = 1;
+        }
+        if ($is_in_another_enum) {
+          $enum_name_to_find_in = $1;
+          $val_part_to_find     = $2;
+          #print
+#"Pre remove other enum prefix: $val_part_to_find\n for other enum: $enum_name_to_find_in\n";
+          $val_part_to_find = remove_enum_member_prefix( $enum_name_to_find_in,
+            $val_part_to_find, $is_in_another_enum );
+          #print
+#"After remove other enum prefix: $val_part_to_find\n for other enum: $enum_name_to_find_in\n";
+        }
+
+        # Handle "member = xyz - abc"
+        if ( $val_part =~ /([^\-\s]+)\s*\-\s*([^\-\s]+)/ ) {
+          my $val_part_orig = $val_part;
+          #print
+          #  "Trying to get base value for $1 and $2 in $enum_name_to_find_in\n";
+          my $base_value_left  = $1;
+          my $left_orig        = $1;
+          my $base_value_right = $2;
+          my $right_orig       = $2;
+          if ( $base_value_left !~ /\d+/ ) {
+            $base_value_left =
+              get_enum_base_value( $enum_name_to_find_in, $base_value_left );
+          }
+          if ( $base_value_right !~ /\d+/ ) {
+            $base_value_right =
+              get_enum_base_value( $enum_name_to_find_in, $base_value_right );
+          }
+
+          # Translate and update enum_content
+          if ( $base_value_left eq "" or $base_value_right eq "" ) {
+            print "Could not translate $val_part\n";
+          }
+          else {
+            $val_part =~ s/\Q$left_orig\E/$base_value_left/;
+            $val_part =~ s/\Q$right_orig\E/$base_value_right/;
+
+            # $line_orig is already set above
+            $line         =~ s/\b\Q$val_part_orig\E\b/$val_part/;
+            $enum_content =~ s/\Q$line_orig\E/$line/;
+            next;
+          }
+        }
+
+        # Case where x = 123
+        # y = x | 345 -> y = 123 | 345
+        #if ( $enum_name eq "HoveredFlagsPrivate_" ) {
+        #  print "checking line for HoveredFlagsPrivate_:\n$line\n";
+        #}
+        my $base_value =
+          get_enum_base_value( $enum_name_to_find_in, $val_part_to_find );
+        if ( not( $base_value eq "" ) ) {
+          $base_value =~ s/(^\s+|\s+$)//g;
+          #print
+#"\n#### Found base val: $base_value\nFor enum member $enum_name_to_find_in\nval_complete: $val_complete\nval_part: $val_part\n";
+
+          #print "PRE: $val_complete_clean\n";
+          $val_complete_clean =~ s/\Q$val_part\E/$base_value/;
+          #print "POST: $val_complete_clean\n";
+          $line_orig = $line;
+          $line         =~ s/\b\Q$val_complete\E\b/$val_complete_clean/;
+          $enum_content =~ s/\Q$line_orig\E/$line/;
+          $val_complete = $val_complete_clean;
+          #if (  $val_complete eq "HoveredFlagsPrivate_"
+          #  and $member_name eq "allowed_mask_for_is_item_hovered" )
+          #{
+            #print
+#"processed HoveredFlagsPrivate_.allowed_mask_for_is_item_hovered: $val_complete_clean\n";
+          #}
+        }
+      }    # for val_parts in line
+    }    # foreach line
          # Apply change
          #print "ApplyEnum:\n$enum_name\nContent:\n$enum_content\n";
     $content =~ s/\Q$enum_scope_content{$enum_name}\E/$enum_content/;
@@ -527,28 +810,30 @@ sub enum_member_alias_to_base_value {
     #my @k = keys %enum_scope_content;
     #print Dumper(\@k);
 
-  }    # for
+  }    # for enum_scope_content
+
+# At the end, "ImGuiDataType_.data_type_count" -> "int(ImGuiDataType_.data_type_count)"
+# Int cast was removed in basic_cleanup(), but here we can assume that all ref.type are translated to base value already.
+# If they are still there, they point to an enum value without = assignment
+  $content =~ s/(?<!<|"|'|\d\.)(?!int\(|C\.)\b(\w+\.\w+)(?!\))\b/int($1)/g;
+
+  # Also change C.Time_t -> C.time_t. It's coming from time.h
+  #             C.Tm     -> C.tm
+  $content =~ s/\bC\.Time_t\b/C.time_t/g;
+  $content =~ s/\bC\.Tm\b/C.tm/g;
+
+  refresh_enum_scope_content();
 
   # If there are enum members with alias values, run again
   $enum_member_alias_to_base_value_run_counter += 1;
   my $got_work_to_do = 0;
   for my $e_name ( keys %enum_scope_content ) {
     if (
-      $enum_scope_content{$e_name} =~ /
-      (                 # Capture start, to print the thing later
-      ^                 # From line start
-      [^\/]             # If it's not a commented line
-      [a-z_0-9]+        # Something like a1b2c3_d4e5f6 to make sure it's a member name
-      \s=\s             #  =
-      (?=[\s\d<\|\-]+)? # Optional base values and separators " 123 << 456 | 789 "
-      [a-z_]+           # Alias member value, like abc_def.
-                        # Not the same as a1b2c3_d4e5f6, because I don't distinguish between
-                        # d and wd 
-      )                 # Capture end
-      /mx
+      $enum_scope_content{$e_name} =~
+      /^\s*[a-z_]+[\s]+[^\n]=[\s<\d\|]+(?!int\()([a-z_]+)\s*$/gm
       )
     {
-      print "Got work to do in $e_name: $1\n";
+      print "Got work to do in $e_name:\n$1\n";
       $got_work_to_do = 1;
       last;    # It's break; for perl
     }

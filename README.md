@@ -1,10 +1,11 @@
 
 # [WIP] [V](https://vlang.io) binding generator for [Dear ImGui](https://github.com/ocornut/imgui)
 
-This is an automated process to generate `src/imgui.v`
- - generate C using [dear_bindings](https://github.com/dearimgui/dear_bindings)
+This is an automated process to generate `src/imgui.v` and `implot.v`
+ - generate C for imgui using [cimgui](https://github.com/cimgui/cimgui)
+ - generate C for implot using [cimplot](https://github.com/cimgui/cimplot)
  - `v translate` C to V
- - `cleanup_imgui.perl` to fix some errors
+ - `cleanup_imgui.perl` and `cleanup_implot.perl` to fix some errors
  
  ## Install
 `v install https://github.com/antono2/imgui`
@@ -15,9 +16,7 @@ On `Ubuntu 24.04`
 ```bash
 sudo apt install -y python3-ply
 v install https://github.com/antono2/imgui
-cd ~/.vmodules/imgui
-git submodule update --init
-./generate_imgui_v.sh
+~/.vmodules/imgui/generate_v.sh
 ```
 
 ## Examples
