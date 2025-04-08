@@ -1,7 +1,7 @@
 
-# [WIP] [V](https://vlang.io) binding generator for [Dear ImGui](https://github.com/ocornut/imgui)
+# [V](https://vlang.io) binding generator for [Dear ImGui](https://github.com/ocornut/imgui)
 
-This is an automated process to generate `src/imgui.v` and `implot.v`
+This is an automated process to generate `src/imgui.v` and `modules/implot/implot.v`
  - generate C for imgui using [cimgui](https://github.com/cimgui/cimgui)
  - generate C for implot using [cimplot](https://github.com/cimgui/cimplot)
  - `v translate` C to V
@@ -14,7 +14,7 @@ This is an automated process to generate `src/imgui.v` and `implot.v`
 ## Generate
 On `Ubuntu 24.04`
 ```bash
-sudo apt install -y python3-ply
+sudo apt install -y luajit
 v install https://github.com/antono2/imgui
 ~/.vmodules/imgui/generate_v.sh
 ```
