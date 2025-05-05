@@ -85,9 +85,9 @@ close($in);
 ####
 
 #### Example
-# [155 KeyData
+# fn ig_create_context(shared_font_atlas &ImFontAtlas) &Context
 # ->
-# [155]KeyData
+# fn create_context(shared_font_atlas &ImFontAtlas) &Context
 ####
 basic_cleanup();
 
@@ -407,6 +407,9 @@ sub basic_cleanup {
   if ( $content =~ /\s(\~\b0\b)/ ) {
     $content =~ s/\s(\~\b0\b)/int($1)/g;
   }
+  
+  # fn ig_create_context(shared_font_atlas &ImFontAtlas) &Context -> fn create_context(shared_font_atlas &ImFontAtlas) &Context
+  $content =~ s/fn\sig_/fn /g;
 
   # Remove enum name from members
   # Also refix members names that are just \d+ with _\d+

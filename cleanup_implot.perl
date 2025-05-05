@@ -92,12 +92,6 @@ close($in);
 # ->
 # _123 = 456
 ####
-
-#### Example
-# [155 KeyData
-# ->
-# [155]KeyData
-####
 basic_cleanup();
 
 #### Append static strings, like version
