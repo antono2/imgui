@@ -463,10 +463,12 @@ sub append_static_strings {
 
   my $static_string =
       "\nmodule imgui\n"
-    . "\n#flag -I \@VMODROOT/include\n"
-    . "#include <cimgui.h>\n"
-    . "#flag -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS\n"
-    . "#flag -DIMGUI_USE_WCHAR32\n"
+#    . "\n#flag -I \@VMODROOT/include\n"
+#    . "#include \"cimgui.h\"\n"
+#    . "#flag -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS\n"
+#    . "#flag -DIMGUI_USE_WCHAR32\n"
+#    . "#flag -L \@VMODROOT/lib\n"
+#    . "#flag -l cimgui\n"
     . $version_v
     . "// Placeholder for appending static strings\n";
 

@@ -498,14 +498,12 @@ sub append_static_strings {
 }
 |;
   my $static_string = "\nmodule implot\n"
-
-    #    . "\n\nimport imgui\n"
-    . "\n#flag -I \@VMODROOT/include\n"
-    . "\n#include <time.h>\n"
-    . "\n#include <cimplot.h>\n"
-
-    #. "\n#flag -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS\n"
-    . "\n#flag -DIMGUI_USE_WCHAR32\n"
+    #. "\n#flag -I \@VMODROOT/include\n"
+    #. "\n#include \"time.h\"\n"
+    #. "\n#include \"cimplot.h\"\n"
+    #. "\n#flag -DIMGUI_USE_WCHAR32\n"
+    #. "#flag -L \@VMODROOT/lib\n"
+    #. "#flag -l cimplot\n"
     . $version_v
     . $struct_input_map
     . "// Placeholder for appending static strings\n";

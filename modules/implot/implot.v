@@ -1,14 +1,6 @@
 @[translated]
 module implot
 
-#flag -I @VMODROOT/include
-
-#include <time.h>
-
-#include <cimplot.h>
-
-#flag -DIMGUI_USE_WCHAR32
-
 pub struct InputMap {
 	pan           ImGuiMouseButton
 	panMod        int
@@ -1510,7 +1502,7 @@ struct ImFont {
 	descent             f32
 	metricsTotalSurface int
 	dirtyLookupTables   bool
-	used8kPagesMap      [17]ImU8
+	used8kPagesMap      [1]ImU8
 }
 
 enum ImGuiViewportFlags_ {
