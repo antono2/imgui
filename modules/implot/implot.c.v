@@ -1,12 +1,13 @@
 module implot
 /*
-#flag -I /home/anton/.vmodules/imgui/include
+#flag -I @VMODROOT/include
 
 #include "time.h"
 
 #include "cimplot.h"
 
 #flag -DIMGUI_USE_WCHAR32
-#flag -L /home/anton/.vmodules/imgui/lib
+#flag -L @VMODROOT/lib
+#flag -Wl,-rpath=@VMODROOT/lib
 #flag -l cimplot
 */

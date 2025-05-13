@@ -10,8 +10,7 @@ git submodule foreach git pull
 
 TARGETS_CIMGUI="internal" #"comments constructors internal noimstrv"
 TARGETS_CIMPLOT="internal"
-CFLAGS="-march=x86-64 glfw opengl3 opengl2 sdl2 sdl3" #"-Wl,--copy-dt-needed-entries"
-#DFLAGS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DIMGUI_STATIC=yes -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS=yes -DCIMGUI_NO_EXPORT=yes -DIMGUI_DISABLE_WIN32_FUNCTIONS=yes -DIMGUI_DISABLE_OSX_FUNCTIONS=yes"
+CFLAGS="glfw opengl3 opengl2 sdl2 sdl3"
 DFLAGS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DIMGUI_STATIC=yes -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS=yes"
 
 printf " --- Generate cimgui\n\n"
@@ -22,10 +21,10 @@ pushd cimgui/generator
 popd
 pushd cimgui
   cmake $DFLAGS $CFLAGS .
-  #cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DIMGUI_STATIC=yes -DIMGUI_FREETYPE=yes -DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=yes .
   make
 popd
 cp cimgui/cimgui.so lib/libcimgui.so
+cp cimgui/cimgui.so lib/cimgui.so
 cp cimgui/*.h include/
 cp cimgui/*.cpp include/
 # Keep a copy at its original place. For the next run
@@ -39,10 +38,10 @@ pushd cimplot/generator
 popd
 pushd cimplot
   cmake $DFLAGS $CFLAGS .
-  #cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DIMGUI_STATIC=yes -DIMGUI_FREETYPE=yes -DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=yes .
   make
 popd
 cp cimplot/cimplot.so lib/libcimplot.so
+cp cimplot/cimplot.so lib/cimplot.so
 cp cimplot/*.cpp include/
 cp cimplot/*.h include/
 # Keep a copy at its original place. For the next run
@@ -61,7 +60,6 @@ popd
 
 pushd include
   printf " --- Translate to V\n\n"
-  #'additional_flags = "-I . -I imgui -I implot -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS -DIMGUI_USE_WCHAR32 -DCIMGUI_USE_VULKAN -DCIMGUI_USE_GLFW -DCIMGUI_DISABLE_OBSOLETE_FUNCTIONS"' \
   printf "[project]\nadditional_flags = \"$DFLAGS\"\n" > c2v.toml
   v translate cimgui.h
   v translate cimplot.h
