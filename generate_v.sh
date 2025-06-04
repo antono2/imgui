@@ -38,7 +38,6 @@ cp include/cimgui_impl.h cimgui/generator/output/
 cp include/cimgui_impl.cpp cimgui/generator/output/
 
 printf " --- Generate cimplot\n\n"
-# rm cimplot/CMakeCache.txt
 pushd cimplot/generator
   luajit ./generator.lua gcc $TARGETS_CIMPLOT $CFLAGS &> /dev/null
 popd
@@ -83,7 +82,7 @@ printf " --- Cleanup src/implot&gui.v\n\n"
 v fmt -w src/imgui.v &> /dev/null
 v fmt -w src/implot.v &> /dev/null
 
-# As ~/.vmodules/imgui/imgui leads to import issue, make sure there is no imgui dir
+# Remove ~/.vmodules/imgui/imgui
 rm -rf ./imgui
 
 popd
