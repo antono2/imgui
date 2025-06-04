@@ -409,6 +409,9 @@ struct ImPlotInputMap
     int ZoomMod;
     float ZoomRate;
 };
+
+
+struct ____TRANSLATIONFIX____;
 typedef int (*ImPlotFormatter)(double value, char* buff, int size, void* user_data);
 typedef ImPlotPoint (*ImPlotGetter)(int idx, void* user_data);
 typedef double (*ImPlotTransform)(double value, void* user_data);

@@ -11,20 +11,26 @@ git submodule foreach git pull
 TARGETS_CIMGUI="internal" #"comments constructors internal noimstrv"
 TARGETS_CIMPLOT="internal"
 CFLAGS="glfw opengl3 opengl2 sdl2 sdl3"
-DFLAGS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DIMGUI_STATIC=yes -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS=yes"
+DFLAGS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS=ON -DIMGUI_STATIC=ON -DCIMGUI_NO_EXPORT=ON"
 
 printf " --- Generate cimgui\n\n"
-rm cimgui/CMakeCache.txt
+# rm cimgui/CMakeCache.txt
 pushd cimgui/generator
   # ./generator.lua <compiler> "<targets>" <CFLAGS>
-  luajit ./generator.lua gcc $TARGETS_CIMGUI $CFLAGS
+  luajit ./generator.lua gcc $TARGETS_CIMGUI $CFLAGS &> /dev/null
 popd
 pushd cimgui
-  cmake $DFLAGS $CFLAGS .
-  make
+  cmake $DFLAGS $CFLAGS . &> /dev/null
+  make VERBOSE=1 &> /dev/null
+printf " --- Add ____TRANSLATIONFIX____ to cimgui.h\n\n"
+# -p=print each line -i=edit in place -g=whole file at once -e=execute
+# Each struct, where typedef comes right after, but not struct or enum
+# Note: Struct may contain another scope inside for the union definition, which has { }
+perl -p -i -g -e 's/(struct\s[\w\d]+\s\{[^\}]+(?:union\s+\{[^\}]+\};[^\}]+)?\};\s)(typedef\s(?!struct|enum)[^\n]+)/$1\n\nstruct ____TRANSLATIONFIX____;\n$2/g' cimgui.h
+
 popd
-cp cimgui/cimgui.so lib/libcimgui.so
-cp cimgui/cimgui.so lib/cimgui.so
+printf " --- Copy cimgui to include & lib\n\n"
+cp cimgui/*.a lib/
 cp cimgui/*.h include/
 cp cimgui/*.cpp include/
 # Keep a copy at its original place. For the next run
@@ -32,16 +38,18 @@ cp include/cimgui_impl.h cimgui/generator/output/
 cp include/cimgui_impl.cpp cimgui/generator/output/
 
 printf " --- Generate cimplot\n\n"
-rm cimplot/CMakeCache.txt
+# rm cimplot/CMakeCache.txt
 pushd cimplot/generator
-  luajit ./generator.lua gcc $TARGETS_CIMPLOT $CFLAGS
+  luajit ./generator.lua gcc $TARGETS_CIMPLOT $CFLAGS &> /dev/null
 popd
 pushd cimplot
-  cmake $DFLAGS $CFLAGS .
-  make
+  cmake $DFLAGS $CFLAGS . &> /dev/null
+  make &> /dev/null
+printf " --- Add ____TRANSLATIONFIX____ to cimplot.h\n\n"
+perl -p -i -g -e 's/(struct\s[\w\d]+\s\{[^\}]+(?:union\s+\{[^\}]+\};[^\}]+)?\};\s)(typedef\s(?!struct|enum)[^\n]+)/$1\n\nstruct ____TRANSLATIONFIX____;\n$2/g' cimplot.h
 popd
-cp cimplot/cimplot.so lib/libcimplot.so
-cp cimplot/cimplot.so lib/cimplot.so
+printf " --- Copy cimplot to include & lib\n\n"
+cp cimplot/*.a lib/
 cp cimplot/*.cpp include/
 cp cimplot/*.h include/
 # Keep a copy at its original place. For the next run
@@ -61,8 +69,8 @@ popd
 pushd include
   printf " --- Translate to V\n\n"
   printf "[project]\nadditional_flags = \"$DFLAGS\"\n" > c2v.toml
-  v translate cimgui.h
-  v translate cimplot.h
+  v translate cimgui.h &> /dev/null
+  v translate cimplot.h &> /dev/null
 popd
 
 printf " --- Move implot&gui.v\n\n"
@@ -75,10 +83,7 @@ printf " --- Cleanup src/implot&gui.v\n\n"
 v fmt -w src/imgui.v &> /dev/null
 v fmt -w src/implot.v &> /dev/null
 
-
-# As src/implot.v is not allowed, move it to another directory
-mv src/implot.v modules/implot/implot.v
-
-v -shared -cc gcc .
+# As ~/.vmodules/imgui/imgui leads to import issue, make sure there is no imgui dir
+rm -rf ./imgui
 
 popd

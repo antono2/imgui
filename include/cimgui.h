@@ -243,6 +243,9 @@ struct ImVec4
 {
     float x, y, z, w;
 };
+
+
+struct ____TRANSLATIONFIX____;
 typedef ImU64 ImTextureID;
 typedef enum {
     ImGuiWindowFlags_None = 0,
@@ -1309,6 +1312,9 @@ struct ImGuiSelectionExternalStorage
     void* UserData;
     void (*AdapterSetItemSelected)(ImGuiSelectionExternalStorage* self, int idx, bool selected);
 };
+
+
+struct ____TRANSLATIONFIX____;
 typedef unsigned short ImDrawIdx;
 typedef void (*ImDrawCallback)(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 struct ImDrawCmd
@@ -1710,11 +1716,17 @@ struct ImRect
     ImVec2 Min;
     ImVec2 Max;
 };
+
+
+struct ____TRANSLATIONFIX____;
 typedef ImU32* ImBitArrayPtr;
 struct ImBitVector
 {
     ImVector_ImU32 Storage;
 };
+
+
+struct ____TRANSLATIONFIX____;
 typedef int ImPoolIdx;
 typedef struct ImVector_int {int Size;int Capacity;int* Data;} ImVector_int;
 
@@ -2175,6 +2187,9 @@ struct ImGuiInputEvent
     };
     bool AddedByTestEngine;
 };
+
+
+struct ____TRANSLATIONFIX____;
 typedef ImS16 ImGuiKeyRoutingIndex;
 typedef struct ImGuiKeyRoutingData ImGuiKeyRoutingData;
 struct ImGuiKeyRoutingData
@@ -2603,6 +2618,9 @@ struct ImGuiLocEntry
     ImGuiLocKey Key;
     const char* Text;
 };
+
+
+struct ____TRANSLATIONFIX____;
 typedef void (*ImGuiErrorCallback)(ImGuiContext* ctx, void* user_data, const char* msg);
 typedef enum {
     ImGuiDebugLogFlags_None = 0,
@@ -2675,6 +2693,9 @@ struct ImGuiIDStackTool
     float CopyToClipboardLastTime;
     ImGuiTextBuffer ResultPathBuf;
 };
+
+
+struct ____TRANSLATIONFIX____;
 typedef void (*ImGuiContextHookCallback)(ImGuiContext* ctx, ImGuiContextHook* hook);
 typedef enum { ImGuiContextHookType_NewFramePre, ImGuiContextHookType_NewFramePost, ImGuiContextHookType_EndFramePre, ImGuiContextHookType_EndFramePost, ImGuiContextHookType_RenderPre, ImGuiContextHookType_RenderPost, ImGuiContextHookType_Shutdown, ImGuiContextHookType_PendingRemoval_ }ImGuiContextHookType;
 struct ImGuiContextHook
@@ -3290,6 +3311,9 @@ struct ImGuiTabBar
     ImVec2 BackupCursorPos;
     ImGuiTextBuffer TabsNames;
 };
+
+
+struct ____TRANSLATIONFIX____;
 typedef ImS16 ImGuiTableColumnIdx;
 typedef ImU16 ImGuiTableDrawChannelIdx;
 struct ImGuiTableColumn

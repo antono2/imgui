@@ -1,7 +1,11 @@
 cleanup_imgui.perl.tdy
 cleanup_implot.perl.tdy
+cleanup_imgui_beautified.perl
+cleanup_implot_beautified.perl
 tmp.txt
 NOTES.txt
 tmp.perl
 imgui.so
 include/c2v.toml
+content_tmp.txt
+tmp*.txt
