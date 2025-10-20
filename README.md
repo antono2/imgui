@@ -36,7 +36,7 @@ Or
 v generate.vsh
 ```
 
-## Contributors
+## Tanks
 Thank you [@ryoskzypu](https://github.com/ryoskzypu) - from  #regex on [libera.chat](https://libera.chat/) - for loving perl and helping people out.
 
 
