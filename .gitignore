@@ -9,3 +9,11 @@ imgui.so
 include/c2v.toml
 content_tmp.txt
 tmp*.txt
+CMakeCache.txt
+CMakeFiles/
+Makefile
+_deps/
+cmake_install.cmake
+generate
+lib/libvimgui.so
+

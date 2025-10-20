@@ -8,8 +8,10 @@ my $file_out = 'src/implot.v';
 # Only available after generate_imgui_v.sh ran at least once
 my $header_file                                 = 'include/cimplot.h';
 my $imgui_file                                  = 'src/imgui.v';
-my $prefix_to_remove                            = "ImGui";
-my $module_name                                 = "imgui";
+my $ImGui                                       = "ImGui"; # Prefix to remove
+my $prefix_to_remove                            = "ImPlot";
+my $prefix_to_ignore                            = "imgui";
+my $module_name                                 = "implot\n\nimport imgui\n//C.tm unknow if not imported. Warning is unskippable\nimport time";
 my $v_manual_additions_file                     = 'src/imgui.v';
 my $max_enum_member_alias_to_base_value_runs    = 10;
 my $enum_member_alias_to_base_value_run_counter = 0;
@@ -17,6 +19,9 @@ my $got_struct_scope_content                    = 0;
 my %struct_scope_content;
 my $got_enum_scope_content = 0;
 my %enum_scope_content;
+my $got_all_imgui_v_types = 0;
+# Map of Original name to cleaned up version, like ImGuiID:ID, of all imgui.v types
+my %all_imgui_v_types;
 my @needs_c_prefix_array;
 my $got_needs_c_prefix_array      = 0;
 my $get_enum_base_value_first_run = 1;
@@ -56,9 +61,9 @@ my @manual_additions_struct_names =
 push @manual_additions_struct_names,
   $manual_additions_content =~ /pub\stype\s([\w\d]+)\s=/g;
 
-# print "##### Manual Additions Struct Names:\n";
-# use Data::Dumper;
-# print Dumper( \@manual_additions_struct_names );
+#print "##### Manual Additions Struct Names:\n";
+#use Data::Dumper;
+#print Dumper( \@manual_additions_struct_names );
 
 #### Last comment causes issues
 #### Example
@@ -128,9 +133,6 @@ push @manual_additions_struct_names,
 # @[typedef]
 # struct C.ImVector_ImFontPtr {
 ####
-# open my $qwe, '>', "content_tmp.txt" or die "Can not write content_tmp.txt: $!";
-# print $qwe $content . "\n// Got enum scope content: $got_enum_scope_content\n";
-# close($qwe);
 basic_cleanup();
 
 #### Append static strings, like version
@@ -145,6 +147,12 @@ basic_cleanup();
 ####
 append_static_strings();
 
+#### Structs Enums Types for ImGui were written to implot for translation
+#### Remove type ImGuiCol = int
+#### Remove enum ImGuiWindowFlags_ { ...
+#### ...
+remove_duplicate_types();
+
 #### Find and replace with C.name, where a type in struct/function is unknown locally
 #### Example
 # ImGuiContext is not in struct names array but used in function
@@ -153,8 +161,6 @@ append_static_strings();
 # pub type C.ImGuiContext = voidptr
 # fn destroy_context(ctx &C.ImGuiContext)
 ####
-
-#### Remove prefix "ImGui", where not C.
 find_unknowns_and_set_c_prefix();
 
 #### Alias to base for enum member values
@@ -207,7 +213,28 @@ add_sub_union_members_to_structs();
 #   x fn() = unsafe{ nil }
 #   y voidptr = unsafe{ nil }
 ####
-set_default_nil_for_pointers();
+# set_default_nil_for_pointers();
+
+# Remove ImPlot from types
+#remove_prefix();
+
+# Set everything to public
+set_public();
+
+# Set const_ prefix on function parameter names and change type to char for i8
+#### Example
+#### pub fn my_function(param &i8)
+# ->
+#### pub fn my_function(const_param &char)
+set_const_prefix_on_function_parameter_names();
+
+# Change all int to i32
+# See https://github.com/vlang/v/blob/master/doc/c_and_v_type_interoperability.md#number-types-in-c-and-v
+# A V int is currently equivalent to C int, or int64_t.
+# There are plans to make it equivalent to isize, so if you want to write C library wrappers,
+# it is better to describe your fn C. parameters using i32 instead of using int.
+change_all_int_to_i32();
+
 
 ####
 #### Write out result to file
@@ -251,7 +278,7 @@ sub refresh_needs_c_prefix_array {
     /(?:pub\stype\s([\w\d]+)\s=\sC\.)/g;    # keys %struct_scope_content;
   $content =~ /(?:struct\s([\w\d\.]+)\s\{)(?{push @struct_names, $1})/g;
 
-  # print "#### STRUCT_NAMES: @struct_names\n";
+  #print "#### STRUCT_NAMES: @struct_names\n";
   if ( not $got_enum_scope_content ) { refresh_enum_scope_content(); }
 
   # All function parameter types and return types.
@@ -284,7 +311,7 @@ sub refresh_needs_c_prefix_array {
 
 # Get fn ( (params) ) (\w+), so it can be appended to @func_param_content and processed again
         $possibly_fn =~ /
-        (?:                      # Start non capture group
+        (?:                      # Start non capture
         (?:fn\s)                 # Has "fn "
         \(                       # Literal (
         (.*)                     # Capture group 1, anything except new line
@@ -292,7 +319,7 @@ sub refresh_needs_c_prefix_array {
         \s([^,]*)|(?:fn\s\()     # Capture group 2
                                  # Not ", " or positive "fn (", to capture function types 
         (.*)                     # Capture group 3, anything inside function parameters
-        )                        # End non capture group
+        )                        # End non capture
         /x;
         my $inline_fn_params = $3 ? $3 : "$1, $2";
         if ( $inline_fn_params eq "" ) { next; }
@@ -315,11 +342,8 @@ sub refresh_needs_c_prefix_array {
       $param =~ s/^\s+|\s+$//g;
       if ( $param =~ /\s?\bfn\b\s\(/ ) { next; }
 
-      #pos($param) = 0;
       if ( $param eq "" or $param =~ /^\bC\./ ) { next; }
 
-      #@func_param_types{$param} = 1;
-      #foreach ( $param =~ /(?:(?:\w+)?\s?(?:&)*)(\w+)/gc ) {
       foreach ( $param =~ /(\w+)/gc ) {
         if ( $1 eq "fn" ) {
           next;
@@ -361,12 +385,14 @@ sub refresh_needs_c_prefix_array {
     $typedef_map{$cur_name} = $2;
   }
 
-  # use Data::Dumper;
-  # print Dumper(\%typedef_map);
+  #use Data::Dumper;
+  #print Dumper(\%typedef_map);
 
   # Find types needed as parameter in some function defintion
-  # or in a struct, where no local definition was found
-  my @manual_additions_struct_names_prefix =
+  # or in a struct, where no local definition was found;
+  # or in imgui.v.
+  # %all_imgui_v_types is avaiable after remove_duplicate_types completed
+  my @manual_additions_struct_names_with_prefix =
     map { "ImGui$_" } @manual_additions_struct_names;
   foreach my $param_type ( keys %func_param_types ) {
     if (  not( "@basetypes" =~ /\b\Q$param_type\E\b/ )
@@ -375,7 +401,8 @@ sub refresh_needs_c_prefix_array {
       and not( exists $typedef_map{$param_type} )
       and not( "@manual_additions_struct_names" =~ /\b\Q$param_type\E\b/ )
       and
-      not( "@manual_additions_struct_names_prefix" =~ /\b\Q$param_type\E\b/ ) )
+      not( "@manual_additions_struct_names_with_prefix" =~ /\b\Q$param_type\E\b/ ) 
+      and not( exists $all_imgui_v_types{$param_type} ) )
     {
       #print $param_type . "\n";
       push @needs_c_prefix_array, $param_type;
@@ -388,7 +415,8 @@ sub refresh_needs_c_prefix_array {
       and not( exists $typedef_map{$param_type} )
       and not( "@manual_additions_struct_names" =~ /\b\Q$param_type\E\b/ )
       and
-      not( "@manual_additions_struct_names_prefix" =~ /\b\Q$param_type\E\b/ ) )
+      not( "@manual_additions_struct_names_with_prefix" =~ /\b\Q$param_type\E\b/ )
+      and not( exists $all_imgui_v_types{$param_type} ) )
     {
       #print $param_type . "\n";
       push @needs_c_prefix_array, $param_type;
@@ -407,7 +435,8 @@ sub refresh_needs_c_prefix_array {
       and not( exists $typedef_map{$param_type} )
       and not( "@manual_additions_struct_names" =~ /\b\Q$param_type\E\b/ )
       and
-      not( "@manual_additions_struct_names_prefix" =~ /\b\Q$param_type\E\b/ ) )
+      not( "@manual_additions_struct_names_with_prefix" =~ /\b\Q$param_type\E\b/ )
+      and not( exists $all_imgui_v_types{$param_type} ) )
     {
       # If ImStbTexteditState is unknown
       # pub type ImStbTexteditState = STB_TexteditState
@@ -416,22 +445,22 @@ sub refresh_needs_c_prefix_array {
       # @[typedef]
       # struct C.STB_TexteditState {}
       #
-      # print "Param type on root level: $param_type\n";
+      #print "Param type on root level: $param_type\n";
       # Look up key from value
       my @matching_keys =
         grep { $typedef_map{$_} eq $param_type } keys %typedef_map;
 
-      # print "#### Matching keys: @matching_keys\n";
+      #print "#### Matching keys: @matching_keys\n";
       my $key_tmp = $matching_keys[0];
       $content =~
 s/^([^\n]*\btype\s+\Q$key_tmp\E\s+=\s+(?:[\d&\[\]]+)?)((?!fn\()[^\n]*)$(?{ $typedef_map{$key_tmp} = "C.$2" })/\npub $1C.$2\n@[typedef]\nstruct C.$2 {}/pm;
 
-      # print "#### Found unknown root level type: $key_tmp\n";
+      #print "#### Found unknown root level type: $key_tmp\n";
     }
   }
 
-  # Deduplicate
-  my %h = map { $_, 1 } @needs_c_prefix_array;
+  # Deduplicate and remove imgui. prefix as unknown type
+  my %h = map { $_ ne $prefix_to_ignore ? ($_, 1) : () } @needs_c_prefix_array;
   @needs_c_prefix_array = keys %h;
 
   $got_needs_c_prefix_array = 1;
@@ -469,6 +498,9 @@ sub basic_cleanup {
   # Remove im_plot_ from members, but not functions
   $content =~ s/((?<!\bfn)\sim_plot_)(?=\w+)?/ /g;
 
+  # Remove im_plot_ from functions
+  $content =~ s/(\bfn\s+)im_plot_([\w\d]+)/$1$2/g;
+
   # Remove im_gui_ from values
   $content =~ s/(\b\.im_gui_)(?=\w+)?/\./g;
 
@@ -479,7 +511,7 @@ sub basic_cleanup {
   # struct ImGuiImFontAtlas -> @[typedef]\nstruct C.ImGuiImFontAtlas ...
   # Also append C.type to basetypes
   $content =~
-s/^struct\s([\w\d]+)\s\{(?{ push(@basetypes, "C\.$1") })/\n\npub type $1 = C.$1\n@[typedef]\nstruct C.$1 {\npub mut:\n/gm;
+s/^struct\s([\w\d]+)\s\{(?{ push(@basetypes, "C\.$1") })/\n\npub type $1 = C.$1\n@[typedef]\nstruct C.$1 {\npub mut:/gm;
 
   #print "#### BASETYPES: @basetypes\n";
   refresh_needs_c_prefix_array();
@@ -508,10 +540,6 @@ s/^struct\s([\w\d]+)\s\{(?{ push(@basetypes, "C\.$1") })/\n\npub type $1 = C.$1\
 
   # Comment out named_begin in Keys enum
   $content =~ s/[^\n]+(\bkey_named_key_begin\s+=\s+512)/\/\/$1/;
-
-  # Remove @[weak] global
-  $content =~
-s/^@\[weak\]\s__global\sGImGui\s&ImGuiContext\s/\/*\n@[weak]\n__global GImGui &ImGuiContext\n*\//m;
 
 # TODO: @[_allow_multiple_values] in enums doesn't seem to work. error: cannot call a function that does not have a body. For function call ctx := imgui.create_context(unsafe{nil})
 # Comment out "none = 0", as it's the same value as mouse_button_left
@@ -569,7 +597,7 @@ s/(enum\sImGuiInputFlagsPrivate_\s\{.*)(input_flags_supported_by_is_key_pressed\
     # Upper case between \U \E
     $struct_content =~ s/^(\s*)([\w_])(\w*\s+[[:print:]]+)$/$1\U$2\E$3/gm;
 
-   # print "#### New struct content:\n$struct_content\n";
+   #print "#### New struct content:\n$struct_content\n";
    # Note: Surrounding pub mut: and }, because x and y are common struct members
     $content =~
       s/pub\smut:\s+\Q$struct_content_orig\E\s*\}/pub mut:\n$struct_content}/;
@@ -631,6 +659,32 @@ sub append_static_strings {
 
   my $static_string =
       "\nmodule $module_name\n\n"
+      . "/*
+MIT License
+
+Copyright Anton Oreskin | https://gosudev.de
+
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the \"Software\"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+"
     . $version_v
     . "// Placeholder for appending static strings\n";
 
@@ -639,9 +693,9 @@ sub append_static_strings {
 
   $static_string = "";
 
-  # print "\n#### Needs C Prefix Array:\n";
-  # use Data::Dumper;
-  # print Dumper( \@needs_c_prefix_array );
+  #print "\n#### Needs C Prefix Array:\n";
+  #use Data::Dumper;
+  #print Dumper( \@needs_c_prefix_array );
   my %type_names_on_root_level = $content =~ /$typedef_regex/g;
   foreach my $type_needs_c_prefix (@needs_c_prefix_array) {
 
@@ -664,9 +718,9 @@ sub append_static_strings {
     }
   }
 
-# args va_list -> args Va_list. It's used in functions, but the V name is Va_list
+# args va_list -> args imgui.Va_list. It's used in functions, but the V name is Va_list
 # This has to be done after unknown types get a struct, otherwise unknown type "va_list" will get an upper case name for the struct as well
-  $content =~ s/\bargs\sva_list\b/args Va_list/g;
+  $content =~ s/\bargs\sva_list\b/args imgui.Va_list/g;
 
   # Apply static string
   $content =~ s/\/\/ Placeholder for appending static strings\n/$static_string/;
@@ -676,8 +730,12 @@ sub append_static_strings {
 }    # sub
 
 # Prepend all occurences of unknown types with C.
-# Also remove $prefix_to_remove, like ImGui
 sub find_unknowns_and_set_c_prefix {
+  if (not $got_all_imgui_v_types) {
+    print("ERROR: Please make sure to fill all_imgui_v_types before setting C prefix.\n");
+    exit(1);
+  }
+
   refresh_needs_c_prefix_array();
   my $needs_c_prefix_search = join( "|", @needs_c_prefix_array );
 
@@ -685,21 +743,21 @@ sub find_unknowns_and_set_c_prefix {
 # Should be an issue with needs_c_prefix_search. Something went wrong at collecting types in func_param_types or struct_member_types
 # Note: No \Q \E here, as text to replace can not be escaped
 # Also, when there are no unknown types, the search string is empty
-# print "#### Needs c prefix search: $needs_c_prefix_search\n";
+#print "#### Needs c prefix search: $needs_c_prefix_search\n";
   if ( $needs_c_prefix_search ne "" ) {
-    $content =~ s/(?<!C\.)\b($needs_c_prefix_search)\b/C\.$1/g;    # [\[\]\d&]*
+    $content =~ s/(?<!C\.|\Q$prefix_to_ignore\E\.)\b($needs_c_prefix_search)\b/C\.$1/g;
   }
 
   #print join ",", $needs_c_prefix_search;
-
+  
 # Remove prefix, like ImGui
-# Also handle struct member types containing $prefix_to_remove
+# Also handle struct member types containing $ImGui
 # Examples
 # pub type ImGuiPopupData = C.ImGuiPopupData -> pub type PopupData = C.ImGuiPopupData
 # pub type xxx_ImGuiKey_xxx__xxxImGui_xxx = C.xxx_ImGuiKey_xxx__xxxImGui_xxx -> pub type xxx_Key_xxx__xxx_xxx = C.xxx_ImGuiKey_xxx__xxxImGui_xxx
-
   my $in_struct_scope = 0;
   my @lines           = split "\n", $content;
+
   foreach my $line (@lines) {
 
     # Skip commented lines or empty structs
@@ -710,40 +768,84 @@ sub find_unknowns_and_set_c_prefix {
     # Flag if current line is inside struct scope
     if ( $line =~ /\bstruct\s(?:C\.)?[\w\d]+\s*\{/ ) {
       $in_struct_scope = 1;
-
-      # print "#### Entering struct scope on line:\n$line\n";
+      next;
+      #print "#### Entering struct scope on line:\n$line\n";
     }
 
     # Flag if current line leaves struct scope
+    # unsafe{ nil } has not been set yet, so there are no extra } to care about
     if ( $in_struct_scope and $line =~ /^\s*\}/ ) {
       $in_struct_scope = 0;
-
-      # print "#### Leaving struct scope on line:\n$line\n";
-    }
-
-    # Ignore line in struct scope, if member type does not contain prefix
-    if (  $in_struct_scope
-      and $line !~ /[\w\d_]+\s+(.*\Q$prefix_to_remove\E.*)/ )
-    {
       next;
+      #print "#### Leaving struct scope on line:\n$line\n";
     }
-    else {
-      my $line_orig = $line;
 
-      # Handle all words containing prefix
-      if ( $line !~ /\Q$prefix_to_remove\E/ ) { next; }
+    my $line_orig = $line;
 
-      # print "Line pre: $line\n";
+    # Set imgui. prefix for any type found in imgui.v
+    # Make sure to ignore enum names, as they might overlap with ImPlots own enums.
+    # Doesn't change pub type defintions, because ImVector_ImS16 and plain ImS16 overlap
+    if ( $line !~ /^\s*\/\// and $line !~ /\benum\b\s+[\w\d]+\s*\{/ and $line !~ /\btype\b\s+[\w\d]+\s*=/ ) {
+    #print "Line pre: $line\n";
+    my @words = ();
+    for my $any_imgui_v_type (keys %all_imgui_v_types) {
+      @words = ();
+      if ( $in_struct_scope ) {
+        if ($line =~ /[\w\d]+\s+.*(\b(?<!C\.|\Q$prefix_to_ignore\E\.)\Q$any_imgui_v_type\E\b)/) {
+          push @words, $1;
+        }
+      } else {
+        while ($line =~ /(\b(?<!C\.|\Q$prefix_to_ignore\E\.)\Q$any_imgui_v_type\E\b)/g) {
+          push @words, $1;
+        }
+      }
+      if (scalar @words == 0) { next; }
+      #print "#### Words with imgui type\n" . (join " | ", @words) . "\n";
+      foreach my $word ( @words ) {
+        # Also ignore ImPlot prefix to handle overlapping types, like ImPlotCol and ImGuiCol
+        if ( $word !~ /^(C\.|\Q$prefix_to_ignore\E\.)/ ) {
+          my $word_orig = $word;
+          #$word =~ s/\Q$ImGui\E//;
+          my $any_type_clean = $all_imgui_v_types{$any_imgui_v_type};
+          $word = "$prefix_to_ignore.$any_type_clean";
+          #if ($in_struct_scope and $any_imgui_v_type eq "ConfigFlags") {
+          #  print "#### Found ConfigFlags in struct scope word orig: $word_orig new: $word\n";
+          #  print join " | ", @words . "\n";
+          #  print "Line PRE: $line\n";
+          #}
+          #if ("@words" eq "imgui.ID") {
+          #  print "#### Prefix check didn't work: $any_imgui_v_type\n$line\n@words\n";
+          #}
+          
+          # Special check for scope, because of line "_ImGuiViewport ImGuiViewport"
+          if ($in_struct_scope) {
+            # Apply
+            $line =~ s/([\w\d]+\s+.*)(\b\Q$word_orig\E\b)/$1$word/;
+          } else {
+            $line =~ s/(?<!$prefix_to_ignore\.)\b\Q$word_orig\E\b/$word/;
+          }
+          if ($in_struct_scope and $any_imgui_v_type eq "ConfigFlags") {
+          #  print "Line POST: $line\n";
+          }
+        }
+      }
+    }
+    }
+    
+    # Remove ImPlot, except for __global GImPlot &ImPlotContext
+    if ($line !~ /^@\[c:/i) {
+    if ( $line =~ /\Q$prefix_to_remove\E/ ) {
+      #print "Line pre: $line\n";
       foreach my $word (
         $line =~ /\b(?:C\.)?[\w\d]*\Q$prefix_to_remove\E[\w\d]*\b/gc )
       {
-        if ( $word !~ /^C\./ ) {
+        if ( $word !~ /^C\./ and $word !~ /GImPlot/ ) {
           my $word_orig = $word;
 
-          # print "#### REMOVE ImGui - processing: $word\n";
+          #print "#### REMOVE ImPlot - processing: $word\n";
           $word =~ s/\Q$prefix_to_remove\E//g;
 
-       # Special check for scope, because of line "_ImGuiViewport ImGuiViewport"
+       # Special check for scope, because of line "_ImPlotViewport ImPlotViewport"
           if ($in_struct_scope) {
             $line =~ s/([\w\d_]+\s+.*)(\Q$word_orig\E)/$1$word/;
           }
@@ -752,12 +854,13 @@ sub find_unknowns_and_set_c_prefix {
           }
         }
       }
-
-      # print "Line post: $line\n";
-      # Apply
-      $content =~ s/\Q$line_orig\E/$line/;
     }
+    }
+    #print "Line post: $line\n";
+    # Apply
+    $content =~ s/^\Q$line_orig\E$/$line/m;
   }
+
 }    # sub
 
 sub get_enum_base_value {
@@ -797,23 +900,23 @@ sub get_enum_base_value {
                                             # Ignore alias values
           if ( $val_part =~ /[^0-9][a-zA-Z_\.]+/ and $val_part !~ /^int\(/ ) {
 
-# print "Ignoring alias for base val translations: $cur_enum_name.$member_name = $val_complete\n";
+#print "Ignoring alias for base val translations: $cur_enum_name.$member_name = $val_complete\n";
             $contains_alias = 1;
             last;
           }
         }
         if ( not $contains_alias ) {
 
-    # print "Adding to enum map: $cur_enum_name.$member_name = $val_complete\n";
+    #print "Adding to enum map: $cur_enum_name.$member_name = $val_complete\n";
           push @{ $enum_member_name_value{$cur_enum_name} },
             ( $member_name, $val_complete );
         }
       }    # for line
     }    # for enum_content
 
-    # print "\nenum_member_name_value\n";
+    #print "\nenum_member_name_value\n";
     #use Data::Dumper;
-    # print Dumper( \%enum_member_name_value );
+    #print Dumper( \%enum_member_name_value );
   }    # if first run
 
   if ( exists $enum_member_name_value{$enum_name}
@@ -834,7 +937,7 @@ sub get_enum_base_value {
       # }
       if ( $cur_name eq $member_name ) {
 
-        # print "Enum: $enum_name.$member_name ret: $names_values_arr[$i]\n";
+        #print "Enum: $enum_name.$member_name ret: $names_values_arr[$i]\n";
         return $names_values_arr[$i];
       }
     }
@@ -847,11 +950,11 @@ sub get_enum_base_value {
       return get_enum_base_value( $enum_name, $member_name, 1 );
     }
     else {
-# print "$enum_name not found in enum_scope_content map. Reset get_enum_base_value_first_run with no effect.\n";
+#print "$enum_name not found in enum_scope_content map. Reset get_enum_base_value_first_run with no effect.\n";
     }
   }
 
-# print "RETURNING EMPTY base_value for enum: $enum_name\nmember: $member_name\n";
+#print "RETURNING EMPTY base_value for enum: $enum_name\nmember: $member_name\n";
   return "";
 }    # sub
 
@@ -866,8 +969,8 @@ sub remove_enum_member_prefix {
   # if parameter is not passed to this sub, default to 0
   $is_in_another_enum //= 0;
 
-  # print "Processing remove_enum_member_prefix enum_name: $enum_name\n";
-  # print "is_in_another_enum: $is_in_another_enum\n";
+  #print "Processing remove_enum_member_prefix enum_name: $enum_name\n";
+  #print "is_in_another_enum: $is_in_another_enum\n";
   # Remove im_gui_ and enum name from members
   if (  $is_in_another_enum
     and $is_in_another_enum == 1
@@ -877,7 +980,7 @@ sub remove_enum_member_prefix {
     $member_name_or_scope_content =~ s/\b(.+)\.(im_gui_)(.+)/$1.$3/g;
     $enum_name = $1;
 
-    # print "\nAfter removing im_plot: $member_name_or_scope_content\n";
+    #print "\nAfter removing im_plot: $member_name_or_scope_content\n";
   }
   else {
     # Whole enum scope
@@ -886,14 +989,14 @@ sub remove_enum_member_prefix {
   }
 
   # Remove "ImGui" pre snake case, because "im_gui_" was removed for each member
-  $enum_name =~ s/ImGui//;
+  $enum_name =~ s/\Q$ImGui\E//;
   $enum_name =~ s/ImPlot//;
 
-  # print "Pre snake case $enum_name\n";
+  #print "Pre snake case $enum_name\n";
   my @upper_words     = $enum_name =~ /([A-Z][a-z0-9_]*)/g;
   my $enum_name_snake = join( "_", map { lc } @upper_words );
 
-  # print "Post snake case $enum_name_snake\n";
+  #print "Post snake case $enum_name_snake\n";
   my $scope_content_clean = $member_name_or_scope_content;
   $scope_content_clean =~ s/\Q$enum_name_snake\E[_]?//g;
 
@@ -903,11 +1006,11 @@ sub remove_enum_member_prefix {
 # as it might break member names otherwise
   if ( $enum_name_snake =~ /_private_$/m ) {
 
-    # print "\nPre _private_ removal: $scope_content_clean\n";
+    #print "\nPre _private_ removal: $scope_content_clean\n";
     $enum_name_snake     =~ s/private_$//m;
     $scope_content_clean =~ s/\Q$enum_name_snake\E[_]?//g;
 
-    # print "\nPost _private_ removal: $scope_content_clean\n"
+    #print "\nPost _private_ removal: $scope_content_clean\n"
   }
 
 # Remove until first _ in enum name and try to remove it from member name start.
@@ -921,18 +1024,17 @@ sub remove_enum_member_prefix {
 
       $enum_name_to_remove =~ s/\Q$first_part\E//;
 
-      # print "Enum name first_part snake: $first_part\n";
+      #print "Enum name first_part snake: $first_part\n";
 
-# Still not clean, because only the last part of the enum name is in member name.
-# The member name begins with the last part of enum name
+# Still not clean, because the enum member name begins with the last part of the enum name
       if ( $scope_content_clean =~ /$enum_name_to_remove/ ) {
 
-        # print "scope_content_clean contains: $first_part\n";
+        #print "scope_content_clean contains: $first_part\n";
 
-        # print "\nPre _private_ removal: $scope_content_clean\n";
+        #print "\nPre _private_ removal: $scope_content_clean\n";
         $scope_content_clean =~ s/^\s*\Q$enum_name_to_remove\E//m;
 
-        # print "\nPost _private_ removal: $scope_content_clean\n"
+        #print "\nPost _private_ removal: $scope_content_clean\n"
       }
 
     }
@@ -961,7 +1063,7 @@ sub enum_member_alias_to_base_value {
       my $val_complete = $2;
 
       # if ( $line =~ /pressed_on_click \| pressed_on_click_release/ ) {
-      # print "After member_name: $member_name\nval_complete: $val_complete\n";
+      #print "After member_name: $member_name\nval_complete: $val_complete\n";
       # }
       my $val_complete_clean = $val_complete;
 
@@ -974,14 +1076,14 @@ sub enum_member_alias_to_base_value {
                                           # Ignore non alias values
         if ( $val_part !~ /[A-Za-z]/ ) {
 
-          # print "Skipping val_part: $val_part\n";
+          #print "Skipping val_part: $val_part\n";
           next;
         }
 
-        # print "Enum name: $enum_name\n";
-        # print "Line: $line\n";
-        # print "val_complete: $val_complete\n";
-        # print "val_part: $val_part\n";
+        #print "Enum name: $enum_name\n";
+        #print "Line: $line\n";
+        #print "val_complete: $val_complete\n";
+        #print "val_part: $val_part\n";
         #if (  $enum_name eq "HoveredFlagsPrivate_"
         #  and $member_name eq "allowed_mask_for_is_item_hovered" )
         #{
@@ -1006,24 +1108,24 @@ sub enum_member_alias_to_base_value {
         if ( $val_part =~ /([^\.\(\)]+)\.([^\.\(\)]+)/ ) {
           $is_in_another_enum = 1;
 
-          # print "val_part $val_part in $1 is in another enum $val_part\n";
+          #print "val_part $val_part in $1 is in another enum $val_part\n";
         }
         if ($is_in_another_enum) {
           $enum_name_to_find_in = $1;
           $val_part_to_find     = $2;
 
-# print "Pre remove other enum prefix: $val_part_to_find\n for other enum: $enum_name_to_find_in\n";
+#print "Pre remove other enum prefix: $val_part_to_find\n for other enum: $enum_name_to_find_in\n";
           $val_part_to_find = remove_enum_member_prefix( $enum_name_to_find_in,
             $val_part_to_find, $is_in_another_enum );
 
-# print "Post remove other enum prefix: $val_part_to_find\n for other enum: $enum_name_to_find_in\n";
+#print "Post remove other enum prefix: $val_part_to_find\n for other enum: $enum_name_to_find_in\n";
         }
 
         # Handle "member = xyz - abc"
         if ( $val_part =~ /([^\-\s]+)\s*\-\s*([^\-\s]+)/ ) {
           my $val_part_orig = $val_part;
 
-    # print "Trying to get base value for $1 and $2 in $enum_name_to_find_in\n";
+    #print "Trying to get base value for $1 and $2 in $enum_name_to_find_in\n";
           my $base_value_left  = $1;
           my $left_orig        = $1;
           my $base_value_right = $2;
@@ -1065,12 +1167,12 @@ sub enum_member_alias_to_base_value {
         if ( not( $base_value eq "" ) ) {
           $base_value =~ s/(^\s+|\s+$)//g;
 
-# print "\n#### Found base val: $base_value\nFor enum $enum_name_to_find_in.$val_part_to_find\nval_complete: $val_complete\nval_part: $val_part\n";
+#print "\n#### Found base val: $base_value\nFor enum $enum_name_to_find_in.$val_part_to_find\nval_complete: $val_complete\nval_part: $val_part\n";
 
-          # print "PRE: $val_complete_clean\n";
+          #print "PRE: $val_complete_clean\n";
           $val_complete_clean =~ s/\Q$val_part\E/$base_value/;
 
-          # print "POST: $val_complete_clean\n";
+          #print "POST: $val_complete_clean\n";
           $line_orig = $line;
           $line         =~ s/\Q$val_complete\E/$val_complete_clean/;
           $enum_content =~ s/\Q$line_orig\E/$line/;
@@ -1085,93 +1187,41 @@ sub enum_member_alias_to_base_value {
       }    # for val_parts in line
     }    # foreach line
          # Apply change
-         # print "ApplyEnum:\n$enum_name\nContent:\n$enum_content\n";
+         #print "ApplyEnum:\n$enum_name\nContent:\n$enum_content\n";
     $content =~ s/\Q$enum_scope_content{$enum_name}\E/$enum_content/;
 
 # Note: If you refresh enum scope content here, all translations will be done in one run,
 # because later enum members depend on earlier enum members in all cases
 #use Data::Dumper;
 #my @k = keys %enum_scope_content;
-# print Dumper(\@k);
+#print Dumper(\@k);
   }    # for enum_scope_content
 
-# At the end, "ImGuiDataType_.data_type_count" -> "int(ImGuiDataType_.data_type_count)"
+# At the end
+# "ImGuiDataType_.data_type_count" -> "int(ImGuiDataType_.data_type_count)"
 # Int cast was removed in basic_cleanup(), but here we can assume that all ref.type are translated to base value already.
 # If they are still there, they point to an enum value without = assignment
-  $content =~
-    s/(^[^\/\n]+)(?<!<|"|'|\d\.)(?!int\(|C\.)\b(\w+\.\w+)(?!\))\b/$1int($2)/gm;
-
-  # Also change C.Time_t -> C.time_t. It's coming from time.h
-  #             C.Tm     -> C.tm
-  $content =~ s/\bC\.Time_t\b/C.time_t/g;
-  $content =~ s/\bC\.Tm\b/C.tm/g;
-
-  # Remove redundant pub type ImFileHandle = C.ImFileHandle
-  # That was added as unknown type. TODO
-  $content =~
-s/pub\stype\sImFileHandle\s=\sC\.ImFileHandle\s@\[typedef\]\spub\sstruct\sC\.ImFileHandle\s\{\}//;
-
-  # Also C.ImFileHandle -> ImFileHandle
-  $content =~ s/\bC\.ImFileHandle\b/ImFileHandle/g;
-
-# Remove every == STRUCT == found in imgui.v, as it's in the same module, but was needed for translations
-  my %imgui_v_structs = ();
-
-  # For each type and C.struct block in imgui.v
-  while ( $imgui_v_content =~
-/\btype\s([\w\d]+)\s=\sC\.[\w\d]+\s+@\[typedef\]\s*(?:pub)?\s*struct\s(C\.[\w\d]+)\s\{/g
-    )
-  {
-    # VType to C.ImGuiVType
-    $imgui_v_structs{$1} = $2;
-  }
-  foreach my $imgui_v_struct ( keys %imgui_v_structs ) {
-
-    # Remove type and C.struct block
-    $content =~
-s/(?:pub\s)?\btype\s\Q$imgui_v_struct\E\s=\sC\.[\w\d]+\s+@\[typedef\]\s*(?:pub)?\s*struct\s\Q$imgui_v_structs{$imgui_v_struct}\E\s\{(?:[^\}]|unsafe\{\s*nil\s*\})*(?=\})(?!\bnil\s*\})(?<!\{nil)\}//;
-
-    # print "#### Removing struct block for: $imgui_v_struct\n";
+# or enum in ImGui
+  refresh_enum_scope_content();
+  for my $enum_content (values %enum_scope_content) {
+    #print "#### Enum scope PRE:\n$enum_content\n";
+    my $enum_content_orig = $enum_content;
+    $enum_content =~ s/(^[^\/\n]+)(?<!<|"|'|\d\.|\Q$prefix_to_ignore\E\.)(?!int\(|C\.)\b(\w+\.\w+(?:.\w+)?)(?!\))\b/$1int($2)/gm;
+    #print "#### Enum scope POST:\n$enum_content\n";
+    $content =~ s/\Q$enum_content_orig\E/$enum_content/;
   }
 
-# Remove every == ENUM == found in imgui.v, as it's in the same module, but was needed for translations
-  my %imgui_v_enums = ();
+  # Also update C.tm and C.time_t. It's coming from time.h, which is included in vlib
+  $content =~ s/pub\stype\sTime_t\s=\sC\.Time_t\s@\[typedef\]\spub\sstruct\sC\.Time_t\s\{\}/\/\/ C.time_t is not a public struct in vlib.time. Also, Time is already aliased to C.ImPlotTime\npub type Time_t = i64/;
+  $content =~ s/pub\stype\sTm\s=\sC\.Tm\s@\[typedef\]\spub\sstruct\sC\.Tm\s\{\}/\/\/ C.tm is a public struct in vlib\npub type Tm = C.tm/;
 
-  # For each type and C.struct block in imgui.v
-  while ( $imgui_v_content =~ /(?:pub\s)?\benum\s([\w\d]+)\s\{/g ) {
+ #open my $qwe, '>', "content_tmp.txt" or die "Can not write content_tmp.txt: $!";
+ #print $qwe $content;
+ #close($qwe);
 
-    # VType
-    $imgui_v_enums{$1} = 1;
-  }
-  foreach my $imgui_v_enum ( keys %imgui_v_enums ) {
-
-    # Remove enum
-    $content =~ s/(?:pub\s)?\benum\s\Q$imgui_v_enum\E\s\{[^\}]+\}//;
-
-    # print "#### Removing enum for: $imgui_v_enum\n";
-  }
-
-# Remove every == TOP LEVEL TYPE == found in imgui.v, as it's in the same module, but was needed for translations
-  my %imgui_v_types = ();
-
-  # For each top level type in imgui.v
-  while ( $imgui_v_content =~
-    /(?:pub\s)?\btype\s([\w\d]+)\s=\s[^\n]+\s+(?!@\[typedef\])/g )
-  {
-    # VType
-    $imgui_v_types{$1} = 1;
-  }
-  foreach my $imgui_v_type ( keys %imgui_v_types ) {
-
-    # Remove top level type
-    $content =~ s/(?:pub\s)?\btype\s\Q$imgui_v_type\E\s=[^\n]+//;
-
-    # print "#### Removing type for: $imgui_v_type\n";
-  }
-
-# Fix issue with [6]&f64. Just change to voidptr
-# error: incompatible types when initializing type ‘double’ using type ‘f64 *’ {aka ‘double *’}
-  $content =~ s/(\s\[\d+\]&*?)(&{1}\w+)/$1\/*$2*\/voidptr/g;
+  # Fix issue with [6]&f64. Just change to voidptr
+  # error: incompatible types when initializing type ‘double’ using type ‘f64 *’ {aka ‘double *’}
+  $content =~ s/(\s\[\d+\]&*?)(&{1}(?:$prefix_to_ignore\.)?\w+)/$1\/*$2*\/voidptr/g;
 
   # Replace last few unknown types, because they were not translated
   $content =~
@@ -1195,7 +1245,7 @@ s/pub\stype\s(?:ImGui)?SizeCallback\s=\sC\.(?:ImGui)?SizeCallback\s@\[typedef\]\
   for my $e_name ( keys %enum_scope_content ) {
     if (
       my @todos = $enum_scope_content{$e_name} =~
-      /^[^\n\*]+(?==)(?:[^\n]+)?[\s<\d\|](?!int\()([a-z_]+)[^=\n]+$/gm
+      /^[^\n\*]+(?==)(?:[^\n]+)?[\s<\d\|](?!int\(|\Q$prefix_to_ignore\E\.)([a-z_]+)[^=\n]+$/gm
       )
     {
       print "Got work to do in $e_name: $1\nUntranslated values: @todos\n";
@@ -1241,14 +1291,14 @@ sub type_alias_to_base_value {
     $name_type_map{$cur_name} = $2;
   }
 
-  # print "\nname_type_map for replacing top level type alias:\n";
-  # use Data::Dumper;
-  # print Dumper( \%name_type_map );
+  #print "\nname_type_map for replacing top level type alias:\n";
+  #use Data::Dumper;
+  #print Dumper( \%name_type_map );
   my $alias_names_regex_group = join( "|", keys %name_type_map );
 
-  # print "################ alias names regex group START #############\n";
-  # print $alias_names_regex_group;
-  # print "################ alias names regex group END #############\n";
+  #print "################ alias names regex group START #############\n";
+  #print $alias_names_regex_group;
+  #print "################ alias names regex group END #############\n";
   if ( $alias_names_regex_group ne "" ) {
 
     # Get 3 groups, concat them back together,
@@ -1262,7 +1312,7 @@ sub type_alias_to_base_value {
       $content =~
 s/(type\s\w+\s=\s(?:[\d\[\]&]*)?)($alias_names_regex_group)(\n)/$1$name_type_map{$2}$3/gs;
 
-      # print "#### Replaced top level type: $1$name_type_map{$2}$3";
+      #print "#### Replaced top level type: $1$name_type_map{$2}$3";
       pos($content) = 0;
     }
   }
@@ -1279,7 +1329,7 @@ sub set_enum_value {
     my $enum_content_orig = $enum_content;
     my @lines             = split "\n", $enum_content;
 
-    # print "#### Enum Content Before:\n$enum_content\n";
+    #print "#### Enum Content Before:\n$enum_content\n";
     foreach my $line (@lines) {
 
    # For enums without values for all members.
@@ -1290,7 +1340,7 @@ sub set_enum_value {
       my $line_orig = $line;
       if ( $line =~ /^\s*[\w_]+\s*=\s*([-\d]+)$/ ) {
 
-        # print "#### Value $enum_name $1\nin line $line\n";
+        #print "#### Value $enum_name $1\nin line $line\n";
         $counter = $1 + 1;
         next;
       }
@@ -1298,7 +1348,7 @@ sub set_enum_value {
         if ( $line =~ /([\w_]+)/ ) {
           my $name = $1;
 
-          # print "#### Name $enum_name.$name\n";
+          #print "#### Name $enum_name.$name\n";
           $line =~ s/\Q$name\E/$name = $counter/;
 
 # Trim space so \b word boundary works, otherwise tab_hovered and tab can not be distinguished
@@ -1312,10 +1362,83 @@ sub set_enum_value {
     if ($content_changed) {
       $content =~ s/\Q$enum_content_orig\E/$enum_content/;
 
-      # print "#### Enum Content After:\n$enum_content\n";
+      #print "#### Enum Content After:\n$enum_content\n";
     }
   }
 }    # sub
+
+# Note: setting the imgui. prefix is done in sub find_unknowns_and_set_c_prefix.
+# This also fills the map for all imgui v types 
+sub remove_duplicate_types {
+
+# Remove every == STRUCT == found in imgui.v, as it's in the same module, but was needed for translations
+  my %imgui_v_structs = ();
+
+  # For each type and C.struct block in imgui.v
+  while ( $imgui_v_content =~
+/\btype\s([\w\d]+)\s=\sC\.[\w\d]+\s+@\[typedef\]\s*(?:pub)?\s*struct\sC\.([\w\d]+)\s\{/g
+    )
+  {
+    # SomeType to ImGuiSomeType
+    $imgui_v_structs{$1} = $2;
+    # Also fill the global variable used in find_unknowns_and_set_c_prefix
+    # Original ImGuiID to cleaned up ID
+    $all_imgui_v_types{$2} = $1;
+  }
+  foreach my $imgui_v_struct ( values %imgui_v_structs ) {
+    #print "#### Removing struct: $imgui_v_struct\n";
+    # Remove type and C.struct block
+    $content =~ s/pub\s+type\s+[\w\d]+\s+=\s+C\.[^\n]+\s+@\[typedef\]\s+(?:pub\s+)?struct\s+C\.\Q$imgui_v_struct\E\s+\{[^\}]*\}//;
+    #print "#### Removing struct block for: $imgui_v_struct\n";
+  }
+  
+  # Remove every == TOP LEVEL TYPE == found in imgui.v, as it's in the same module, but was needed for translations
+  # Top level is the same as root level, meaning not in a struct or other surrounding text
+  my %imgui_v_toplvl_types = ();
+
+  # For each top level type in imgui.v
+  while ( $imgui_v_content =~
+    /(?:pub\s)?\btype\s([\w\d]+)\s=\s[^\n]+\s+(?!@\[typedef\])/g )
+  {
+    # VType
+    $imgui_v_toplvl_types{$1} = 1;
+    # Top level types in imgui.v are already clean from any prefix. So I just assume the original type is ImGuiVType
+    # It is compared against in refresh_needs_c_prefix_array
+    $all_imgui_v_types{"$ImGui$1"} = $1;
+    $all_imgui_v_types{$1} = $1; # May conflict like Axis ImAxis ImGuiAxis ImPlotAxis, so when setting imgui. prefix it will compare to whole word boundary
+  }
+  foreach my $imgui_v_type ( keys %imgui_v_toplvl_types ) {
+
+    # Remove top level type
+    $content =~ s/(?:pub\s)?\btype\s(?:\Q$ImGui\E)?\Q$imgui_v_type\E\s=[^\n]+//;
+
+    #print "#### Removing type for: $imgui_v_type\n";
+  }
+
+  # Remove every == ENUM == found in imgui.v, as it's in the same module, but was needed for translations
+  my %imgui_v_enums = ();
+
+  # For each type and C.struct block in imgui.v
+  while ( $imgui_v_content =~ /(?:pub\s)?\benum\s([\w\d]+)\s\{/g ) {
+
+    # VType
+    $imgui_v_enums{$1} = 1;
+    #$all_imgui_v_types{"$ImGui$1"} = $1;
+    $all_imgui_v_types{$1} = $1;
+  }
+  foreach my $imgui_v_enum ( keys %imgui_v_enums ) {
+
+    # Remove enum
+    $content =~ s/(?:pub\s)?\benum\s(?:\Q$ImGui\E)?\Q$imgui_v_enum\E\s\{[^\}]+\}//;
+
+    #print "#### Removing enum for: $imgui_v_enum\n";
+  }
+
+  $got_all_imgui_v_types = 1;
+  #print "\nall_imgui_v_types\n";
+  #use Data::Dumper;
+  #print Dumper( \%all_imgui_v_types );
+} # sub
 
 sub add_sub_union_members_to_structs {
   my %c_to_v = qw(
@@ -1330,8 +1453,8 @@ sub add_sub_union_members_to_structs {
     my $c_union_content = $2;
 
     # Translate union content to V
-    # print "#### C union content: $c_union_content\n";
-    # print "In struct: $c_struct\n";
+    #print "#### C union content: $c_union_content\n";
+    #print "In struct: $c_struct\n";
     # Sample output:
     # #### C union content:  int val_i; float val_f; void* val_p;
     # In struct: ImGuiStoragePair
@@ -1348,9 +1471,9 @@ sub add_sub_union_members_to_structs {
         /([\w\*]+)\s*([\w\d\[\]_]+)(?{ push @c_members, ($2, $1) })/;
     }
 
-    # print "#### C members:\n";
-    # use Data::Dumper;
-    # print Dumper( \@c_members );
+    #print "#### C members:\n";
+    #use Data::Dumper;
+    #print Dumper( \@c_members );
 
     my @v_members = ();
     my $c_member_name;
@@ -1360,11 +1483,11 @@ sub add_sub_union_members_to_structs {
         next;
       }
 
-      # print "Processing $c_member_name\n";
+      #print "Processing $c_member_name\n";
       my $c_member_type = $c_members[$i];
       my $v_member_type;
 
-      # print "Got type: $c_member_type\n";
+      #print "Got type: $c_member_type\n";
       if ( $c_member_name =~ /(\[\d*\])/ ) {
         $v_member_type .= $1;
         $c_member_name =~ s/\[\d*\]//;
@@ -1396,14 +1519,13 @@ sub add_sub_union_members_to_structs {
     my $struct_scope_orig = $struct_scope;
     $struct_scope .= "$append_string";
 
-    # print "#### Added struct sub union:\n$struct_scope\n";
+    #print "#### Added struct sub union:\n$struct_scope\n";
     $content =~ s/\Q$struct_scope_orig\E/$struct_scope/;
   }
 }    # sub
 
 # In structs
 sub set_default_nil_for_pointers {
-
   # Pointers or function definitions on top level
   my @ptr_types = ();
   while ( $content =~
@@ -1421,57 +1543,116 @@ sub set_default_nil_for_pointers {
   my $ptr_types_search     = join "|", @ptr_types;
   my $empty_structs_search = join "|", @empty_structs;
 
-  # print "#### Ptr types search: $ptr_types_search\n";
+  #print "#### Ptr types search: $ptr_types_search\n";
   for my $struct_name ( keys %struct_scope_content ) {
     my $cur_content       = $struct_scope_content{$struct_name};
-    my $cur_content_clean = $struct_scope_content{$struct_name};
+    my $cur_content_clean = $cur_content;
 
     # Set default for types aliasing pointers. Mandatory
     $cur_content_clean =~
-s/(^\s*[\w\d_]+\s+)((?!\])&*(?:$ptr_types_search)[^\n]*)/$1\/*$2*\/voidptr = unsafe{ nil }/gm;
+    s/(^\s*[\w\d]+\s+)((?:$prefix_to_ignore\.)?(?!\])&*(?:$ptr_types_search)[^\n]*)/$1\/*$2*\/voidptr = unsafe{nil }/gm;
 
-# Set default for fn types
-# $cur_content_clean =~ s/(^\s*[\w\d_]+\s+)((?:\bfn\s*\()[^\n]*)/$1$2 = unsafe{ nil }/gm;
-# Set default for voidptr
+    # Set default for voidptr
     $cur_content_clean =~
-s/(^\s*[\w\d_]+\s+)((?:voidptr)(?!\s=\sunsafe\{)[^\n]*)/$1$2 = unsafe{ nil }/gm;
+    s/(^\s*[\w\d]+\s+)((?:$prefix_to_ignore\.)?(?:voidptr)(?!\s=\sunsafe\{)[^\n]*)/$1$2 = unsafe{ nil}/gm;
 
     # Set default voidptr for normal pointers. Mandatory
     $cur_content_clean =~
-s/(^\s*[\w\d_]+\s+)((?:(?!\[\d*\])&+[\w\d]+)(?!\s=\sunsafe\{)[^\n]*)/$1\/*$2*\/voidptr= unsafe{ nil }/gm;
-
-# Set default for empty struct pointers
-# $cur_content_clean =~ s/(^\s*[\w\d_]+\s+)((?!\])&(?:$empty_structs_search)(?!\s=\sunsafe\{)[^\n]*)/$1$2 = unsafe{ nil }/gm;
+    s/(^\s*[\w\d]+\s+(?!\[\d*\])?&*)((?:$prefix_to_ignore\.)?(?:(?!\[\d*\])&{1}[\w\d]+)(?!\s=\sunsafe\{)[^\n]*)/$1\/*$2*\/voidptr= unsafe{ nil }/gm;
 
     # Apply
     $content =~ s/\Q$cur_content\E/$cur_content_clean/;
   }
+}  #sub
 
-  #### TMP until end
-# my %c_structs = ();
-# while ($header_content =~ /struct\s+([\w\d]+)\s+\{/g) {
-#   @c_structs{$1} = 1;
-# }
-# # my %seen = ();
-# # $seen{$_}++ for @tmp;
-# # print Dumper \%seen;
-# my %v_structs = ();
-# print "#### V structs not translated:\n";
-# while ($content =~ /struct\s+C\.([\w\d]+)\s+\{/g) {
-#   @v_structs{$1} = 1;
-# }
-# my @not_found_in_v = ();
-# foreach my $c_struct (keys %c_structs) {
-#   if (not defined $v_structs{$c_struct}) {
-#     push @not_found_in_v, $c_struct;
-#   }
-# }
-# print join "\n", @not_found_in_v;
-# print "#### Normal pointer lines:\n";
-#my @pointers = ();
-#while($content =~ /(^\s*[\w\d_]+\s+)((?:(?!\[\d*\])&+[\w\d]+)(?!\s=\sunsafe\{)[^\n]*)/gm) {
-#  push @pointers, ($1, $2);
-#}
-# print Dumper \@pointers;
-}    # THE END
+sub set_public {
+  $content =~ s/^(type|struct|enum)\s/pub $1 /gm;
+} # sub
 
+sub remove_prefix {
+  $content =~ s/(?!C\.)\b(?:\Q$prefix_to_remove\E)([\w\d]+)/$1/gm;
+} # sub
+
+sub set_const_prefix_on_function_parameter_names {
+  # ==Normal== function defintions with const parameters
+  # Get all function names and parameters
+  # CIMGUI_API ImFont* ImFontAtlas_AddFontDefault(ImFontAtlas* self,const ImFontConfig* font_cfg);
+  # ==INLINE== function defintions with const parameters
+  # CIMGUI_API bool igListBox_FnStrPtr(const char* label,int* current_item,const char*(*getter)(void* user_data,int idx),void* user_data,int items_count,int height_in_items);
+  my %c_func_name_to_const_params = ();
+  # This map is not used, but maybe we set const return types at some point
+  my %c_func_name_to_const_return = ();
+  #while ($header_content =~ /([\*\w\d\[\]]+)\s*\b([\w\d]+)\s*\(([^\)]*)\)\s*;/g) { # Didn't get inline functions
+  while ($header_content =~ /([\*\w\d\[\]]+)\s*\b([\w\d]+)\s*\((.*)\)\s*;/g) {
+    my $c_func_ret_type = $1;
+    my $c_func_name = $2;
+    my $c_func_params = $3; # May contain inline function defintions without function name, but with some const parameter
+    #print "#### c_func ret | name | params: $c_func_ret_type | $c_func_name | $c_func_params\n";
+
+    if ($c_func_params =~ /\(/) {
+      # TODO: Distinguish inline function here and put their parameters in a separate map
+    }
+    
+    if ($c_func_params =~ /\bconst\b/) {
+      my @params = split ",", $c_func_params;
+      foreach my $param (@params) {
+        # const ImFontConfig* font_cfg
+        if ($param =~ /\bconst\s+([\w\d\*\[\]]+)\s+([\w\d]+)/) {
+          my $param_type = $1;
+          my $param_name = $2;
+          # ImFontAtlas_AddFontDefault -> (font_cfg, const_font_cfg)
+          push @{$c_func_name_to_const_params{$c_func_name}}, $param_name;
+        }
+      }
+    }
+    # const ImWchar*
+    if ($c_func_ret_type =~ /\bconst\b/) {
+      push @{$c_func_name_to_const_return{$c_func_name}}, $c_func_ret_type;
+    }
+  }
+  
+  # Apply const_ prefix to all funcion parameters
+  foreach my $c_func_name (keys %c_func_name_to_const_params) {
+    foreach my $c_const_param_name ( @{$c_func_name_to_const_params{$c_func_name}} ) {
+      # $1 is the complete string
+      # @[c: '$c_func_name']
+      # pub fn my_function($2) $3
+      if ($content =~ /(@\[c:\s*'\Q$c_func_name\E'\]\s+(?:pub\s)?fn\s+[\w\d]+\(([^\)]+)\)(?:\s)+?([\w\d\[\]&]+)?)/) {
+        my $string_complete = $1;
+        my $string_complete_orig = $string_complete;
+        my $updated_string = 0;
+        my $v_func_params = $2;
+        my $v_return_type = $3 ? $3 : "";
+        #print "#### Found params to prefix const_ $string_complete\n";
+        my @v_param_name_types = split ",", $v_func_params;
+        foreach my $v_param_name_type ( @v_param_name_types ) {
+          # param_name &i8
+          if ($v_param_name_type =~ /\b([\w\d]+)\s+[&\[\]\d\w]+/) {
+            my $v_param_name = $1;
+            #print "#### Got v_param_name: $v_param_name comparing to: $c_const_param_name\n";
+            if ( $v_param_name eq $c_const_param_name) {
+              #print "#### Setting const_ for $v_param_name in $c_func_name\n";
+              $string_complete =~ s/\b(\Q$v_param_name\E)\b/const_$1/;
+              $updated_string = 1;
+            }
+          }
+        }
+        if ($updated_string) {
+          $content =~ s/\Q$string_complete_orig\E/$string_complete/;
+        }
+      }
+    }
+  }
+  
+  # Fix C type mismatch of &i8 and char*
+  # const_name &i8 -> const_name &char
+  $content =~ s/(const_[\w\d]+\s+[&\[\]\d]*)i8\b/$1char/g;
+  # name ...&i8 -> const_name &char, ...
+  $content =~ s/\b([\w\d]+\s+)\.\.\.([\[\]&\d]*)i8\b/const_$1$2char, .../g;
+} # sub
+
+# Don't change int(abc) cast for enum members
+sub change_all_int_to_i32 {
+  $content =~ s/\bint\b(?!\()/i32/g;
+} # sub
+  # THE END
