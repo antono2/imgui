@@ -9,7 +9,7 @@ This is an automated process to generate `imgui.v` and `implot.v`
  - `cleanup_imgui.perl` and `cleanup_implot.perl` to fix some errors
 
 ## Dependencies
-`v install https://github.com/antono2/vulkan`
+`v install https://github.com/antono2/vulkan`<br>
 `v install https://github.com/antono2/glfw`
 
 ## Install
