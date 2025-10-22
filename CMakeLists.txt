@@ -1,9 +1,4 @@
-# TODO: vulkan defines in imgui/backends/imgui_impl_vulkan.h
-
-# Using 3.16 for GET_RUNTIME_DEPENDENCIES, to copy all linked libraries
 cmake_minimum_required(VERSION 3.16)
-
-# When building a shared library, it also sets RPATH to ${LIBDIR} and copies all linked libraries
 
 Project(vimgui)
 set(NAME ${PROJECT_NAME})
@@ -88,7 +83,6 @@ include(FetchContent)
 	FetchContent_Declare(
    	 glfw
    	 URL https://github.com/glfw/glfw/archive/refs/tags/${GLFW_VERSION}.tar.gz)
-	 #GIT_REPOSITORY https://github.com/glfw/glfw )
 
 FetchContent_GetProperties(glfw)
 if (NOT glfw_POPULATED)
