@@ -14,8 +14,12 @@ import imgui
 
 pub type PFN_LoaderFunc = fn (function_name &char, user_data voidptr) voidptr
 
-@[c: 'ImGui_ImplVulkan_LoadFunctions']
-pub fn load_functions(api_version u32, loader_func PFN_LoaderFunc, user_data voidptr) bool
+fn C.ImGui_ImplVulkan_LoadFunctions(api_version u32, loader_func PFN_LoaderFunc, user_data voidptr) bool
+
+@[inline]
+pub fn load_functions(api_version u32, loader_func PFN_LoaderFunc, user_data voidptr) bool {
+	return C.ImGui_ImplVulkan_LoadFunctions(api_version, loader_func, user_data)
+}
 
 pub type PFN_CheckVkResult = fn (err vk.Result)
 
@@ -59,14 +63,26 @@ pub mut:
 	custom_shader_frag_create_info vk.ShaderModuleCreateInfo
 }
 
-@[c: 'ImGui_ImplVulkan_Init']
-pub fn vkinit(init &InitInfo) bool
+fn C.ImGui_ImplVulkan_Init(init &InitInfo) bool
 
-@[c: 'ImGui_ImplVulkan_NewFrame']
-pub fn new_frame()
+@[inline]
+pub fn vkinit(init &InitInfo) bool {
+	return C.ImGui_ImplVulkan_Init(init)
+}
 
-@[c: 'ImGui_ImplVulkan_RenderDrawData']
-pub fn render_draw_data(draw_data &imgui.ImDrawData, command_buffer vk.CommandBuffer, pipeline vk.Pipeline)
+fn C.ImGui_ImplVulkan_NewFrame()
+
+@[inline]
+pub fn new_frame() {
+	C.ImGui_ImplVulkan_NewFrame()
+}
+
+fn C.ImGui_ImplVulkan_RenderDrawData(draw_data &imgui.ImDrawData, command_buffer vk.CommandBuffer, pipeline vk.Pipeline)
+
+@[inline]
+pub fn render_draw_data(draw_data &imgui.ImDrawData, command_buffer vk.CommandBuffer, pipeline vk.Pipeline) {
+	C.ImGui_ImplVulkan_RenderDrawData(draw_data, command_buffer, pipeline)
+}
 
 // Helper structure to hold the data needed by one rendering frame
 // (Used by example. Used by multi-viewport features. Probably NOT used by your own engine/app.)
@@ -175,23 +191,49 @@ pub mut:
 	frame_semaphores      []FrameSemaphores
 }
 
-@[c: 'ImGui_ImplVulkanH_SelectPhysicalDevice']
-pub fn select_physical_device(instance vk.Instance) vk.PhysicalDevice
+fn C.ImGui_ImplVulkanH_SelectPhysicalDevice(instance vk.Instance) vk.PhysicalDevice
 
-@[c: 'ImGui_ImplVulkanH_SelectQueueFamilyIndex']
-pub fn select_queue_family_index(physical_device vk.PhysicalDevice) u32
+@[inline]
+pub fn select_physical_device(instance vk.Instance) vk.PhysicalDevice {
+	return C.ImGui_ImplVulkanH_SelectPhysicalDevice(instance)
+}
 
-@[c: 'ImGui_ImplVulkanH_SelectSurfaceFormat']
-pub fn select_surface_format(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_formats &vk.Format, request_formats_count i32, request_color_space vk.ColorSpaceKHR) vk.SurfaceFormatKHR
+fn C.ImGui_ImplVulkanH_SelectQueueFamilyIndex(physical_device vk.PhysicalDevice) u32
 
-@[c: 'ImGui_ImplVulkanH_SelectPresentMode']
-pub fn select_present_mode(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_modes &vk.PresentModeKHR, request_modes_count i32) vk.PresentModeKHR
+@[inline]
+pub fn select_queue_family_index(physical_device vk.PhysicalDevice) u32 {
+	return C.ImGui_ImplVulkanH_SelectQueueFamilyIndex(physical_device)
+}
 
-@[c: 'ImGui_ImplVulkan_SetMinImageCount']
-pub fn set_min_image_count(min_image_count u32)
+fn C.ImGui_ImplVulkanH_SelectSurfaceFormat(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_formats &vk.Format, request_formats_count i32, request_color_space vk.ColorSpaceKHR) vk.SurfaceFormatKHR
 
-@[c: 'ImGui_ImplVulkan_Shutdown']
-pub fn shutdown()
+@[inline]
+pub fn select_surface_format(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_formats &vk.Format, request_formats_count i32, request_color_space vk.ColorSpaceKHR) vk.SurfaceFormatKHR {
+	return C.ImGui_ImplVulkanH_SelectSurfaceFormat(physical_device, surface, const_request_formats,
+		request_formats_count, request_color_space)
+}
+
+fn C.ImGui_ImplVulkanH_SelectPresentMode(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_modes &vk.PresentModeKHR, request_modes_count i32) vk.PresentModeKHR
+
+@[inline]
+pub fn select_present_mode(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_modes &vk.PresentModeKHR, request_modes_count i32) vk.PresentModeKHR {
+	return C.ImGui_ImplVulkanH_SelectPresentMode(physical_device, surface, const_request_modes,
+		request_modes_count)
+}
+
+fn C.ImGui_ImplVulkan_SetMinImageCount(min_image_count u32)
+
+@[inline]
+pub fn set_min_image_count(min_image_count u32) {
+	C.ImGui_ImplVulkan_SetMinImageCount(min_image_count)
+}
+
+fn C.ImGui_ImplVulkan_Shutdown()
+
+@[inline]
+pub fn shutdown() {
+	C.ImGui_ImplVulkan_Shutdown()
+}
 
 pub fn create_or_resize_window(instance vk.Instance, physical_device vk.PhysicalDevice, device vk.Device, wd &Window, queue_family u32, allocator &vk.AllocationCallbacks, width i32, height i32, min_image_count u32) {
 	create_window_swap_chain(physical_device, device, mut wd, allocator, width, height,
