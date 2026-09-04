@@ -70,7 +70,9 @@ SOFTWARE.
 pub const version = '1.92.7'
 pub const version_num = 19270
 
-pub type Axis = C.ImPlotAxis_c
+pub type Axis = imgui.Axis
+
+pub type ImRect = imgui.ImRect
 
 pub type Point = C.ImPlotPoint_c
 

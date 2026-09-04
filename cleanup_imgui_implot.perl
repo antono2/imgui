@@ -58,7 +58,7 @@ sub clean_one {
   my %seen_type;
   my %seen_struct;
   my %seen_enum;
-  my (%imported_c_struct, %imported_c_alias);
+  my (%imported_c_struct, %imported_c_alias, %imported_type);
   if ($kind eq 'implot') {
     my $imgui_file = find_imgui_binding($outfile);
     die "Cannot deduplicate ImPlot declarations: imgui.v was not found\n" if $imgui_file eq '';
@@ -68,6 +68,9 @@ sub clean_one {
     }
     while ($imgui_src =~ /^\s*pub\s+type\s+([A-Za-z_]\w*)\s*=\s*C\.([A-Za-z_]\w*)\s*$/gm) {
       $imported_c_alias{$2} = $1;
+    }
+    while ($imgui_src =~ /^\s*pub\s+(?:type|struct|enum)\s+([A-Za-z_]\w*)\b/gm) {
+      $imported_type{$1} = 1;
     }
   }
 
@@ -152,7 +155,8 @@ sub clean_one {
 
   my $body = join("\n", @out) . "\n";
   $body = postprocess($kind, $body);
-  my $dynamic = dynamic_missing_decls($kind, $body, $hdr, \%imported_c_struct);
+  my $dynamic = dynamic_missing_decls($kind, $body, $hdr, \%imported_c_struct,
+    \%imported_c_alias, \%imported_type);
   my $final = header_text($kind, $ver, $vernum) . $dynamic . $body;
   $final = postprocess($kind, $final);
   $final =~ s/\\\@\[/@[/g;
@@ -278,8 +282,10 @@ Covered cases and examples:
 }
 
 sub dynamic_missing_decls {
-  my ($kind, $body, $hdr, $imported_c_struct) = @_;
+  my ($kind, $body, $hdr, $imported_c_struct, $imported_c_alias, $imported_type) = @_;
   $imported_c_struct //= {};
+  $imported_c_alias //= {};
+  $imported_type //= {};
 
   my %defined;
   while ($body =~ /^\s*(?:pub\s+)?type\s+([A-Za-z_]\w*)\s*=/gm) { $defined{$1}=1; }
@@ -317,6 +323,14 @@ sub dynamic_missing_decls {
   my @decls;
   for my $name (sort keys %need) {
     next if $defined{$name};
+    if ($imported_type->{$name}) {
+      push @decls, "pub type $name = imgui.$name";
+      $defined{$name}=1; next;
+    }
+    if (defined $imported_c_alias->{$name}) {
+      push @decls, "pub type $name = imgui.$imported_c_alias->{$name}";
+      $defined{$name}=1; next;
+    }
     if ($name eq 'Va_list') {
       if ($imported_c_struct->{va_list}) {
         push @decls, 'pub type Va_list = imgui.Va_list';
