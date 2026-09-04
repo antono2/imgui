@@ -119,6 +119,10 @@ write_file('${wd}/include/c2v.toml', '[project]\nadditional_flags = "${dflags}"'
 }
 sh('v translate cimgui.h')
 sh('v translate cimplot.h')
+// v translate leaves machine-specific Clang AST metadata behind. It is not
+// needed by the bindings and contains absolute builder and system paths.
+rm('${wd}/include/cimgui.json') or {}
+rm('${wd}/include/cimplot.json') or {}
 
 println(' --- Move implot&gui.v')
 mv('${wd}/include/cimgui.v', '${wd}/imgui.v', overwrite: true) or {

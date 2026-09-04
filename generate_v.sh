@@ -89,6 +89,9 @@ pushd include
   printf "[project]\nadditional_flags = \"$DFLAGS\"\n" > c2v.toml
   v translate cimgui.h #&> /dev/null
   v translate cimplot.h #&> /dev/null
+	# v translate leaves machine-specific Clang AST metadata behind. It is not
+	# needed by the bindings and contains absolute builder and system paths.
+	rm -f cimgui.json cimplot.json
 popd
 
 printf " --- Move implot&gui.v\n\n"
