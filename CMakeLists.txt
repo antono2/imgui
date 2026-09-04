@@ -8,8 +8,6 @@ if(WIN32) # For mingw
 endif(WIN32)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DVK_PROTOTYPES")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DVK_PROTOTYPES")
 
 # General settings
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cimgui/imgui/backends)
@@ -69,7 +67,6 @@ endif(IMGUI_FREETYPE)
 
 # Vulkan
 find_package(Vulkan REQUIRED)
-list(APPEND IMGUI_LIBRARIES Vulkan::Vulkan)
 list(APPEND IMGUI_SOURCES ${BACKENDS_FOLDER}/imgui_impl_vulkan.cpp)
 include_directories(${Vulkan_INCLUDE_DIRS})
 
@@ -133,7 +130,10 @@ else(WIN32)
     target_compile_definitions(${NAME} PUBLIC "-DIMGUI_IMPL_API=extern \"C\" ")
 endif(WIN32)
 
-target_compile_definitions(${NAME} PUBLIC -DCIMGUI_USE_VULKAN -DCIMGUI_USE_GLFW)
+target_compile_definitions(${NAME} PUBLIC
+	-DCIMGUI_USE_VULKAN
+	-DCIMGUI_USE_GLFW
+	-DIMGUI_IMPL_VULKAN_NO_PROTOTYPES)
 
 # GCC can report a false-positive bounds warning from ImVector::push_back while
 # optimizing the upstream Vulkan backend. Keep warnings from our own sources
