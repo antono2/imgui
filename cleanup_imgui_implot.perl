@@ -18,7 +18,7 @@ my %CFG = (
   implot => {
     module => 'implot', prefix => 'ImPlot', lower => 'im_plot_', c_prefix => 'ImPlot',
     in => 'src/implot.v', fallback => 'cimplot.v', out => 'src/implot.v', header => 'cimplot/cimplot.h', version_macro => 'IMPLOT',
-    imports => "\n\nimport imgui\n//C.tm unknow if not imported. Warning is unskippable\nimport time",
+    imports => "\n\nimport imgui\n// C.tm is used by translated callback signatures. Keep the import explicitly.\nimport time as _",
   },
 );
 
@@ -58,6 +58,18 @@ sub clean_one {
   my %seen_type;
   my %seen_struct;
   my %seen_enum;
+  my (%imported_c_struct, %imported_c_alias);
+  if ($kind eq 'implot') {
+    my $imgui_file = find_imgui_binding($outfile);
+    die "Cannot deduplicate ImPlot declarations: imgui.v was not found\n" if $imgui_file eq '';
+    my $imgui_src = slurp($imgui_file);
+    while ($imgui_src =~ /^\s*pub\s+struct\s+C\.([A-Za-z_]\w*)\b/gm) {
+      $imported_c_struct{$1} = 1;
+    }
+    while ($imgui_src =~ /^\s*pub\s+type\s+([A-Za-z_]\w*)\s*=\s*C\.([A-Za-z_]\w*)\s*$/gm) {
+      $imported_c_alias{$2} = $1;
+    }
+  }
 
   for (my $i = 0; $i <= $#lines; $i++) {
     my $line = $lines[$i];
@@ -102,6 +114,15 @@ sub clean_one {
       my @body;
       while (++$i <= $#lines) { last if $lines[$i] =~ /^\s*}\s*$/; push @body, $lines[$i]; }
       my $clean = clean_type_name($kind, $orig);
+      my $c_name = $orig;
+      $c_name =~ s/^C\.//;
+      if ($kind eq 'implot' && $imported_c_struct{$c_name}) {
+        my $alias = $imported_c_alias{$c_name};
+        if (defined $alias && !$seen_type{$clean}++) {
+          push @out, "pub type $clean = imgui.$alias";
+        }
+        next;
+      }
       next if $clean =~ /^(Main|C)$/ || $clean =~ /\./;
       next if $seen_struct{$clean}++;
       my $block = emit_struct($kind, $orig, $clean, \@body);
@@ -111,8 +132,13 @@ sub clean_one {
 
     # Type alias.
     if ($line =~ /^\s*(?:pub\s+)?type\s+((?:C\.)?[A-Za-z_]\w*)\s*=\s*(.+?)\s*$/) {
-      my ($name, $rhs) = (clean_type_name($kind, $1), clean_type_expr($kind, $2));
+      my ($raw_name, $raw_rhs) = ($1, $2);
+      my ($name, $rhs) = (clean_type_name($kind, $raw_name), clean_type_expr($kind, $raw_rhs));
       next if $name eq '' || $name =~ /\./ || $name eq 'Main' || $name eq $rhs;
+      if ($kind eq 'implot' && $raw_rhs =~ /^\s*C\.([A-Za-z_]\w*)\s*$/
+          && $imported_c_struct{$1} && defined $imported_c_alias{$1}) {
+        $rhs = "imgui.$imported_c_alias{$1}";
+      }
       $rhs = normalize_alias_rhs($kind, $name, $rhs);
       next if $seen_type{$name}++;
       push @out, "pub type $name = $rhs";
@@ -126,7 +152,7 @@ sub clean_one {
 
   my $body = join("\n", @out) . "\n";
   $body = postprocess($kind, $body);
-  my $dynamic = dynamic_missing_decls($kind, $body, $hdr);
+  my $dynamic = dynamic_missing_decls($kind, $body, $hdr, \%imported_c_struct);
   my $final = header_text($kind, $ver, $vernum) . $dynamic . $body;
   $final = postprocess($kind, $final);
   $final =~ s/\\\@\[/@[/g;
@@ -137,6 +163,15 @@ sub clean_one {
   $final =~ s/\n{4,}/\n\n\n/g;
   write_file($outfile, $final);
   print "cleaned $kind: $infile -> $outfile\n";
+}
+
+sub find_imgui_binding {
+  my ($outfile)=@_;
+  my $dir = $outfile;
+  $dir =~ s#[^/]+$##;
+  my @candidates = ('imgui.v', 'src/imgui.v', "${dir}../imgui.v", "${dir}../src/imgui.v");
+  for my $f (@candidates) { return $f if -e $f; }
+  return '';
 }
 
 sub find_header {
@@ -243,7 +278,8 @@ Covered cases and examples:
 }
 
 sub dynamic_missing_decls {
-  my ($kind, $body, $hdr) = @_;
+  my ($kind, $body, $hdr, $imported_c_struct) = @_;
+  $imported_c_struct //= {};
 
   my %defined;
   while ($body =~ /^\s*(?:pub\s+)?type\s+([A-Za-z_]\w*)\s*=/gm) { $defined{$1}=1; }
@@ -281,7 +317,14 @@ sub dynamic_missing_decls {
   my @decls;
   for my $name (sort keys %need) {
     next if $defined{$name};
-    if ($name eq 'Va_list') { push @decls, "pub type Va_list = C.va_list\n@[typedef]\npub struct C.va_list {}"; $defined{$name}=1; delete $need_c_struct{'C.va_list'}; next; }
+    if ($name eq 'Va_list') {
+      if ($imported_c_struct->{va_list}) {
+        push @decls, 'pub type Va_list = imgui.Va_list';
+      } else {
+        push @decls, "pub type Va_list = C.va_list\n@[typedef]\npub struct C.va_list {}";
+      }
+      $defined{$name}=1; delete $need_c_struct{'C.va_list'}; next;
+    }
     if ($kind eq 'imgui' && $name eq 'ImWchar') { push @decls, "pub type ImWchar = u32"; $defined{$name}=1; next; }
     if (exists $c_suffix_backing{$name}) { push @decls, "pub type $name = C.$c_suffix_backing{$name}"; $defined{$name}=1; delete $need_c_struct{"C.$c_suffix_backing{$name}"}; next; }
     if (exists $callbacks{$name}) { push @decls, $callbacks{$name}; $defined{$name}=1; next; }
@@ -292,7 +335,12 @@ sub dynamic_missing_decls {
     $defined{$name}=1; delete $need_c_struct{"C.$cname"};
   }
 
-  for my $ct (sort keys %need_c_struct) { next if $ct =~ /^C\.(?:int|float|double|char|bool|void)$/; push @decls, "\@[typedef]\npub struct $ct {}"; }
+  for my $ct (sort keys %need_c_struct) {
+    next if $ct =~ /^C\.(?:int|float|double|char|bool|void)$/;
+    my $cname = $ct; $cname =~ s/^C\.//;
+    next if $imported_c_struct->{$cname};
+    push @decls, "\@[typedef]\npub struct $ct {}";
+  }
   return @decls ? join("\n\n", @decls) . "\n\n" : '';
 }
 

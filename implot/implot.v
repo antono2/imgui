@@ -1,7 +1,7 @@
 module implot
 
 import imgui
-//C.tm unknow if not imported. Warning is unskippable
+// C.tm is used by translated callback signatures. Keep the import explicitly.
 import time as _
 
 /*
@@ -72,8 +72,6 @@ pub const version_num = 19270
 
 pub type Axis = C.ImPlotAxis_c
 
-pub type ImRect = C.ImRect_c
-
 pub type Point = C.ImPlotPoint_c
 
 pub type Range = C.ImPlotRange_c
@@ -86,113 +84,124 @@ pub type Tick = C.ImPlotTick_c
 
 pub type Time = C.ImPlotTime_c
 
-pub type Va_list = C.va_list
-@[typedef]
-pub struct C.va_list {}
-
-@[typedef]
-pub struct C.STB_TexteditState {}
-
-@[typedef]
-pub struct C.stbrp_node {}
+pub type Va_list = imgui.Va_list
 
 // docking branch
-
-
-pub type ImVector_const_charPtr = C.ImVector_const_charPtr
-@[typedef]
-pub struct C.ImVector_const_charPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&u8
-}
+pub type ImVector_const_charPtr = imgui.ImVector_const_charPtr
 
 pub type ImGuiID = u32
+
 pub type ImS8 = i8
+
 pub type ImU8 = u8
+
 pub type ImS16 = i16
+
 pub type ImU16 = u16
+
 pub type ImS32 = i32
+
 pub type ImU32 = u32
+
 pub type ImS64 = i64
+
 pub type ImU64 = i64
+
 pub type ImGuiCol = i32
+
 pub type ImGuiCond = i32
+
 pub type ImGuiDataType = i32
+
 pub type ImGuiMouseButton = i32
+
 pub type ImGuiMouseCursor = i32
+
 pub type ImGuiStyleVar = i32
+
 pub type ImGuiTableBgTarget = i32
+
 pub type ImDrawFlags = i32
+
 pub type ImDrawListFlags = i32
+
 pub type ImDrawTextFlags = i32
+
 pub type ImFontFlags = i32
+
 pub type ImFontAtlasFlags = i32
+
 pub type ImGuiBackendFlags = i32
+
 pub type ImGuiButtonFlags = i32
+
 pub type ImGuiChildFlags = i32
+
 pub type ImGuiColorEditFlags = i32
+
 pub type ImGuiConfigFlags = i32
+
 pub type ImGuiComboFlags = i32
+
 pub type ImGuiDockNodeFlags = i32
+
 pub type ImGuiDragDropFlags = i32
+
 pub type ImGuiFocusedFlags = i32
+
 pub type ImGuiHoveredFlags = i32
+
 pub type ImGuiInputFlags = i32
+
 pub type ImGuiInputTextFlags = i32
+
 pub type ImGuiItemFlags = i32
+
 pub type ImGuiKeyChord = i32
+
 pub type ImGuiListClipperFlags = i32
+
 pub type ImGuiPopupFlags = i32
+
 pub type ImGuiMultiSelectFlags = i32
+
 pub type ImGuiSelectableFlags = i32
+
 pub type ImGuiSliderFlags = i32
+
 pub type ImGuiTabBarFlags = i32
+
 pub type ImGuiTabItemFlags = i32
+
 pub type ImGuiTableFlags = i32
+
 pub type ImGuiTableColumnFlags = i32
+
 pub type ImGuiTableRowFlags = i32
+
 pub type ImGuiTreeNodeFlags = i32
+
 pub type ImGuiViewportFlags = i32
+
 pub type ImGuiWindowFlags = i32
+
 pub type ImWchar32 = u32
+
 pub type ImWchar16 = u16
+
 pub type ImGuiSelectionUserData = i64
-pub type ImGuiMemAllocFunc = fn (usize, voidptr) voidptr
 
-pub type ImGuiMemFreeFunc = fn (voidptr, voidptr)
+pub type ImGuiMemAllocFunc = fn(usize, voidptr) voidptr
 
+pub type ImGuiMemFreeFunc = fn(voidptr, voidptr)
 
-pub type ImVec2_c = C.ImVec2_c
-@[typedef]
-pub struct C.ImVec2_c {
-pub mut:
-	x f32
-	y f32
-}
+pub type ImVec2_c = imgui.ImVec2_c
 
-
-pub type ImVec4_c = C.ImVec4_c
-@[typedef]
-pub struct C.ImVec4_c {
-pub mut:
-	x f32
-	y f32
-	z f32
-	w f32
-}
+pub type ImVec4_c = imgui.ImVec4_c
 
 pub type ImTextureID = i64
 
-
-pub type ImTextureRef_c = C.ImTextureRef_c
-@[typedef]
-pub struct C.ImTextureRef_c {
-pub mut:
-	_TexData &ImTextureData
-	_TexID imgui.ImTextureID
-}
+pub type ImTextureRef_c = imgui.ImTextureRef_c
 
 
 pub enum ImGuiWindowFlags_ {
@@ -1001,383 +1010,41 @@ pub enum ImGuiTableBgTarget_ {
  cell_bg                            = 3
 }
 
+pub type ImGuiTableSortSpecs = imgui.TableSortSpecs
 
-pub type ImGuiTableSortSpecs = C.ImGuiTableSortSpecs
-@[typedef]
-pub struct C.ImGuiTableSortSpecs {
-pub mut:
-	Specs &imgui.TableColumnSortSpecs
-	SpecsCount i32
-	SpecsDirty bool
-}
+pub type ImGuiTableColumnSortSpecs = imgui.TableColumnSortSpecs
 
+pub type ImGuiStyle = imgui.Style
 
-pub type ImGuiTableColumnSortSpecs = C.ImGuiTableColumnSortSpecs
-@[typedef]
-pub struct C.ImGuiTableColumnSortSpecs {
-pub mut:
-	ColumnUserID imgui.ID
-	ColumnIndex i16
-	SortOrder i16
-	SortDirection imgui.SortDirection
-}
+pub type ImGuiKeyData = imgui.KeyData
 
+pub type ImVector_ImWchar = imgui.ImVector_ImWchar
 
-pub type ImGuiStyle = C.ImGuiStyle
-@[typedef]
-pub struct C.ImGuiStyle {
-pub mut:
-	FontSizeBase f32
-	FontScaleMain f32
-	FontScaleDpi f32
-	Alpha f32
-	DisabledAlpha f32
-	WindowPadding ImVec2_c
-	WindowRounding f32
-	WindowBorderSize f32
-	WindowBorderHoverPadding f32
-	WindowMinSize ImVec2_c
-	WindowTitleAlign ImVec2_c
-	WindowMenuButtonPosition imgui.Dir
-	ChildRounding f32
-	ChildBorderSize f32
-	PopupRounding f32
-	PopupBorderSize f32
-	FramePadding ImVec2_c
-	FrameRounding f32
-	FrameBorderSize f32
-	ItemSpacing ImVec2_c
-	ItemInnerSpacing ImVec2_c
-	CellPadding ImVec2_c
-	TouchExtraPadding ImVec2_c
-	IndentSpacing f32
-	ColumnsMinSpacing f32
-	ScrollbarSize f32
-	ScrollbarRounding f32
-	ScrollbarPadding f32
-	GrabMinSize f32
-	GrabRounding f32
-	LogSliderDeadzone f32
-	ImageRounding f32
-	ImageBorderSize f32
-	TabRounding f32
-	TabBorderSize f32
-	TabMinWidthBase f32
-	TabMinWidthShrink f32
-	TabCloseButtonMinWidthSelected f32
-	TabCloseButtonMinWidthUnselected f32
-	TabBarBorderSize f32
-	TabBarOverlineSize f32
-	TableAngledHeadersAngle f32
-	TableAngledHeadersTextAlign ImVec2_c
-	TreeLinesFlags imgui.TreeNodeFlags
-	TreeLinesSize f32
-	TreeLinesRounding f32
-	DragDropTargetRounding f32
-	DragDropTargetBorderSize f32
-	DragDropTargetPadding f32
-	ColorMarkerSize f32
-	ColorButtonPosition imgui.Dir
-	ButtonTextAlign ImVec2_c
-	SelectableTextAlign ImVec2_c
-	SeparatorSize f32
-	SeparatorTextBorderSize f32
-	SeparatorTextAlign ImVec2_c
-	SeparatorTextPadding ImVec2_c
-	DisplayWindowPadding ImVec2_c
-	DisplaySafeAreaPadding ImVec2_c
-	DockingNodeHasCloseButton bool
-	DockingSeparatorSize f32
-	MouseCursorScale f32
-	AntiAliasedLines bool
-	AntiAliasedLinesUseTex bool
-	AntiAliasedFill bool
-	CurveTessellationTol f32
-	CircleTessellationMaxError f32
-	Colors [62]ImVec4_c
-	HoverStationaryDelay f32
-	HoverDelayShort f32
-	HoverDelayNormal f32
-	HoverFlagsForTooltipMouse imgui.HoveredFlags
-	HoverFlagsForTooltipNav imgui.HoveredFlags
-	_MainScale f32
-	_NextFrameFontSizeBase f32
-}
+pub type ImGuiIO = imgui.IO
 
+pub type ImGuiInputTextCallbackData = imgui.InputTextCallbackData
 
-pub type ImGuiKeyData = C.ImGuiKeyData
-@[typedef]
-pub struct C.ImGuiKeyData {
-pub mut:
-	Down bool
-	DownDuration f32
-	DownDurationPrev f32
-	AnalogValue f32
-}
+pub type ImGuiSizeCallbackData = imgui.SizeCallbackData
 
+pub type ImGuiWindowClass = imgui.WindowClass
 
-pub type ImVector_ImWchar = C.ImVector_ImWchar
-@[typedef]
-pub struct C.ImVector_ImWchar {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &u32
-}
+pub type ImGuiPayload = imgui.Payload
 
+pub type ImGuiOnceUponAFrame = imgui.OnceUponAFrame
 
-pub type ImGuiIO = C.ImGuiIO
-@[typedef]
-pub struct C.ImGuiIO {
-pub mut:
-	ConfigFlags imgui.ConfigFlags
-	BackendFlags imgui.BackendFlags
-	DisplaySize ImVec2_c
-	DisplayFramebufferScale ImVec2_c
-	DeltaTime f32
-	IniSavingRate f32
-	IniFilename &char
-	LogFilename &char
-	UserData voidptr
-	Fonts &imgui.ImFontAtlas
-	FontDefault &imgui.ImFont
-	FontAllowUserScaling bool
-	ConfigNavSwapGamepadButtons bool
-	ConfigNavMoveSetMousePos bool
-	ConfigNavCaptureKeyboard bool
-	ConfigNavEscapeClearFocusItem bool
-	ConfigNavEscapeClearFocusWindow bool
-	ConfigNavCursorVisibleAuto bool
-	ConfigNavCursorVisibleAlways bool
-	ConfigDockingNoSplit bool
-	ConfigDockingNoDockingOver bool
-	ConfigDockingWithShift bool
-	ConfigDockingAlwaysTabBar bool
-	ConfigDockingTransparentPayload bool
-	ConfigViewportsNoAutoMerge bool
-	ConfigViewportsNoTaskBarIcon bool
-	ConfigViewportsNoDecoration bool
-	ConfigViewportsNoDefaultParent bool
-	ConfigViewportsPlatformFocusSetsImGuiFocus bool
-	ConfigDpiScaleFonts bool
-	ConfigDpiScaleViewports bool
-	MouseDrawCursor bool
-	ConfigMacOSXBehaviors bool
-	ConfigInputTrickleEventQueue bool
-	ConfigInputTextCursorBlink bool
-	ConfigInputTextEnterKeepActive bool
-	ConfigDragClickToInputText bool
-	ConfigWindowsResizeFromEdges bool
-	ConfigWindowsMoveFromTitleBarOnly bool
-	ConfigWindowsCopyContentsWithCtrlC bool
-	ConfigScrollbarScrollByPage bool
-	ConfigMemoryCompactTimer f32
-	MouseDoubleClickTime f32
-	MouseDoubleClickMaxDist f32
-	MouseDragThreshold f32
-	KeyRepeatDelay f32
-	KeyRepeatRate f32
-	ConfigErrorRecovery bool
-	ConfigErrorRecoveryEnableAssert bool
-	ConfigErrorRecoveryEnableDebugLog bool
-	ConfigErrorRecoveryEnableTooltip bool
-	ConfigDebugIsDebuggerPresent bool
-	ConfigDebugHighlightIdConflicts bool
-	ConfigDebugHighlightIdConflictsShowItemPicker bool
-	ConfigDebugBeginReturnValueOnce bool
-	ConfigDebugBeginReturnValueLoop bool
-	ConfigDebugIgnoreFocusLoss bool
-	ConfigDebugIniSettings bool
-	BackendPlatformName &char
-	BackendRendererName &char
-	BackendPlatformUserData voidptr
-	BackendRendererUserData voidptr
-	BackendLanguageUserData voidptr
-	WantCaptureMouse bool
-	WantCaptureKeyboard bool
-	WantTextInput bool
-	WantSetMousePos bool
-	WantSaveIniSettings bool
-	NavActive bool
-	NavVisible bool
-	Framerate f32
-	MetricsRenderVertices i32
-	MetricsRenderIndices i32
-	MetricsRenderWindows i32
-	MetricsActiveWindows i32
-	MouseDelta ImVec2_c
-	Ctx &imgui.Context
-	MousePos ImVec2_c
-	MouseDown [5]bool
-	MouseWheel f32
-	MouseWheelH f32
-	MouseSource imgui.MouseSource
-	MouseHoveredViewport imgui.ID
-	KeyCtrl bool
-	KeyShift bool
-	KeyAlt bool
-	KeySuper bool
-	KeyMods imgui.KeyChord
-	KeysData [155]imgui.KeyData
-	WantCaptureMouseUnlessPopupClose bool
-	MousePosPrev ImVec2_c
-	MouseClickedPos [5]ImVec2_c
-	MouseClickedTime [5]f64
-	MouseClicked [5]bool
-	MouseDoubleClicked [5]bool
-	MouseClickedCount [5]u16
-	MouseClickedLastCount [5]u16
-	MouseReleased [5]bool
-	MouseReleasedTime [5]f64
-	MouseDownOwned [5]bool
-	MouseDownOwnedUnlessPopupClose [5]bool
-	MouseWheelRequestAxisSwap bool
-	MouseCtrlLeftAsRightClick bool
-	MouseDownDuration [5]f32
-	MouseDownDurationPrev [5]f32
-	MouseDragMaxDistanceAbs [5]ImVec2_c
-	MouseDragMaxDistanceSqr [5]f32
-	PenPressure f32
-	AppFocusLost bool
-	AppAcceptingEvents bool
-	InputQueueSurrogate u16
-	InputQueueCharacters ImVector_ImWchar
-}
+pub type ImGuiTextRange = imgui.TextRange
 
+pub type ImVector_ImGuiTextRange = imgui.ImVector_TextRange
 
-pub type ImGuiInputTextCallbackData = C.ImGuiInputTextCallbackData
-@[typedef]
-pub struct C.ImGuiInputTextCallbackData {
-pub mut:
-	Ctx &imgui.Context
-	EventFlag imgui.InputTextFlags
-	Flags imgui.InputTextFlags
-	UserData voidptr
-	ID imgui.ID
-	EventKey imgui.Key
-	EventChar u32
-	EventActivated bool
-	BufDirty bool
-	Buf &char
-	BufTextLen i32
-	BufSize i32
-	CursorPos i32
-	SelectionStart i32
-	SelectionEnd i32
-}
+pub type ImVector_char = imgui.ImVector_char
 
+pub type ImGuiTextBuffer = imgui.TextBuffer
 
-pub type ImGuiSizeCallbackData = C.ImGuiSizeCallbackData
-@[typedef]
-pub struct C.ImGuiSizeCallbackData {
-pub mut:
-	UserData voidptr
-	Pos ImVec2_c
-	CurrentSize ImVec2_c
-	DesiredSize ImVec2_c
-}
+pub type ImGuiStoragePair = imgui.StoragePair
 
+pub type ImVector_ImGuiStoragePair = imgui.ImVector_StoragePair
 
-pub type ImGuiWindowClass = C.ImGuiWindowClass
-@[typedef]
-pub struct C.ImGuiWindowClass {
-pub mut:
-	ClassId imgui.ID
-	ParentViewportId imgui.ID
-	FocusRouteParentWindowId imgui.ID
-	ViewportFlagsOverrideSet imgui.ViewportFlags
-	ViewportFlagsOverrideClear imgui.ViewportFlags
-	TabItemFlagsOverrideSet imgui.TabItemFlags
-	DockNodeFlagsOverrideSet imgui.DockNodeFlags
-	DockingAlwaysTabBar bool
-	DockingAllowUnclassed bool
-}
-
-
-pub type ImGuiPayload = C.ImGuiPayload
-@[typedef]
-pub struct C.ImGuiPayload {
-pub mut:
-	Data voidptr
-	DataSize i32
-	SourceId imgui.ID
-	SourceParentId imgui.ID
-	DataFrameCount i32
-	DataType [33]i8
-	Preview bool
-	Delivery bool
-}
-
-
-pub type ImGuiOnceUponAFrame = C.ImGuiOnceUponAFrame
-@[typedef]
-pub struct C.ImGuiOnceUponAFrame {
-pub mut:
-	RefFrame i32
-}
-
-
-pub type ImGuiTextRange = C.ImGuiTextRange
-@[typedef]
-pub struct C.ImGuiTextRange {
-pub mut:
-	B &char
-	E &char
-}
-
-
-pub type ImVector_ImGuiTextRange = C.ImVector_ImGuiTextRange
-@[typedef]
-pub struct C.ImVector_ImGuiTextRange {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.TextRange
-}
-
-
-pub type ImVector_char = C.ImVector_char
-@[typedef]
-pub struct C.ImVector_char {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &char
-}
-
-
-pub type ImGuiTextBuffer = C.ImGuiTextBuffer
-@[typedef]
-pub struct C.ImGuiTextBuffer {
-pub mut:
-	Buf ImVector_char
-}
-
-
-pub type ImGuiStoragePair = C.ImGuiStoragePair
-@[typedef]
-pub struct C.ImGuiStoragePair {
-pub mut:
-	Key imgui.ID
-}
-
-
-pub type ImVector_ImGuiStoragePair = C.ImVector_ImGuiStoragePair
-@[typedef]
-pub struct C.ImVector_ImGuiStoragePair {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.StoragePair
-}
-
-
-pub type ImGuiStorage = C.ImGuiStorage
-@[typedef]
-pub struct C.ImGuiStorage {
-pub mut:
-	Data ImVector_ImGuiStoragePair
-}
+pub type ImGuiStorage = imgui.Storage
 
 
 pub enum ImGuiListClipperFlags_ {
@@ -1385,30 +1052,9 @@ pub enum ImGuiListClipperFlags_ {
  no_set_table_row_counters          = 1 << 0
 }
 
+pub type ImGuiListClipper = imgui.ListClipper
 
-pub type ImGuiListClipper = C.ImGuiListClipper
-@[typedef]
-pub struct C.ImGuiListClipper {
-pub mut:
-	DisplayStart i32
-	DisplayEnd i32
-	UserIndex i32
-	ItemsCount i32
-	ItemsHeight f32
-	Flags imgui.ListClipperFlags
-	StartPosY f64
-	StartSeekOffsetY f64
-	Ctx &imgui.Context
-	TempData voidptr
-}
-
-
-pub type ImColor_c = C.ImColor_c
-@[typedef]
-pub struct C.ImColor_c {
-pub mut:
-	Value ImVec4_c
-}
+pub type ImColor_c = imgui.ImColor_c
 
 
 pub enum ImGuiMultiSelectFlags_ {
@@ -1434,28 +1080,9 @@ pub enum ImGuiMultiSelectFlags_ {
  select_on_mask_                    = 1 << 13 | 1 << 14 | 1 << 15
 }
 
+pub type ImVector_ImGuiSelectionRequest = imgui.ImVector_SelectionRequest
 
-pub type ImVector_ImGuiSelectionRequest = C.ImVector_ImGuiSelectionRequest
-@[typedef]
-pub struct C.ImVector_ImGuiSelectionRequest {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.SelectionRequest
-}
-
-
-pub type ImGuiMultiSelectIO = C.ImGuiMultiSelectIO
-@[typedef]
-pub struct C.ImGuiMultiSelectIO {
-pub mut:
-	Requests ImVector_ImGuiSelectionRequest
-	RangeSrcItem imgui.SelectionUserData
-	NavIdItem imgui.SelectionUserData
-	NavIdSelected bool
-	RangeSrcReset bool
-	ItemsCount i32
-}
+pub type ImGuiMultiSelectIO = imgui.MultiSelectIO
 
 
 pub enum ImGuiSelectionRequestType {
@@ -1464,127 +1091,31 @@ pub enum ImGuiSelectionRequestType {
  set_range
 }
 
+pub type ImGuiSelectionRequest = imgui.SelectionRequest
 
-pub type ImGuiSelectionRequest = C.ImGuiSelectionRequest
-@[typedef]
-pub struct C.ImGuiSelectionRequest {
-pub mut:
-	Type imgui.SelectionRequestType
-	Selected bool
-	RangeDirection i8
-	RangeFirstItem imgui.SelectionUserData
-	RangeLastItem imgui.SelectionUserData
-}
+pub type ImGuiSelectionBasicStorage = imgui.SelectionBasicStorage
 
-
-pub type ImGuiSelectionBasicStorage = C.ImGuiSelectionBasicStorage
-@[typedef]
-pub struct C.ImGuiSelectionBasicStorage {
-pub mut:
-	Size i32
-	PreserveOrder bool
-	UserData voidptr
-	AdapterIndexToStorageId fn (&imgui.SelectionBasicStorage, i32) imgui.ID
-	_SelectionOrder i32
-	_Storage imgui.Storage
-}
-
-
-pub type ImGuiSelectionExternalStorage = C.ImGuiSelectionExternalStorage
-@[typedef]
-pub struct C.ImGuiSelectionExternalStorage {
-pub mut:
-	UserData voidptr
-	AdapterSetItemSelected fn (&imgui.SelectionExternalStorage, i32, bool)
-}
+pub type ImGuiSelectionExternalStorage = imgui.SelectionExternalStorage
 
 pub type ImDrawIdx = u16
-pub type ImDrawCallback = fn (&imgui.ImDrawList, &imgui.ImDrawCmd)
 
+pub type ImDrawCallback = fn(&imgui.ImDrawList, &imgui.ImDrawCmd)
 
-pub type ImDrawCmd = C.ImDrawCmd
-@[typedef]
-pub struct C.ImDrawCmd {
-pub mut:
-	ClipRect ImVec4_c
-	TexRef ImTextureRef_c
-	VtxOffset u32
-	IdxOffset u32
-	ElemCount u32
-	UserCallback imgui.ImDrawCallback
-	UserCallbackData voidptr
-	UserCallbackDataSize i32
-	UserCallbackDataOffset i32
-}
+pub type ImDrawCmd = imgui.ImDrawCmd
 
+pub type ImDrawVert = imgui.ImDrawVert
 
-pub type ImDrawVert = C.ImDrawVert
-@[typedef]
-pub struct C.ImDrawVert {
-pub mut:
-	pos ImVec2_c
-	uv ImVec2_c
-	col u32
-}
+pub type ImDrawCmdHeader = imgui.ImDrawCmdHeader
 
+pub type ImVector_ImDrawCmd = imgui.ImVector_ImDrawCmd
 
-pub type ImDrawCmdHeader = C.ImDrawCmdHeader
-@[typedef]
-pub struct C.ImDrawCmdHeader {
-pub mut:
-	ClipRect ImVec4_c
-	TexRef ImTextureRef_c
-	VtxOffset u32
-}
+pub type ImVector_ImDrawIdx = imgui.ImVector_ImDrawIdx
 
+pub type ImDrawChannel = imgui.ImDrawChannel
 
-pub type ImVector_ImDrawCmd = C.ImVector_ImDrawCmd
-@[typedef]
-pub struct C.ImVector_ImDrawCmd {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ImDrawCmd
-}
+pub type ImVector_ImDrawChannel = imgui.ImVector_ImDrawChannel
 
-
-pub type ImVector_ImDrawIdx = C.ImVector_ImDrawIdx
-@[typedef]
-pub struct C.ImVector_ImDrawIdx {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ImDrawIdx
-}
-
-
-pub type ImDrawChannel = C.ImDrawChannel
-@[typedef]
-pub struct C.ImDrawChannel {
-pub mut:
-	_CmdBuffer ImVector_ImDrawCmd
-	_IdxBuffer ImVector_ImDrawIdx
-}
-
-
-pub type ImVector_ImDrawChannel = C.ImVector_ImDrawChannel
-@[typedef]
-pub struct C.ImVector_ImDrawChannel {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ImDrawChannel
-}
-
-
-pub type ImDrawListSplitter = C.ImDrawListSplitter
-@[typedef]
-pub struct C.ImDrawListSplitter {
-pub mut:
-	_Current i32
-	_Count i32
-	_Channels ImVector_ImDrawChannel
-}
+pub type ImDrawListSplitter = imgui.ImDrawListSplitter
 
 
 pub enum ImDrawFlags_ {
@@ -1613,115 +1144,23 @@ pub enum ImDrawListFlags_ {
  allow_vtx_offset                   = 1 << 3
 }
 
+pub type ImVector_ImDrawVert = imgui.ImVector_ImDrawVert
 
-pub type ImVector_ImDrawVert = C.ImVector_ImDrawVert
-@[typedef]
-pub struct C.ImVector_ImDrawVert {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ImDrawVert
-}
+pub type ImVector_ImVec2 = imgui.ImVector_ImVec2
 
+pub type ImVector_ImVec4 = imgui.ImVector_ImVec4
 
-pub type ImVector_ImVec2 = C.ImVector_ImVec2
-@[typedef]
-pub struct C.ImVector_ImVec2 {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &ImVec2_c
-}
+pub type ImVector_ImTextureRef = imgui.ImVector_ImTextureRef
 
+pub type ImVector_ImU8 = imgui.ImVector_ImU8
 
-pub type ImVector_ImVec4 = C.ImVector_ImVec4
-@[typedef]
-pub struct C.ImVector_ImVec4 {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &ImVec4_c
-}
+pub type ImDrawList = imgui.ImDrawList
 
+pub type ImVector_ImDrawListPtr = imgui.ImVector_ImDrawListPtr
 
-pub type ImVector_ImTextureRef = C.ImVector_ImTextureRef
-@[typedef]
-pub struct C.ImVector_ImTextureRef {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &ImTextureRef_c
-}
+pub type ImVector_ImTextureDataPtr = imgui.ImVector_ImTextureDataPtr
 
-
-pub type ImVector_ImU8 = C.ImVector_ImU8
-@[typedef]
-pub struct C.ImVector_ImU8 {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &u8
-}
-
-
-pub type ImDrawList = C.ImDrawList
-@[typedef]
-pub struct C.ImDrawList {
-pub mut:
-	CmdBuffer ImVector_ImDrawCmd
-	IdxBuffer ImVector_ImDrawIdx
-	VtxBuffer ImVector_ImDrawVert
-	Flags imgui.ImDrawListFlags
-	_VtxCurrentIdx u32
-	_Data &imgui.ImDrawListSharedData
-	_VtxWritePtr &imgui.ImDrawVert
-	_IdxWritePtr &imgui.ImDrawIdx
-	_Path ImVector_ImVec2
-	_CmdHeader imgui.ImDrawCmdHeader
-	_Splitter imgui.ImDrawListSplitter
-	_ClipRectStack ImVector_ImVec4
-	_TextureStack ImVector_ImTextureRef
-	_CallbacksDataBuf ImVector_ImU8
-	_FringeScale f32
-	_OwnerName &char
-}
-
-
-pub type ImVector_ImDrawListPtr = C.ImVector_ImDrawListPtr
-@[typedef]
-pub struct C.ImVector_ImDrawListPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&imgui.ImDrawList
-}
-
-
-pub type ImVector_ImTextureDataPtr = C.ImVector_ImTextureDataPtr
-@[typedef]
-pub struct C.ImVector_ImTextureDataPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&ImTextureData
-}
-
-
-pub type ImDrawData = C.ImDrawData
-@[typedef]
-pub struct C.ImDrawData {
-pub mut:
-	Valid bool
-	CmdListsCount i32
-	TotalIdxCount i32
-	TotalVtxCount i32
-	CmdLists ImVector_ImDrawListPtr
-	DisplayPos ImVec2_c
-	DisplaySize ImVec2_c
-	FramebufferScale ImVec2_c
-	OwnerViewport &imgui.Viewport
-	Textures &ImVector_ImTextureDataPtr
-}
+pub type ImDrawData = imgui.ImDrawData
 
 
 pub enum ImTextureFormat {
@@ -1738,135 +1177,23 @@ pub enum ImTextureStatus {
  want_destroy
 }
 
+pub type ImTextureRect = imgui.ImTextureRect
 
-pub type ImTextureRect = C.ImTextureRect
-@[typedef]
-pub struct C.ImTextureRect {
-pub mut:
-	X u16
-	Y u16
-	W u16
-	H u16
-}
+pub type ImVector_ImTextureRect = imgui.ImVector_ImTextureRect
 
+pub type ImTextureData = imgui.ImTextureData
 
-pub type ImVector_ImTextureRect = C.ImVector_ImTextureRect
-@[typedef]
-pub struct C.ImVector_ImTextureRect {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &ImTextureRect
-}
+pub type ImFontConfig = imgui.ImFontConfig
 
+pub type ImFontGlyph = imgui.ImFontGlyph
 
-pub type ImTextureData = C.ImTextureData
-@[typedef]
-pub struct C.ImTextureData {
-pub mut:
-	UniqueID i32
-	Status ImTextureStatus
-	BackendUserData voidptr
-	TexID imgui.ImTextureID
-	Format ImTextureFormat
-	Width i32
-	Height i32
-	BytesPerPixel i32
-	Pixels &u8
-	UsedRect ImTextureRect
-	UpdateRect ImTextureRect
-	Updates ImVector_ImTextureRect
-	UnusedFrames i32
-	RefCount u16
-	UseColors bool
-	WantDestroyNextFrame bool
-}
+pub type ImVector_ImU32 = imgui.ImVector_ImU32
 
-
-pub type ImFontConfig = C.ImFontConfig
-@[typedef]
-pub struct C.ImFontConfig {
-pub mut:
-	Name [40]i8
-	FontData voidptr
-	FontDataSize i32
-	FontDataOwnedByAtlas bool
-	MergeMode bool
-	PixelSnapH bool
-	OversampleH i8
-	OversampleV i8
-	EllipsisChar u32
-	SizePixels f32
-	GlyphRanges &u32
-	GlyphExcludeRanges &u32
-	GlyphOffset ImVec2_c
-	GlyphMinAdvanceX f32
-	GlyphMaxAdvanceX f32
-	GlyphExtraAdvanceX f32
-	FontNo u32
-	FontLoaderFlags u32
-	RasterizerMultiply f32
-	RasterizerDensity f32
-	ExtraSizeScale f32
-	Flags imgui.ImFontFlags
-	DstFont &imgui.ImFont
-	FontLoader &imgui.ImFontLoader
-	FontLoaderData voidptr
-}
-
-
-pub type ImFontGlyph = C.ImFontGlyph
-@[typedef]
-pub struct C.ImFontGlyph {
-pub mut:
-	Colored u32
-	Visible u32
-	SourceIdx u32
-	Codepoint u32
-	AdvanceX f32
-	X0 f32
-	Y0 f32
-	X1 f32
-	Y1 f32
-	U0 f32
-	V0 f32
-	U1 f32
-	V1 f32
-	PackId i32
-}
-
-
-pub type ImVector_ImU32 = C.ImVector_ImU32
-@[typedef]
-pub struct C.ImVector_ImU32 {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &u32
-}
-
-
-pub type ImFontGlyphRangesBuilder = C.ImFontGlyphRangesBuilder
-@[typedef]
-pub struct C.ImFontGlyphRangesBuilder {
-pub mut:
-	UsedChars ImVector_ImU32
-}
+pub type ImFontGlyphRangesBuilder = imgui.ImFontGlyphRangesBuilder
 
 pub type ImFontAtlasRectId = i32
 
-
-pub type ImFontAtlasRect = C.ImFontAtlasRect
-@[typedef]
-pub struct C.ImFontAtlasRect {
-pub mut:
-	X u16
-	Y u16
-	W u16
-	H u16
-	Uv0 ImVec2_c
-	Uv1 ImVec2_c
-}
+pub type ImFontAtlasRect = imgui.ImFontAtlasRect
 
 
 pub enum ImFontAtlasFlags_ {
@@ -1876,126 +1203,21 @@ pub enum ImFontAtlasFlags_ {
  no_baked_lines                     = 1 << 2
 }
 
+pub type ImVector_ImFontPtr = imgui.ImVector_ImFontPtr
 
-pub type ImVector_ImFontPtr = C.ImVector_ImFontPtr
-@[typedef]
-pub struct C.ImVector_ImFontPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&imgui.ImFont
-}
+pub type ImVector_ImFontConfig = imgui.ImVector_ImFontConfig
 
+pub type ImVector_ImDrawListSharedDataPtr = imgui.ImVector_ImDrawListSharedDataPtr
 
-pub type ImVector_ImFontConfig = C.ImVector_ImFontConfig
-@[typedef]
-pub struct C.ImVector_ImFontConfig {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ImFontConfig
-}
+pub type ImFontAtlas = imgui.ImFontAtlas
 
+pub type ImVector_float = imgui.ImVector_float
 
-pub type ImVector_ImDrawListSharedDataPtr = C.ImVector_ImDrawListSharedDataPtr
-@[typedef]
-pub struct C.ImVector_ImDrawListSharedDataPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&imgui.ImDrawListSharedData
-}
+pub type ImVector_ImU16 = imgui.ImVector_ImU16
 
+pub type ImVector_ImFontGlyph = imgui.ImVector_ImFontGlyph
 
-pub type ImFontAtlas = C.ImFontAtlas
-@[typedef]
-pub struct C.ImFontAtlas {
-pub mut:
-	Flags imgui.ImFontAtlasFlags
-	TexDesiredFormat ImTextureFormat
-	TexGlyphPadding i32
-	TexMinWidth i32
-	TexMinHeight i32
-	TexMaxWidth i32
-	TexMaxHeight i32
-	UserData voidptr
-	TexRef ImTextureRef_c
-	TexData &ImTextureData
-	TexList ImVector_ImTextureDataPtr
-	Locked bool
-	RendererHasTextures bool
-	TexIsBuilt bool
-	TexPixelsUseColors bool
-	TexUvScale ImVec2_c
-	TexUvWhitePixel ImVec2_c
-	Fonts ImVector_ImFontPtr
-	Sources ImVector_ImFontConfig
-	TexUvLines [33]ImVec4_c
-	TexNextUniqueID i32
-	FontNextUniqueID i32
-	DrawListSharedDatas ImVector_ImDrawListSharedDataPtr
-	Builder &imgui.ImFontAtlasBuilder
-	FontLoader &imgui.ImFontLoader
-	FontLoaderName &char
-	FontLoaderData voidptr
-	FontLoaderFlags u32
-	RefCount i32
-	OwnerContext &imgui.Context
-}
-
-
-pub type ImVector_float = C.ImVector_float
-@[typedef]
-pub struct C.ImVector_float {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &f32
-}
-
-
-pub type ImVector_ImU16 = C.ImVector_ImU16
-@[typedef]
-pub struct C.ImVector_ImU16 {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &u16
-}
-
-
-pub type ImVector_ImFontGlyph = C.ImVector_ImFontGlyph
-@[typedef]
-pub struct C.ImVector_ImFontGlyph {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ImFontGlyph
-}
-
-
-pub type ImFontBaked = C.ImFontBaked
-@[typedef]
-pub struct C.ImFontBaked {
-pub mut:
-	IndexAdvanceX ImVector_float
-	FallbackAdvanceX f32
-	Size f32
-	RasterizerDensity f32
-	IndexLookup ImVector_ImU16
-	Glyphs ImVector_ImFontGlyph
-	FallbackGlyphIndex i32
-	Ascent f32
-	Descent f32
-	MetricsTotalSurface u32
-	WantDestroy u32
-	LoadNoFallback u32
-	LoadNoRenderOnLayout u32
-	LastUsedFrame i32
-	BakedId imgui.ID
-	OwnerFont &imgui.ImFont
-	FontLoaderDatas voidptr
-}
+pub type ImFontBaked = imgui.ImFontBaked
 
 
 pub enum ImFontFlags_ {
@@ -2005,34 +1227,9 @@ pub enum ImFontFlags_ {
  lock_baked_sizes                   = 1 << 3
 }
 
+pub type ImVector_ImFontConfigPtr = imgui.ImVector_ImFontConfigPtr
 
-pub type ImVector_ImFontConfigPtr = C.ImVector_ImFontConfigPtr
-@[typedef]
-pub struct C.ImVector_ImFontConfigPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&imgui.ImFontConfig
-}
-
-
-pub type ImFont = C.ImFont
-@[typedef]
-pub struct C.ImFont {
-pub mut:
-	LastBaked &imgui.ImFontBaked
-	OwnerAtlas &imgui.ImFontAtlas
-	Flags imgui.ImFontFlags
-	CurrentRasterizerDensity f32
-	FontId imgui.ID
-	LegacySize f32
-	Sources ImVector_ImFontConfigPtr
-	EllipsisChar u32
-	FallbackChar u32
-	Used8kPagesMap [1]u8
-	EllipsisAutoBake bool
-	RemapPairs imgui.Storage
-}
+pub type ImFont = imgui.ImFont
 
 
 pub enum ImGuiViewportFlags_ {
@@ -2053,143 +1250,58 @@ pub enum ImGuiViewportFlags_ {
  is_focused                         = 1 << 13
 }
 
+pub type ImGuiViewport = imgui.Viewport
 
-pub type ImGuiViewport = C.ImGuiViewport
-@[typedef]
-pub struct C.ImGuiViewport {
-pub mut:
-	ID imgui.ID
-	Flags imgui.ViewportFlags
-	Pos ImVec2_c
-	Size ImVec2_c
-	FramebufferScale ImVec2_c
-	WorkPos ImVec2_c
-	WorkSize ImVec2_c
-	DpiScale f32
-	ParentViewportId imgui.ID
-	ParentViewport &imgui.Viewport
-	DrawData &imgui.ImDrawData
-	RendererUserData voidptr
-	PlatformUserData voidptr
-	PlatformHandle voidptr
-	PlatformHandleRaw voidptr
-	PlatformWindowCreated bool
-	PlatformRequestMove bool
-	PlatformRequestResize bool
-	PlatformRequestClose bool
-}
+pub type ImVector_ImGuiPlatformMonitor = imgui.ImVector_PlatformMonitor
 
+pub type ImVector_ImGuiViewportPtr = imgui.ImVector_ViewportPtr
 
-pub type ImVector_ImGuiPlatformMonitor = C.ImVector_ImGuiPlatformMonitor
-@[typedef]
-pub struct C.ImVector_ImGuiPlatformMonitor {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.PlatformMonitor
-}
+pub type ImGuiPlatformIO = imgui.PlatformIO
 
+pub type ImGuiPlatformMonitor = imgui.PlatformMonitor
 
-pub type ImVector_ImGuiViewportPtr = C.ImVector_ImGuiViewportPtr
-@[typedef]
-pub struct C.ImVector_ImGuiViewportPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&imgui.Viewport
-}
-
-
-pub type ImGuiPlatformIO = C.ImGuiPlatformIO
-@[typedef]
-pub struct C.ImGuiPlatformIO {
-pub mut:
-	Platform_GetClipboardTextFn fn (&imgui.Context) &char
-	Platform_SetClipboardTextFn fn (&imgui.Context, &char)
-	Platform_ClipboardUserData voidptr
-	Platform_OpenInShellFn fn (&imgui.Context, &char) bool
-	Platform_OpenInShellUserData voidptr
-	Platform_SetImeDataFn fn (&imgui.Context, &imgui.Viewport, &imgui.PlatformImeData)
-	Platform_ImeUserData voidptr
-	Platform_LocaleDecimalPoint u32
-	Renderer_TextureMaxWidth i32
-	Renderer_TextureMaxHeight i32
-	Renderer_RenderState voidptr
-	Platform_CreateWindow fn (&imgui.Viewport)
-	Platform_DestroyWindow fn (&imgui.Viewport)
-	Platform_ShowWindow fn (&imgui.Viewport)
-	Platform_SetWindowPos fn (&imgui.Viewport, ImVec2_c)
-	Platform_GetWindowPos fn (&imgui.Viewport) ImVec2_c
-	Platform_SetWindowSize fn (&imgui.Viewport, ImVec2_c)
-	Platform_GetWindowSize fn (&imgui.Viewport) ImVec2_c
-	Platform_GetWindowFramebufferScale fn (&imgui.Viewport) ImVec2_c
-	Platform_SetWindowFocus fn (&imgui.Viewport)
-	Platform_GetWindowFocus fn (&imgui.Viewport) bool
-	Platform_GetWindowMinimized fn (&imgui.Viewport) bool
-	Platform_SetWindowTitle fn (&imgui.Viewport, &char)
-	Platform_SetWindowAlpha fn (&imgui.Viewport, f32)
-	Platform_UpdateWindow fn (&imgui.Viewport)
-	Platform_RenderWindow fn (&imgui.Viewport, voidptr)
-	Platform_SwapBuffers fn (&imgui.Viewport, voidptr)
-	Platform_GetWindowDpiScale fn (&imgui.Viewport) f32
-	Platform_OnChangedViewport fn (&imgui.Viewport)
-	Platform_GetWindowWorkAreaInsets fn (&imgui.Viewport) ImVec4_c
-	Platform_CreateVkSurface fn (&imgui.Viewport, u64, voidptr, &u64) i32
-	Renderer_CreateWindow fn (&imgui.Viewport)
-	Renderer_DestroyWindow fn (&imgui.Viewport)
-	Renderer_SetWindowSize fn (&imgui.Viewport, ImVec2_c)
-	Renderer_RenderWindow fn (&imgui.Viewport, voidptr)
-	Renderer_SwapBuffers fn (&imgui.Viewport, voidptr)
-	Monitors ImVector_ImGuiPlatformMonitor
-	Textures ImVector_ImTextureDataPtr
-	Viewports ImVector_ImGuiViewportPtr
-}
-
-
-pub type ImGuiPlatformMonitor = C.ImGuiPlatformMonitor
-@[typedef]
-pub struct C.ImGuiPlatformMonitor {
-pub mut:
-	MainPos ImVec2_c
-	MainSize ImVec2_c
-	WorkPos ImVec2_c
-	WorkSize ImVec2_c
-	DpiScale f32
-	PlatformHandle voidptr
-}
-
-
-pub type ImGuiPlatformImeData = C.ImGuiPlatformImeData
-@[typedef]
-pub struct C.ImGuiPlatformImeData {
-pub mut:
-	WantVisible bool
-	WantTextInput bool
-	InputPos ImVec2_c
-	InputLineHeight f32
-	ViewportId imgui.ID
-}
+pub type ImGuiPlatformImeData = imgui.PlatformImeData
 
 pub type ImGuiDataAuthority = i32
+
 pub type ImGuiLayoutType = i32
+
 pub type ImGuiActivateFlags = i32
+
 pub type ImGuiDebugLogFlags = i32
+
 pub type ImGuiFocusRequestFlags = i32
+
 pub type ImGuiItemStatusFlags = i32
+
 pub type ImGuiOldColumnFlags = i32
+
 pub type ImGuiLogFlags = i32
+
 pub type ImGuiNavRenderCursorFlags = i32
+
 pub type ImGuiNavMoveFlags = i32
+
 pub type ImGuiNextItemDataFlags = i32
+
 pub type ImGuiNextWindowDataFlags = i32
+
 pub type ImGuiScrollFlags = i32
+
 pub type ImGuiSeparatorFlags = i32
+
 pub type ImGuiTextFlags = i32
+
 pub type ImGuiTooltipFlags = i32
+
 pub type ImGuiTypingSelectFlags = i32
+
 pub type ImGuiWindowBgClickFlags = i32
+
 pub type ImGuiWindowRefreshFlags = i32
+
 pub type ImGuiTableColumnIdx = i16
+
 pub type ImGuiTableDrawChannelIdx = u16
 
 
@@ -2209,160 +1321,39 @@ pub enum ImWcharClass {
 
 pub type ImFileHandle = &C.FILE
 
+pub type ImVec1 = imgui.ImVec1
 
-pub type ImVec1 = C.ImVec1
-@[typedef]
-pub struct C.ImVec1 {
-pub mut:
-	X f32
-}
+pub type ImVec2i_c = imgui.ImVec2i_c
 
+pub type ImVec2ih = imgui.ImVec2ih
 
-pub type ImVec2i_c = C.ImVec2i_c
-@[typedef]
-pub struct C.ImVec2i_c {
-pub mut:
-	x i32
-	y i32
-}
-
-
-pub type ImVec2ih = C.ImVec2ih
-@[typedef]
-pub struct C.ImVec2ih {
-pub mut:
-	X i16
-	Y i16
-}
-
-
-pub type ImRect_c = C.ImRect_c
-@[typedef]
-pub struct C.ImRect_c {
-pub mut:
-	Min ImVec2_c
-	Max ImVec2_c
-}
+pub type ImRect_c = imgui.ImRect_c
 
 pub type ImBitArrayPtr = &u32
 
-
-pub type ImBitVector = C.ImBitVector
-@[typedef]
-pub struct C.ImBitVector {
-pub mut:
-	Storage ImVector_ImU32
-}
+pub type ImBitVector = imgui.ImBitVector
 
 pub type ImPoolIdx = i32
 
+pub type ImVector_int = imgui.ImVector_int
 
-pub type ImVector_int = C.ImVector_int
-@[typedef]
-pub struct C.ImVector_int {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &i32
-}
+pub type ImGuiTextIndex = imgui.TextIndex
 
+pub type ImDrawListSharedData = imgui.ImDrawListSharedData
 
-pub type ImGuiTextIndex = C.ImGuiTextIndex
-@[typedef]
-pub struct C.ImGuiTextIndex {
-pub mut:
-	Offsets ImVector_int
-	EndOffset i32
-}
+pub type ImDrawDataBuilder = imgui.ImDrawDataBuilder
 
+pub type ImFontStackData = imgui.ImFontStackData
 
-pub type ImDrawListSharedData = C.ImDrawListSharedData
-@[typedef]
-pub struct C.ImDrawListSharedData {
-pub mut:
-	TexUvWhitePixel ImVec2_c
-	TexUvLines &ImVec4_c
-	FontAtlas &imgui.ImFontAtlas
-	Font &imgui.ImFont
-	FontSize f32
-	FontScale f32
-	CurveTessellationTol f32
-	CircleSegmentMaxError f32
-	InitialFringeScale f32
-	InitialFlags imgui.ImDrawListFlags
-	ClipRectFullscreen ImVec4_c
-	TempBuffer ImVector_ImVec2
-	DrawLists ImVector_ImDrawListPtr
-	Context &imgui.Context
-	ArcFastVtx [48]ImVec2_c
-	ArcFastRadiusCutoff f32
-	CircleSegmentCounts [64]u8
-}
+pub type ImGuiStyleVarInfo = imgui.StyleVarInfo
 
+pub type ImGuiColorMod = imgui.ColorMod
 
-pub type ImDrawDataBuilder = C.ImDrawDataBuilder
-@[typedef]
-pub struct C.ImDrawDataBuilder {
-pub mut:
-	Layers [2]&ImVector_ImDrawListPtr
-	LayerData1 ImVector_ImDrawListPtr
-}
+pub type ImGuiStyleMod = imgui.StyleMod
 
+pub type ImGuiDataTypeStorage = imgui.DataTypeStorage
 
-pub type ImFontStackData = C.ImFontStackData
-@[typedef]
-pub struct C.ImFontStackData {
-pub mut:
-	Font &imgui.ImFont
-	FontSizeBeforeScaling f32
-	FontSizeAfterScaling f32
-}
-
-
-pub type ImGuiStyleVarInfo = C.ImGuiStyleVarInfo
-@[typedef]
-pub struct C.ImGuiStyleVarInfo {
-pub mut:
-	Count u32
-	DataType imgui.DataType
-	Offset u32
-}
-
-
-pub type ImGuiColorMod = C.ImGuiColorMod
-@[typedef]
-pub struct C.ImGuiColorMod {
-pub mut:
-	Col imgui.Col
-	BackupValue ImVec4_c
-}
-
-
-pub type ImGuiStyleMod = C.ImGuiStyleMod
-@[typedef]
-pub struct C.ImGuiStyleMod {
-pub mut:
-	VarIdx imgui.StyleVar
-}
-
-
-pub type ImGuiDataTypeStorage = C.ImGuiDataTypeStorage
-@[typedef]
-pub struct C.ImGuiDataTypeStorage {
-pub mut:
-	Data [8]u8
-}
-
-
-pub type ImGuiDataTypeInfo = C.ImGuiDataTypeInfo
-@[typedef]
-pub struct C.ImGuiDataTypeInfo {
-pub mut:
-	Size usize
-	Name &char
-	PrintFmt &char
-	ScanFmt &char
-}
+pub type ImGuiDataTypeInfo = imgui.DataTypeInfo
 
 
 pub enum ImGuiDataTypePrivate_ {
@@ -2523,95 +1514,17 @@ pub enum ImGuiPlotType {
  histogram
 }
 
+pub type ImGuiComboPreviewData = imgui.ComboPreviewData
 
-pub type ImGuiComboPreviewData = C.ImGuiComboPreviewData
-@[typedef]
-pub struct C.ImGuiComboPreviewData {
-pub mut:
-	PreviewRect ImRect_c
-	BackupCursorPos ImVec2_c
-	BackupCursorMaxPos ImVec2_c
-	BackupCursorPosPrevLine ImVec2_c
-	BackupPrevLineTextBaseOffset f32
-	BackupLayout imgui.LayoutType
-}
+pub type ImGuiGroupData = imgui.GroupData
 
+pub type ImGuiMenuColumns = imgui.MenuColumns
 
-pub type ImGuiGroupData = C.ImGuiGroupData
-@[typedef]
-pub struct C.ImGuiGroupData {
-pub mut:
-	WindowID imgui.ID
-	BackupCursorPos ImVec2_c
-	BackupCursorMaxPos ImVec2_c
-	BackupCursorPosPrevLine ImVec2_c
-	BackupIndent ImVec1
-	BackupGroupOffset ImVec1
-	BackupCurrLineSize ImVec2_c
-	BackupCurrLineTextBaseOffset f32
-	BackupActiveIdIsAlive imgui.ID
-	BackupActiveIdHasBeenEditedThisFrame bool
-	BackupDeactivatedIdIsAlive bool
-	BackupHoveredIdIsAlive bool
-	BackupIsSameLine bool
-	EmitItem bool
-}
-
-
-pub type ImGuiMenuColumns = C.ImGuiMenuColumns
-@[typedef]
-pub struct C.ImGuiMenuColumns {
-pub mut:
-	TotalWidth u32
-	NextTotalWidth u32
-	Spacing u16
-	OffsetIcon u16
-	OffsetLabel u16
-	OffsetShortcut u16
-	OffsetMark u16
-	Widths [4]u16
-}
-
-
-pub type ImGuiInputTextDeactivatedState = C.ImGuiInputTextDeactivatedState
-@[typedef]
-pub struct C.ImGuiInputTextDeactivatedState {
-pub mut:
-	ID imgui.ID
-	TextA ImVector_char
-}
+pub type ImGuiInputTextDeactivatedState = imgui.InputTextDeactivatedState
 
 pub type ImStbTexteditState = C.STB_TexteditState
 
-
-pub type ImGuiInputTextState = C.ImGuiInputTextState
-@[typedef]
-pub struct C.ImGuiInputTextState {
-pub mut:
-	Ctx &imgui.Context
-	Stb &ImStbTexteditState
-	Flags imgui.InputTextFlags
-	ID imgui.ID
-	TextLen i32
-	TextSrc &char
-	TextA ImVector_char
-	TextToRevertTo ImVector_char
-	CallbackTextBackup ImVector_char
-	BufCapacity i32
-	Scroll ImVec2_c
-	LineCount i32
-	WrapWidth f32
-	CursorAnim f32
-	CursorFollow bool
-	CursorCenterY bool
-	SelectedAllMouseLock bool
-	EditedBefore bool
-	EditedThisFrame bool
-	WantReloadUserBuf bool
-	LastMoveDirectionLR i8
-	ReloadSelectionStart i32
-	ReloadSelectionEnd i32
-}
+pub type ImGuiInputTextState = imgui.InputTextState
 
 
 pub enum ImGuiWindowRefreshFlags_ {
@@ -2646,35 +1559,7 @@ pub enum ImGuiNextWindowDataFlags_ {
  has_window_class                   = 1 << 13
 }
 
-
-pub type ImGuiNextWindowData = C.ImGuiNextWindowData
-@[typedef]
-pub struct C.ImGuiNextWindowData {
-pub mut:
-	HasFlags imgui.NextWindowDataFlags
-	PosCond imgui.Cond
-	SizeCond imgui.Cond
-	CollapsedCond imgui.Cond
-	DockCond imgui.Cond
-	PosVal ImVec2_c
-	PosPivotVal ImVec2_c
-	SizeVal ImVec2_c
-	ContentSizeVal ImVec2_c
-	ScrollVal ImVec2_c
-	WindowFlags imgui.WindowFlags
-	ChildFlags imgui.ChildFlags
-	PosUndock bool
-	CollapsedVal bool
-	SizeConstraintRect ImRect_c
-	SizeCallback imgui.SizeCallback
-	SizeCallbackUserData voidptr
-	BgAlphaVal f32
-	ViewportId imgui.ID
-	DockId imgui.ID
-	WindowClass imgui.WindowClass
-	MenuBarOffsetMinVal ImVec2_c
-	RefreshFlagsVal imgui.WindowRefreshFlags
-}
+pub type ImGuiNextWindowData = imgui.NextWindowData
 
 
 pub enum ImGuiNextItemDataFlags_ {
@@ -2687,113 +1572,21 @@ pub enum ImGuiNextItemDataFlags_ {
  has_color_marker                   = 1 << 5
 }
 
+pub type ImGuiNextItemData = imgui.NextItemData
 
-pub type ImGuiNextItemData = C.ImGuiNextItemData
-@[typedef]
-pub struct C.ImGuiNextItemData {
-pub mut:
-	HasFlags imgui.NextItemDataFlags
-	ItemFlags imgui.ItemFlags
-	FocusScopeId imgui.ID
-	SelectionUserData imgui.SelectionUserData
-	Width f32
-	Shortcut imgui.KeyChord
-	ShortcutFlags imgui.InputFlags
-	OpenVal bool
-	OpenCond u8
-	RefVal imgui.DataTypeStorage
-	StorageId imgui.ID
-	ColorMarker u32
-}
+pub type ImGuiLastItemData = imgui.LastItemData
 
+pub type ImGuiTreeNodeStackData = imgui.TreeNodeStackData
 
-pub type ImGuiLastItemData = C.ImGuiLastItemData
-@[typedef]
-pub struct C.ImGuiLastItemData {
-pub mut:
-	ID imgui.ID
-	ItemFlags imgui.ItemFlags
-	StatusFlags imgui.ItemStatusFlags
-	Rect ImRect_c
-	NavRect ImRect_c
-	DisplayRect ImRect_c
-	ClipRect ImRect_c
-	Shortcut imgui.KeyChord
-}
+pub type ImGuiErrorRecoveryState = imgui.ErrorRecoveryState
 
+pub type ImGuiWindowStackData = imgui.WindowStackData
 
-pub type ImGuiTreeNodeStackData = C.ImGuiTreeNodeStackData
-@[typedef]
-pub struct C.ImGuiTreeNodeStackData {
-pub mut:
-	ID imgui.ID
-	TreeFlags imgui.TreeNodeFlags
-	ItemFlags imgui.ItemFlags
-	NavRect ImRect_c
-	DrawLinesX1 f32
-	DrawLinesToNodesY2 f32
-	DrawLinesTableColumn imgui.TableColumnIdx
-}
+pub type ImGuiShrinkWidthItem = imgui.ShrinkWidthItem
 
+pub type ImGuiPtrOrIndex = imgui.PtrOrIndex
 
-pub type ImGuiErrorRecoveryState = C.ImGuiErrorRecoveryState
-@[typedef]
-pub struct C.ImGuiErrorRecoveryState {
-pub mut:
-	SizeOfWindowStack i16
-	SizeOfIDStack i16
-	SizeOfTreeStack i16
-	SizeOfColorStack i16
-	SizeOfStyleVarStack i16
-	SizeOfFontStack i16
-	SizeOfFocusScopeStack i16
-	SizeOfGroupStack i16
-	SizeOfItemFlagsStack i16
-	SizeOfBeginPopupStack i16
-	SizeOfDisabledStack i16
-}
-
-
-pub type ImGuiWindowStackData = C.ImGuiWindowStackData
-@[typedef]
-pub struct C.ImGuiWindowStackData {
-pub mut:
-	Window &imgui.Window
-	ParentLastItemDataBackup imgui.LastItemData
-	StackSizesInBegin imgui.ErrorRecoveryState
-	DisabledOverrideReenable bool
-	DisabledOverrideReenableAlphaBackup f32
-}
-
-
-pub type ImGuiShrinkWidthItem = C.ImGuiShrinkWidthItem
-@[typedef]
-pub struct C.ImGuiShrinkWidthItem {
-pub mut:
-	Index i32
-	Width f32
-	InitialWidth f32
-}
-
-
-pub type ImGuiPtrOrIndex = C.ImGuiPtrOrIndex
-@[typedef]
-pub struct C.ImGuiPtrOrIndex {
-pub mut:
-	Ptr voidptr
-	Index i32
-}
-
-
-pub type ImGuiDeactivatedItemData = C.ImGuiDeactivatedItemData
-@[typedef]
-pub struct C.ImGuiDeactivatedItemData {
-pub mut:
-	ID imgui.ID
-	ElapseFrame i32
-	HasBeenEditedBefore bool
-	IsAlive bool
-}
+pub type ImGuiDeactivatedItemData = imgui.DeactivatedItemData
 
 
 pub enum ImGuiPopupPositionPolicy {
@@ -2802,28 +1595,9 @@ pub enum ImGuiPopupPositionPolicy {
  tooltip
 }
 
+pub type ImGuiPopupData = imgui.PopupData
 
-pub type ImGuiPopupData = C.ImGuiPopupData
-@[typedef]
-pub struct C.ImGuiPopupData {
-pub mut:
-	PopupId imgui.ID
-	Window &imgui.Window
-	RestoreNavWindow &imgui.Window
-	ParentNavLayer i32
-	OpenFrameCount i32
-	OpenParentId imgui.ID
-	OpenPopupPos ImVec2_c
-	OpenMousePos ImVec2_c
-}
-
-
-pub type ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN = C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN
-@[typedef]
-pub struct C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN {
-pub mut:
-	Data [5]u32
-}
+pub type ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN = imgui.ImBitArrayForNamedKeys
 
 pub type ImBitArrayForNamedKeys = C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN
 
@@ -2849,126 +1623,31 @@ pub enum ImGuiInputSource {
  count                              = 4
 }
 
+pub type ImGuiInputEventMousePos = imgui.InputEventMousePos
 
-pub type ImGuiInputEventMousePos = C.ImGuiInputEventMousePos
-@[typedef]
-pub struct C.ImGuiInputEventMousePos {
-pub mut:
-	PosX f32
-	PosY f32
-	MouseSource imgui.MouseSource
-}
+pub type ImGuiInputEventMouseWheel = imgui.InputEventMouseWheel
 
+pub type ImGuiInputEventMouseButton = imgui.InputEventMouseButton
 
-pub type ImGuiInputEventMouseWheel = C.ImGuiInputEventMouseWheel
-@[typedef]
-pub struct C.ImGuiInputEventMouseWheel {
-pub mut:
-	WheelX f32
-	WheelY f32
-	MouseSource imgui.MouseSource
-}
+pub type ImGuiInputEventMouseViewport = imgui.InputEventMouseViewport
 
+pub type ImGuiInputEventKey = imgui.InputEventKey
 
-pub type ImGuiInputEventMouseButton = C.ImGuiInputEventMouseButton
-@[typedef]
-pub struct C.ImGuiInputEventMouseButton {
-pub mut:
-	Button i32
-	Down bool
-	MouseSource imgui.MouseSource
-}
+pub type ImGuiInputEventText = imgui.InputEventText
 
+pub type ImGuiInputEventAppFocused = imgui.InputEventAppFocused
 
-pub type ImGuiInputEventMouseViewport = C.ImGuiInputEventMouseViewport
-@[typedef]
-pub struct C.ImGuiInputEventMouseViewport {
-pub mut:
-	HoveredViewportID imgui.ID
-}
-
-
-pub type ImGuiInputEventKey = C.ImGuiInputEventKey
-@[typedef]
-pub struct C.ImGuiInputEventKey {
-pub mut:
-	Key imgui.Key
-	Down bool
-	AnalogValue f32
-}
-
-
-pub type ImGuiInputEventText = C.ImGuiInputEventText
-@[typedef]
-pub struct C.ImGuiInputEventText {
-pub mut:
-	Char u32
-}
-
-
-pub type ImGuiInputEventAppFocused = C.ImGuiInputEventAppFocused
-@[typedef]
-pub struct C.ImGuiInputEventAppFocused {
-pub mut:
-	Focused bool
-}
-
-
-pub type ImGuiInputEvent = C.ImGuiInputEvent
-@[typedef]
-pub struct C.ImGuiInputEvent {
-pub mut:
-	Type imgui.InputEventType
-	Source imgui.InputSource
-	EventId u32
-	AddedByTestEngine bool
-}
+pub type ImGuiInputEvent = imgui.InputEvent
 
 pub type ImGuiKeyRoutingIndex = i16
 
+pub type ImGuiKeyRoutingData = imgui.KeyRoutingData
 
-pub type ImGuiKeyRoutingData = C.ImGuiKeyRoutingData
-@[typedef]
-pub struct C.ImGuiKeyRoutingData {
-pub mut:
-	NextEntryIndex imgui.KeyRoutingIndex
-	Mods u16
-	RoutingCurrScore u16
-	RoutingNextScore u16
-	RoutingCurr imgui.ID
-	RoutingNext imgui.ID
-}
+pub type ImVector_ImGuiKeyRoutingData = imgui.ImVector_KeyRoutingData
 
+pub type ImGuiKeyRoutingTable = imgui.KeyRoutingTable
 
-pub type ImVector_ImGuiKeyRoutingData = C.ImVector_ImGuiKeyRoutingData
-@[typedef]
-pub struct C.ImVector_ImGuiKeyRoutingData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.KeyRoutingData
-}
-
-
-pub type ImGuiKeyRoutingTable = C.ImGuiKeyRoutingTable
-@[typedef]
-pub struct C.ImGuiKeyRoutingTable {
-pub mut:
-	Index [155]imgui.KeyRoutingIndex
-	Entries ImVector_ImGuiKeyRoutingData
-	EntriesNext ImVector_ImGuiKeyRoutingData
-}
-
-
-pub type ImGuiKeyOwnerData = C.ImGuiKeyOwnerData
-@[typedef]
-pub struct C.ImGuiKeyOwnerData {
-pub mut:
-	OwnerCurr imgui.ID
-	OwnerNext imgui.ID
-	LockThisFrame bool
-	LockUntilRelease bool
-}
+pub type ImGuiKeyOwnerData = imgui.KeyOwnerData
 
 
 pub enum ImGuiInputFlagsPrivate_ {
@@ -2998,39 +1677,11 @@ pub enum ImGuiInputFlagsPrivate_ {
  supported_by_set_item_key_owner    = 1 << 20 | 1 << 21 | 1 << 22 | 1 << 23
 }
 
+pub type ImGuiListClipperRange = imgui.ListClipperRange
 
-pub type ImGuiListClipperRange = C.ImGuiListClipperRange
-@[typedef]
-pub struct C.ImGuiListClipperRange {
-pub mut:
-	Min i32
-	Max i32
-	PosToIndexConvert bool
-	PosToIndexOffsetMin i8
-	PosToIndexOffsetMax i8
-}
+pub type ImVector_ImGuiListClipperRange = imgui.ImVector_ListClipperRange
 
-
-pub type ImVector_ImGuiListClipperRange = C.ImVector_ImGuiListClipperRange
-@[typedef]
-pub struct C.ImVector_ImGuiListClipperRange {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ListClipperRange
-}
-
-
-pub type ImGuiListClipperData = C.ImGuiListClipperData
-@[typedef]
-pub struct C.ImGuiListClipperData {
-pub mut:
-	ListClipper &imgui.ListClipper
-	LossynessOffset f32
-	StepNo i32
-	ItemsFrozen i32
-	Ranges ImVector_ImGuiListClipperRange
-}
+pub type ImGuiListClipperData = imgui.ListClipperData
 
 
 pub enum ImGuiActivateFlags_ {
@@ -3094,30 +1745,9 @@ pub enum ImGuiNavLayer {
  count
 }
 
+pub type ImGuiNavItemData = imgui.NavItemData
 
-pub type ImGuiNavItemData = C.ImGuiNavItemData
-@[typedef]
-pub struct C.ImGuiNavItemData {
-pub mut:
-	Window &imgui.Window
-	ID imgui.ID
-	FocusScopeId imgui.ID
-	RectRel ImRect_c
-	ItemFlags imgui.ItemFlags
-	DistBox f32
-	DistCenter f32
-	DistAxial f32
-	SelectionUserData imgui.SelectionUserData
-}
-
-
-pub type ImGuiFocusScopeData = C.ImGuiFocusScopeData
-@[typedef]
-pub struct C.ImGuiFocusScopeData {
-pub mut:
-	ID imgui.ID
-	WindowID imgui.ID
-}
+pub type ImGuiFocusScopeData = imgui.FocusScopeData
 
 
 pub enum ImGuiTypingSelectFlags_ {
@@ -3126,31 +1756,9 @@ pub enum ImGuiTypingSelectFlags_ {
  allow_single_char_mode             = 1 << 1
 }
 
+pub type ImGuiTypingSelectRequest = imgui.TypingSelectRequest
 
-pub type ImGuiTypingSelectRequest = C.ImGuiTypingSelectRequest
-@[typedef]
-pub struct C.ImGuiTypingSelectRequest {
-pub mut:
-	Flags imgui.TypingSelectFlags
-	SearchBufferLen i32
-	SearchBuffer &char
-	SelectRequest bool
-	SingleCharMode bool
-	SingleCharSize i8
-}
-
-
-pub type ImGuiTypingSelectState = C.ImGuiTypingSelectState
-@[typedef]
-pub struct C.ImGuiTypingSelectState {
-pub mut:
-	Request imgui.TypingSelectRequest
-	SearchBuffer [64]i8
-	FocusScope imgui.ID
-	LastRequestFrame i32
-	LastRequestTime f32
-	SingleCharModeLock bool
-}
+pub type ImGuiTypingSelectState = imgui.TypingSelectState
 
 
 pub enum ImGuiOldColumnFlags_ {
@@ -3162,110 +1770,17 @@ pub enum ImGuiOldColumnFlags_ {
  grow_parent_contents_size          = 1 << 4
 }
 
+pub type ImGuiOldColumnData = imgui.OldColumnData
 
-pub type ImGuiOldColumnData = C.ImGuiOldColumnData
-@[typedef]
-pub struct C.ImGuiOldColumnData {
-pub mut:
-	OffsetNorm f32
-	OffsetNormBeforeResize f32
-	Flags imgui.OldColumnFlags
-	ClipRect ImRect_c
-}
+pub type ImVector_ImGuiOldColumnData = imgui.ImVector_OldColumnData
 
+pub type ImGuiOldColumns = imgui.OldColumns
 
-pub type ImVector_ImGuiOldColumnData = C.ImVector_ImGuiOldColumnData
-@[typedef]
-pub struct C.ImVector_ImGuiOldColumnData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.OldColumnData
-}
+pub type ImGuiBoxSelectState = imgui.BoxSelectState
 
+pub type ImGuiMultiSelectTempData = imgui.MultiSelectTempData
 
-pub type ImGuiOldColumns = C.ImGuiOldColumns
-@[typedef]
-pub struct C.ImGuiOldColumns {
-pub mut:
-	ID imgui.ID
-	Flags imgui.OldColumnFlags
-	IsFirstFrame bool
-	IsBeingResized bool
-	Current i32
-	Count i32
-	OffMinX f32
-	OffMaxX f32
-	LineMinY f32
-	LineMaxY f32
-	HostCursorPosY f32
-	HostCursorMaxPosX f32
-	HostInitialClipRect ImRect_c
-	HostBackupClipRect ImRect_c
-	HostBackupParentWorkRect ImRect_c
-	Columns ImVector_ImGuiOldColumnData
-	Splitter imgui.ImDrawListSplitter
-}
-
-
-pub type ImGuiBoxSelectState = C.ImGuiBoxSelectState
-@[typedef]
-pub struct C.ImGuiBoxSelectState {
-pub mut:
-	ID imgui.ID
-	IsActive bool
-	IsStarting bool
-	IsStartedFromVoid bool
-	IsStartedSetNavIdOnce bool
-	RequestClear bool
-	KeyMods imgui.KeyChord
-	StartPosRel ImVec2_c
-	EndPosRel ImVec2_c
-	ScrollAccum ImVec2_c
-	Window &imgui.Window
-	UnclipMode bool
-	UnclipRect ImRect_c
-	BoxSelectRectPrev ImRect_c
-	BoxSelectRectCurr ImRect_c
-}
-
-
-pub type ImGuiMultiSelectTempData = C.ImGuiMultiSelectTempData
-@[typedef]
-pub struct C.ImGuiMultiSelectTempData {
-pub mut:
-	IO imgui.MultiSelectIO
-	Storage &imgui.MultiSelectState
-	FocusScopeId imgui.ID
-	Flags imgui.MultiSelectFlags
-	ScopeRectMin ImVec2_c
-	BackupCursorMaxPos ImVec2_c
-	LastSubmittedItem imgui.SelectionUserData
-	BoxSelectId imgui.ID
-	KeyMods imgui.KeyChord
-	LoopRequestSetAll i8
-	IsEndIO bool
-	IsFocused bool
-	IsKeyboardSetRange bool
-	NavIdPassedBy bool
-	RangeSrcPassedBy bool
-	RangeDstPassedBy bool
-}
-
-
-pub type ImGuiMultiSelectState = C.ImGuiMultiSelectState
-@[typedef]
-pub struct C.ImGuiMultiSelectState {
-pub mut:
-	Window &imgui.Window
-	ID imgui.ID
-	LastFrameActive i32
-	LastSelectionSize i32
-	RangeSelected i8
-	NavIdSelected i8
-	RangeSrcItem imgui.SelectionUserData
-	NavIdItem imgui.SelectionUserData
-}
+pub type ImGuiMultiSelectState = imgui.MultiSelectState
 
 
 pub enum ImGuiDockNodeFlagsPrivate_ {
@@ -3304,64 +1819,9 @@ pub enum ImGuiDockNodeState {
  host_window_visible
 }
 
+pub type ImVector_ImGuiWindowPtr = imgui.ImVector_WindowPtr
 
-pub type ImVector_ImGuiWindowPtr = C.ImVector_ImGuiWindowPtr
-@[typedef]
-pub struct C.ImVector_ImGuiWindowPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&imgui.Window
-}
-
-
-pub type ImGuiDockNode = C.ImGuiDockNode
-@[typedef]
-pub struct C.ImGuiDockNode {
-pub mut:
-	ID imgui.ID
-	SharedFlags imgui.DockNodeFlags
-	LocalFlags imgui.DockNodeFlags
-	LocalFlagsInWindows imgui.DockNodeFlags
-	MergedFlags imgui.DockNodeFlags
-	State imgui.DockNodeState
-	ParentNode &imgui.DockNode
-	ChildNodes [2]&imgui.DockNode
-	Windows ImVector_ImGuiWindowPtr
-	TabBar &imgui.TabBar
-	Pos ImVec2_c
-	Size ImVec2_c
-	SizeRef ImVec2_c
-	SplitAxis imgui.Axis
-	WindowClass imgui.WindowClass
-	LastBgColor u32
-	HostWindow &imgui.Window
-	VisibleWindow &imgui.Window
-	CentralNode &imgui.DockNode
-	OnlyNodeWithWindows &imgui.DockNode
-	CountNodeWithWindows i32
-	LastFrameAlive i32
-	LastFrameActive i32
-	LastFrameFocused i32
-	LastFocusedNodeId imgui.ID
-	SelectedTabId imgui.ID
-	WantCloseTabId imgui.ID
-	RefViewportId imgui.ID
-	AuthorityForPos imgui.DataAuthority
-	AuthorityForSize imgui.DataAuthority
-	AuthorityForViewport imgui.DataAuthority
-	IsVisible bool
-	IsFocused bool
-	IsBgDrawnThisFrame bool
-	HasCloseButton bool
-	HasWindowMenuButton bool
-	HasCentralNodeChild bool
-	WantCloseAll bool
-	WantLockSizeOnce bool
-	WantMouseMove bool
-	WantHiddenTabBarUpdate bool
-	WantHiddenTabBarToggle bool
-}
+pub type ImGuiDockNode = imgui.DockNode
 
 
 pub enum ImGuiWindowDockStyleCol {
@@ -3377,109 +1837,19 @@ pub enum ImGuiWindowDockStyleCol {
  count
 }
 
+pub type ImGuiWindowDockStyle = imgui.WindowDockStyle
 
-pub type ImGuiWindowDockStyle = C.ImGuiWindowDockStyle
-@[typedef]
-pub struct C.ImGuiWindowDockStyle {
-pub mut:
-	Colors [9]u32
-}
+pub type ImVector_ImGuiDockRequest = imgui.ImVector_DockRequest
 
+pub type ImVector_ImGuiDockNodeSettings = imgui.ImVector_DockNodeSettings
 
-pub type ImVector_ImGuiDockRequest = C.ImVector_ImGuiDockRequest
-@[typedef]
-pub struct C.ImVector_ImGuiDockRequest {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.DockRequest
-}
+pub type ImGuiDockContext = imgui.DockContext
 
+pub type ImGuiViewportP = imgui.ViewportP
 
-pub type ImVector_ImGuiDockNodeSettings = C.ImVector_ImGuiDockNodeSettings
-@[typedef]
-pub struct C.ImVector_ImGuiDockNodeSettings {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.DockNodeSettings
-}
+pub type ImGuiWindowSettings = imgui.WindowSettings
 
-
-pub type ImGuiDockContext = C.ImGuiDockContext
-@[typedef]
-pub struct C.ImGuiDockContext {
-pub mut:
-	Nodes imgui.Storage
-	Requests ImVector_ImGuiDockRequest
-	NodesSettings ImVector_ImGuiDockNodeSettings
-	WantFullRebuild bool
-}
-
-
-pub type ImGuiViewportP = C.ImGuiViewportP
-@[typedef]
-pub struct C.ImGuiViewportP {
-pub mut:
-	_ImGuiViewport imgui.Viewport
-	Window &imgui.Window
-	Idx i32
-	LastFrameActive i32
-	LastFocusedStampCount i32
-	LastNameHash imgui.ID
-	LastPos ImVec2_c
-	LastSize ImVec2_c
-	Alpha f32
-	LastAlpha f32
-	LastFocusedHadNavWindow bool
-	PlatformMonitor i16
-	BgFgDrawListsLastTimeActive [2]f32
-	BgFgDrawLists [2]&imgui.ImDrawList
-	DrawDataP imgui.ImDrawData
-	DrawDataBuilder imgui.ImDrawDataBuilder
-	LastPlatformPos ImVec2_c
-	LastPlatformSize ImVec2_c
-	LastRendererSize ImVec2_c
-	WorkInsetMin ImVec2_c
-	WorkInsetMax ImVec2_c
-	BuildWorkInsetMin ImVec2_c
-	BuildWorkInsetMax ImVec2_c
-}
-
-
-pub type ImGuiWindowSettings = C.ImGuiWindowSettings
-@[typedef]
-pub struct C.ImGuiWindowSettings {
-pub mut:
-	ID imgui.ID
-	Pos ImVec2ih
-	Size ImVec2ih
-	ViewportPos ImVec2ih
-	ViewportId imgui.ID
-	DockId imgui.ID
-	ClassId imgui.ID
-	DockOrder i16
-	Collapsed bool
-	IsChild bool
-	WantApply bool
-	WantDelete bool
-}
-
-
-pub type ImGuiSettingsHandler = C.ImGuiSettingsHandler
-@[typedef]
-pub struct C.ImGuiSettingsHandler {
-pub mut:
-	TypeName &char
-	TypeHash imgui.ID
-	ClearAllFn fn (&imgui.Context, &imgui.SettingsHandler)
-	ReadInitFn fn (&imgui.Context, &imgui.SettingsHandler)
-	ReadOpenFn fn (&imgui.Context, &imgui.SettingsHandler, &char) voidptr
-	ReadLineFn fn (&imgui.Context, &imgui.SettingsHandler, voidptr, &char)
-	ApplyAllFn fn (&imgui.Context, &imgui.SettingsHandler)
-	WriteAllFn fn (&imgui.Context, &imgui.SettingsHandler, &imgui.TextBuffer)
-	UserData voidptr
-}
+pub type ImGuiSettingsHandler = imgui.SettingsHandler
 
 
 pub enum ImGuiLocKey {
@@ -3499,16 +1869,9 @@ pub enum ImGuiLocKey {
  count                              = 13
 }
 
+pub type ImGuiLocEntry = imgui.LocEntry
 
-pub type ImGuiLocEntry = C.ImGuiLocEntry
-@[typedef]
-pub struct C.ImGuiLocEntry {
-pub mut:
-	Key imgui.LocKey
-	Text &char
-}
-
-pub type ImGuiErrorCallback = fn (&imgui.Context, voidptr, &char)
+pub type ImGuiErrorCallback = fn(&imgui.Context, voidptr, &char)
 
 
 pub enum ImGuiDebugLogFlags_ {
@@ -3531,97 +1894,21 @@ pub enum ImGuiDebugLogFlags_ {
  output_to_test_engine              = 1 << 22
 }
 
+pub type ImGuiDebugAllocEntry = imgui.DebugAllocEntry
 
-pub type ImGuiDebugAllocEntry = C.ImGuiDebugAllocEntry
-@[typedef]
-pub struct C.ImGuiDebugAllocEntry {
-pub mut:
-	FrameCount i32
-	AllocCount i16
-	FreeCount i16
-}
+pub type ImGuiDebugAllocInfo = imgui.DebugAllocInfo
 
+pub type ImGuiMetricsConfig = imgui.MetricsConfig
 
-pub type ImGuiDebugAllocInfo = C.ImGuiDebugAllocInfo
-@[typedef]
-pub struct C.ImGuiDebugAllocInfo {
-pub mut:
-	TotalAllocCount i32
-	TotalFreeCount i32
-	LastEntriesIdx i16
-	LastEntriesBuf [6]imgui.DebugAllocEntry
-}
+pub type ImGuiStackLevelInfo = imgui.StackLevelInfo
 
+pub type ImVector_ImGuiStackLevelInfo = imgui.ImVector_StackLevelInfo
 
-pub type ImGuiMetricsConfig = C.ImGuiMetricsConfig
-@[typedef]
-pub struct C.ImGuiMetricsConfig {
-pub mut:
-	ShowDebugLog bool
-	ShowIDStackTool bool
-	ShowWindowsRects bool
-	ShowWindowsBeginOrder bool
-	ShowTablesRects bool
-	ShowDrawCmdMesh bool
-	ShowDrawCmdBoundingBoxes bool
-	ShowTextEncodingViewer bool
-	ShowTextureUsedRect bool
-	ShowDockingNodes bool
-	ShowWindowsRectsType i32
-	ShowTablesRectsType i32
-	HighlightMonitorIdx i32
-	HighlightViewportID imgui.ID
-	ShowFontPreview bool
-}
+pub type ImGuiDebugItemPathQuery = imgui.DebugItemPathQuery
 
+pub type ImGuiIDStackTool = imgui.IDStackTool
 
-pub type ImGuiStackLevelInfo = C.ImGuiStackLevelInfo
-@[typedef]
-pub struct C.ImGuiStackLevelInfo {
-pub mut:
-	ID imgui.ID
-	QueryFrameCount i8
-	QuerySuccess bool
-	DataType i8
-	DescOffset i32
-}
-
-
-pub type ImVector_ImGuiStackLevelInfo = C.ImVector_ImGuiStackLevelInfo
-@[typedef]
-pub struct C.ImVector_ImGuiStackLevelInfo {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.StackLevelInfo
-}
-
-
-pub type ImGuiDebugItemPathQuery = C.ImGuiDebugItemPathQuery
-@[typedef]
-pub struct C.ImGuiDebugItemPathQuery {
-pub mut:
-	MainID imgui.ID
-	Active bool
-	Complete bool
-	Step i8
-	Results ImVector_ImGuiStackLevelInfo
-	ResultsDescBuf imgui.TextBuffer
-	ResultPathBuf imgui.TextBuffer
-}
-
-
-pub type ImGuiIDStackTool = C.ImGuiIDStackTool
-@[typedef]
-pub struct C.ImGuiIDStackTool {
-pub mut:
-	OptHexEncodeNonAsciiChars bool
-	OptCopyToClipboardOnCtrlC bool
-	LastActiveFrame i32
-	CopyToClipboardLastTime f32
-}
-
-pub type ImGuiContextHookCallback = fn (&imgui.Context, &imgui.ContextHook)
+pub type ImGuiContextHookCallback = fn(&imgui.Context, &imgui.ContextHook)
 
 
 pub enum ImGuiContextHookType {
@@ -3635,836 +1922,75 @@ pub enum ImGuiContextHookType {
  pending_removal_
 }
 
+pub type ImGuiContextHook = imgui.ContextHook
 
-pub type ImGuiContextHook = C.ImGuiContextHook
-@[typedef]
-pub struct C.ImGuiContextHook {
-pub mut:
-	HookId imgui.ID
-	Type imgui.ContextHookType
-	Owner imgui.ID
-	Callback imgui.ContextHookCallback
-	UserData voidptr
-}
-
-pub type ImGuiDemoMarkerCallback = fn (&char, i32, &char)
-
-
-pub type ImVector_ImFontAtlasPtr = C.ImVector_ImFontAtlasPtr
-@[typedef]
-pub struct C.ImVector_ImFontAtlasPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&imgui.ImFontAtlas
-}
-
-
-pub type ImVector_ImGuiInputEvent = C.ImVector_ImGuiInputEvent
-@[typedef]
-pub struct C.ImVector_ImGuiInputEvent {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.InputEvent
-}
-
-
-pub type ImVector_ImGuiWindowStackData = C.ImVector_ImGuiWindowStackData
-@[typedef]
-pub struct C.ImVector_ImGuiWindowStackData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.WindowStackData
-}
-
-
-pub type ImVector_ImGuiColorMod = C.ImVector_ImGuiColorMod
-@[typedef]
-pub struct C.ImVector_ImGuiColorMod {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ColorMod
-}
-
-
-pub type ImVector_ImGuiStyleMod = C.ImVector_ImGuiStyleMod
-@[typedef]
-pub struct C.ImVector_ImGuiStyleMod {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.StyleMod
-}
-
-
-pub type ImVector_ImFontStackData = C.ImVector_ImFontStackData
-@[typedef]
-pub struct C.ImVector_ImFontStackData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ImFontStackData
-}
-
-
-pub type ImVector_ImGuiFocusScopeData = C.ImVector_ImGuiFocusScopeData
-@[typedef]
-pub struct C.ImVector_ImGuiFocusScopeData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.FocusScopeData
-}
-
-
-pub type ImVector_ImGuiItemFlags = C.ImVector_ImGuiItemFlags
-@[typedef]
-pub struct C.ImVector_ImGuiItemFlags {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ItemFlags
-}
-
-
-pub type ImVector_ImGuiGroupData = C.ImVector_ImGuiGroupData
-@[typedef]
-pub struct C.ImVector_ImGuiGroupData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.GroupData
-}
-
-
-pub type ImVector_ImGuiPopupData = C.ImVector_ImGuiPopupData
-@[typedef]
-pub struct C.ImVector_ImGuiPopupData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.PopupData
-}
-
-
-pub type ImVector_ImGuiTreeNodeStackData = C.ImVector_ImGuiTreeNodeStackData
-@[typedef]
-pub struct C.ImVector_ImGuiTreeNodeStackData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.TreeNodeStackData
-}
-
-
-pub type ImVector_ImGuiViewportPPtr = C.ImVector_ImGuiViewportPPtr
-@[typedef]
-pub struct C.ImVector_ImGuiViewportPPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&imgui.ViewportP
-}
-
-
-pub type ImVector_unsigned_char = C.ImVector_unsigned_char
-@[typedef]
-pub struct C.ImVector_unsigned_char {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &u8
-}
-
-
-pub type ImVector_ImGuiListClipperData = C.ImVector_ImGuiListClipperData
-@[typedef]
-pub struct C.ImVector_ImGuiListClipperData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ListClipperData
-}
-
-
-pub type ImVector_ImGuiTableTempData = C.ImVector_ImGuiTableTempData
-@[typedef]
-pub struct C.ImVector_ImGuiTableTempData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.TableTempData
-}
-
-
-pub type ImVector_ImGuiTable = C.ImVector_ImGuiTable
-@[typedef]
-pub struct C.ImVector_ImGuiTable {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.Table
-}
-
-
-pub type ImPool_ImGuiTable = C.ImPool_ImGuiTable
-@[typedef]
-pub struct C.ImPool_ImGuiTable {
-pub mut:
-	Buf ImVector_ImGuiTable
-	Map imgui.Storage
-	FreeIdx ImPoolIdx
-	AliveCount ImPoolIdx
-}
-
-
-pub type ImVector_ImGuiTabBar = C.ImVector_ImGuiTabBar
-@[typedef]
-pub struct C.ImVector_ImGuiTabBar {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.TabBar
-}
-
-
-pub type ImPool_ImGuiTabBar = C.ImPool_ImGuiTabBar
-@[typedef]
-pub struct C.ImPool_ImGuiTabBar {
-pub mut:
-	Buf ImVector_ImGuiTabBar
-	Map imgui.Storage
-	FreeIdx ImPoolIdx
-	AliveCount ImPoolIdx
-}
-
-
-pub type ImVector_ImGuiPtrOrIndex = C.ImVector_ImGuiPtrOrIndex
-@[typedef]
-pub struct C.ImVector_ImGuiPtrOrIndex {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.PtrOrIndex
-}
-
-
-pub type ImVector_ImGuiShrinkWidthItem = C.ImVector_ImGuiShrinkWidthItem
-@[typedef]
-pub struct C.ImVector_ImGuiShrinkWidthItem {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ShrinkWidthItem
-}
-
-
-pub type ImVector_ImGuiMultiSelectTempData = C.ImVector_ImGuiMultiSelectTempData
-@[typedef]
-pub struct C.ImVector_ImGuiMultiSelectTempData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.MultiSelectTempData
-}
-
-
-pub type ImVector_ImGuiMultiSelectState = C.ImVector_ImGuiMultiSelectState
-@[typedef]
-pub struct C.ImVector_ImGuiMultiSelectState {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.MultiSelectState
-}
-
-
-pub type ImPool_ImGuiMultiSelectState = C.ImPool_ImGuiMultiSelectState
-@[typedef]
-pub struct C.ImPool_ImGuiMultiSelectState {
-pub mut:
-	Buf ImVector_ImGuiMultiSelectState
-	Map imgui.Storage
-	FreeIdx ImPoolIdx
-	AliveCount ImPoolIdx
-}
-
-
-pub type ImVector_ImGuiID = C.ImVector_ImGuiID
-@[typedef]
-pub struct C.ImVector_ImGuiID {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ID
-}
-
-
-pub type ImVector_ImGuiSettingsHandler = C.ImVector_ImGuiSettingsHandler
-@[typedef]
-pub struct C.ImVector_ImGuiSettingsHandler {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.SettingsHandler
-}
-
-
-pub type ImChunkStream_ImGuiWindowSettings = C.ImChunkStream_ImGuiWindowSettings
-@[typedef]
-pub struct C.ImChunkStream_ImGuiWindowSettings {
-pub mut:
-	Buf ImVector_char
-}
-
-
-pub type ImChunkStream_ImGuiTableSettings = C.ImChunkStream_ImGuiTableSettings
-@[typedef]
-pub struct C.ImChunkStream_ImGuiTableSettings {
-pub mut:
-	Buf ImVector_char
-}
-
-
-pub type ImVector_ImGuiContextHook = C.ImVector_ImGuiContextHook
-@[typedef]
-pub struct C.ImVector_ImGuiContextHook {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ContextHook
-}
-
-
-pub type ImGuiContext = C.ImGuiContext
-@[typedef]
-pub struct C.ImGuiContext {
-pub mut:
-	Initialized bool
-	WithinFrameScope bool
-	WithinFrameScopeWithImplicitWindow bool
-	TestEngineHookItems bool
-	FrameCount i32
-	FrameCountEnded i32
-	FrameCountPlatformEnded i32
-	FrameCountRendered i32
-	Time f64
-	ContextName [16]i8
-	IO imgui.IO
-	PlatformIO imgui.PlatformIO
-	Style imgui.Style
-	ConfigFlagsCurrFrame imgui.ConfigFlags
-	ConfigFlagsLastFrame imgui.ConfigFlags
-	FontAtlases ImVector_ImFontAtlasPtr
-	Font &imgui.ImFont
-	FontBaked &imgui.ImFontBaked
-	FontSize f32
-	FontSizeBase f32
-	FontBakedScale f32
-	FontRasterizerDensity f32
-	CurrentDpiScale f32
-	DrawListSharedData imgui.ImDrawListSharedData
-	WithinEndChildID imgui.ID
-	TestEngine voidptr
-	InputEventsQueue ImVector_ImGuiInputEvent
-	InputEventsTrail ImVector_ImGuiInputEvent
-	InputEventsNextMouseSource imgui.MouseSource
-	InputEventsNextEventId u32
-	Windows ImVector_ImGuiWindowPtr
-	WindowsFocusOrder ImVector_ImGuiWindowPtr
-	WindowsTempSortBuffer ImVector_ImGuiWindowPtr
-	CurrentWindowStack ImVector_ImGuiWindowStackData
-	WindowsById imgui.Storage
-	WindowsActiveCount i32
-	WindowsBorderHoverPadding f32
-	DebugBreakInWindow imgui.ID
-	CurrentWindow &imgui.Window
-	HoveredWindow &imgui.Window
-	HoveredWindowUnderMovingWindow &imgui.Window
-	HoveredWindowBeforeClear &imgui.Window
-	MovingWindow &imgui.Window
-	WheelingWindow &imgui.Window
-	WheelingWindowRefMousePos ImVec2_c
-	WheelingWindowStartFrame i32
-	WheelingWindowScrolledFrame i32
-	WheelingWindowReleaseTimer f32
-	WheelingWindowWheelRemainder ImVec2_c
-	WheelingAxisAvg ImVec2_c
-	DebugDrawIdConflictsId imgui.ID
-	DebugHookIdInfoId imgui.ID
-	HoveredId imgui.ID
-	HoveredIdPreviousFrame imgui.ID
-	HoveredIdPreviousFrameItemCount i32
-	HoveredIdTimer f32
-	HoveredIdNotActiveTimer f32
-	HoveredIdAllowOverlap bool
-	HoveredIdIsDisabled bool
-	ItemUnclipByLog bool
-	ActiveId imgui.ID
-	ActiveIdIsAlive imgui.ID
-	ActiveIdTimer f32
-	ActiveIdIsJustActivated bool
-	ActiveIdAllowOverlap bool
-	ActiveIdNoClearOnFocusLoss bool
-	ActiveIdHasBeenPressedBefore bool
-	ActiveIdHasBeenEditedBefore bool
-	ActiveIdHasBeenEditedThisFrame bool
-	ActiveIdFromShortcut bool
-	ActiveIdMouseButton i8
-	ActiveIdDisabledId imgui.ID
-	ActiveIdClickOffset ImVec2_c
-	ActiveIdSource imgui.InputSource
-	ActiveIdWindow &imgui.Window
-	ActiveIdPreviousFrame imgui.ID
-	DeactivatedItemData imgui.DeactivatedItemData
-	ActiveIdValueOnActivation imgui.DataTypeStorage
-	LastActiveId imgui.ID
-	LastActiveIdTimer f32
-	LastKeyModsChangeTime f64
-	LastKeyModsChangeFromNoneTime f64
-	LastKeyboardKeyPressTime f64
-	KeysMayBeCharInput ImBitArrayForNamedKeys
-	KeysOwnerData [155]imgui.KeyOwnerData
-	KeysRoutingTable imgui.KeyRoutingTable
-	ActiveIdUsingNavDirMask u32
-	ActiveIdUsingAllKeyboardKeys bool
-	DebugBreakInShortcutRouting imgui.KeyChord
-	CurrentFocusScopeId imgui.ID
-	CurrentItemFlags imgui.ItemFlags
-	DebugLocateId imgui.ID
-	NextItemData imgui.NextItemData
-	LastItemData imgui.LastItemData
-	NextWindowData imgui.NextWindowData
-	DebugShowGroupRects bool
-	GcCompactAll bool
-	DebugFlashStyleColorIdx imgui.Col
-	ColorStack ImVector_ImGuiColorMod
-	StyleVarStack ImVector_ImGuiStyleMod
-	FontStack ImVector_ImFontStackData
-	FocusScopeStack ImVector_ImGuiFocusScopeData
-	ItemFlagsStack ImVector_ImGuiItemFlags
-	GroupStack ImVector_ImGuiGroupData
-	OpenPopupStack ImVector_ImGuiPopupData
-	BeginPopupStack ImVector_ImGuiPopupData
-	TreeNodeStack ImVector_ImGuiTreeNodeStackData
-	Viewports ImVector_ImGuiViewportPPtr
-	CurrentViewport &imgui.ViewportP
-	MouseViewport &imgui.ViewportP
-	MouseLastHoveredViewport &imgui.ViewportP
-	PlatformLastFocusedViewportId imgui.ID
-	FallbackMonitor imgui.PlatformMonitor
-	PlatformMonitorsFullWorkRect ImRect_c
-	ViewportCreatedCount i32
-	PlatformWindowsCreatedCount i32
-	ViewportFocusedStampCount i32
-	NavCursorVisible bool
-	NavHighlightItemUnderNav bool
-	NavMousePosDirty bool
-	NavIdIsAlive bool
-	NavId imgui.ID
-	NavWindow &imgui.Window
-	NavFocusScopeId imgui.ID
-	NavLayer imgui.NavLayer
-	NavIdItemFlags imgui.ItemFlags
-	NavActivateId imgui.ID
-	NavActivateDownId imgui.ID
-	NavActivatePressedId imgui.ID
-	NavActivateFlags imgui.ActivateFlags
-	NavFocusRoute ImVector_ImGuiFocusScopeData
-	NavHighlightActivatedId imgui.ID
-	NavHighlightActivatedTimer f32
-	NavOpenContextMenuItemId imgui.ID
-	NavOpenContextMenuWindowId imgui.ID
-	NavNextActivateId imgui.ID
-	NavNextActivateFlags imgui.ActivateFlags
-	NavInputSource imgui.InputSource
-	NavLastValidSelectionUserData imgui.SelectionUserData
-	NavCursorHideFrames i8
-	NavAnyRequest bool
-	NavInitRequest bool
-	NavInitRequestFromMove bool
-	NavInitResult imgui.NavItemData
-	NavMoveSubmitted bool
-	NavMoveScoringItems bool
-	NavMoveForwardToNextFrame bool
-	NavMoveFlags imgui.NavMoveFlags
-	NavMoveScrollFlags imgui.ScrollFlags
-	NavMoveKeyMods imgui.KeyChord
-	NavMoveDir imgui.Dir
-	NavMoveDirForDebug imgui.Dir
-	NavMoveClipDir imgui.Dir
-	NavScoringRect ImRect_c
-	NavScoringNoClipRect ImRect_c
-	NavScoringDebugCount i32
-	NavTabbingDir i32
-	NavTabbingCounter i32
-	NavMoveResultLocal imgui.NavItemData
-	NavMoveResultLocalVisible imgui.NavItemData
-	NavMoveResultOther imgui.NavItemData
-	NavTabbingResultFirst imgui.NavItemData
-	NavJustMovedFromFocusScopeId imgui.ID
-	NavJustMovedToId imgui.ID
-	NavJustMovedToFocusScopeId imgui.ID
-	NavJustMovedToKeyMods imgui.KeyChord
-	NavJustMovedToIsTabbing bool
-	NavJustMovedToHasSelectionData bool
-	ConfigNavEnableTabbing bool
-	ConfigNavWindowingWithGamepad bool
-	ConfigNavWindowingKeyNext imgui.KeyChord
-	ConfigNavWindowingKeyPrev imgui.KeyChord
-	NavWindowingTarget &imgui.Window
-	NavWindowingTargetAnim &imgui.Window
-	NavWindowingListWindow &imgui.Window
-	NavWindowingTimer f32
-	NavWindowingHighlightAlpha f32
-	NavWindowingInputSource imgui.InputSource
-	NavWindowingToggleLayer bool
-	NavWindowingToggleKey imgui.Key
-	NavWindowingAccumDeltaPos ImVec2_c
-	NavWindowingAccumDeltaSize ImVec2_c
-	DimBgRatio f32
-	DragDropActive bool
-	DragDropWithinSource bool
-	DragDropWithinTarget bool
-	DragDropSourceFlags imgui.DragDropFlags
-	DragDropSourceFrameCount i32
-	DragDropMouseButton i32
-	DragDropPayload imgui.Payload
-	DragDropTargetRect ImRect_c
-	DragDropTargetClipRect ImRect_c
-	DragDropTargetId imgui.ID
-	DragDropTargetFullViewport imgui.ID
-	DragDropAcceptFlagsCurr imgui.DragDropFlags
-	DragDropAcceptFlagsPrev imgui.DragDropFlags
-	DragDropAcceptIdCurrRectSurface f32
-	DragDropAcceptIdCurr imgui.ID
-	DragDropAcceptIdPrev imgui.ID
-	DragDropAcceptFrameCount i32
-	DragDropHoldJustPressedId imgui.ID
-	DragDropPayloadBufHeap ImVector_unsigned_char
-	DragDropPayloadBufLocal [16]u8
-	ClipperTempDataStacked i32
-	ClipperTempData ImVector_ImGuiListClipperData
-	CurrentTable &imgui.Table
-	DebugBreakInTable imgui.ID
-	TablesTempDataStacked i32
-	TablesTempData ImVector_ImGuiTableTempData
-	Tables ImPool_ImGuiTable
-	TablesLastTimeActive ImVector_float
-	DrawChannelsTempMergeBuffer ImVector_ImDrawChannel
-	CurrentTabBar &imgui.TabBar
-	TabBars ImPool_ImGuiTabBar
-	CurrentTabBarStack ImVector_ImGuiPtrOrIndex
-	ShrinkWidthBuffer ImVector_ImGuiShrinkWidthItem
-	BoxSelectState imgui.BoxSelectState
-	CurrentMultiSelect &imgui.MultiSelectTempData
-	MultiSelectTempDataStacked i32
-	MultiSelectTempData ImVector_ImGuiMultiSelectTempData
-	MultiSelectStorage ImPool_ImGuiMultiSelectState
-	HoverItemDelayId imgui.ID
-	HoverItemDelayIdPreviousFrame imgui.ID
-	HoverItemDelayTimer f32
-	HoverItemDelayClearTimer f32
-	HoverItemUnlockedStationaryId imgui.ID
-	HoverWindowUnlockedStationaryId imgui.ID
-	MouseCursor imgui.MouseCursor
-	MouseStationaryTimer f32
-	MouseLastValidPos ImVec2_c
-	InputTextState imgui.InputTextState
-	InputTextLineIndex imgui.TextIndex
-	InputTextDeactivatedState imgui.InputTextDeactivatedState
-	InputTextPasswordFontBackupBaked imgui.ImFontBaked
-	InputTextPasswordFontBackupFlags imgui.ImFontFlags
-	InputTextReactivateId imgui.ID
-	TempInputId imgui.ID
-	DataTypeZeroValue imgui.DataTypeStorage
-	BeginMenuDepth i32
-	BeginComboDepth i32
-	ColorEditOptions imgui.ColorEditFlags
-	ColorEditCurrentID imgui.ID
-	ColorEditSavedID imgui.ID
-	ColorEditSavedHue f32
-	ColorEditSavedSat f32
-	ColorEditSavedColor u32
-	ColorPickerRef ImVec4_c
-	ComboPreviewData imgui.ComboPreviewData
-	WindowResizeBorderExpectedRect ImRect_c
-	WindowResizeRelativeMode bool
-	ScrollbarSeekMode i16
-	ScrollbarClickDeltaToGrabCenter f32
-	SliderGrabClickOffset f32
-	SliderCurrentAccum f32
-	SliderCurrentAccumDirty bool
-	DragCurrentAccumDirty bool
-	DragCurrentAccum f32
-	DragSpeedDefaultRatio f32
-	DisabledAlphaBackup f32
-	DisabledStackSize i16
-	TooltipOverrideCount i16
-	TooltipPreviousWindow &imgui.Window
-	ClipboardHandlerData ImVector_char
-	MenusIdSubmittedThisFrame ImVector_ImGuiID
-	TypingSelectState imgui.TypingSelectState
-	PlatformImeData imgui.PlatformImeData
-	PlatformImeDataPrev imgui.PlatformImeData
-	UserTextures ImVector_ImTextureDataPtr
-	DockContext imgui.DockContext
-	DockNodeWindowMenuHandler fn (&imgui.Context, &imgui.DockNode, &imgui.TabBar)
-	SettingsLoaded bool
-	SettingsDirtyTimer f32
-	SettingsIniData imgui.TextBuffer
-	SettingsHandlers ImVector_ImGuiSettingsHandler
-	SettingsWindows ImChunkStream_ImGuiWindowSettings
-	SettingsTables ImChunkStream_ImGuiTableSettings
-	Hooks ImVector_ImGuiContextHook
-	HookIdNext imgui.ID
-	DemoMarkerCallback imgui.DemoMarkerCallback
-	LocalizationTable [13]&char
-	LogEnabled bool
-	LogLineFirstItem bool
-	LogFlags imgui.LogFlags
-	LogWindow &imgui.Window
-	LogFile ImFileHandle
-	LogBuffer imgui.TextBuffer
-	LogNextPrefix &char
-	LogNextSuffix &char
-	LogLinePosY f32
-	LogDepthRef i32
-	LogDepthToExpand i32
-	LogDepthToExpandDefault i32
-	ErrorCallback imgui.ErrorCallback
-	ErrorCallbackUserData voidptr
-	ErrorTooltipLockedPos ImVec2_c
-	ErrorFirst bool
-	ErrorCountCurrentFrame i32
-	StackSizesInNewFrame imgui.ErrorRecoveryState
-	StackSizesInBeginForCurrentWindow &imgui.ErrorRecoveryState
-	DebugDrawIdConflictsCount i32
-	DebugLogFlags imgui.DebugLogFlags
-	DebugLogBuf imgui.TextBuffer
-	DebugLogIndex imgui.TextIndex
-	DebugLogSkippedErrors i32
-	DebugLogAutoDisableFlags imgui.DebugLogFlags
-	DebugLogAutoDisableFrames u8
-	DebugLocateFrames u8
-	DebugBreakInLocateId bool
-	DebugBreakKeyChord imgui.KeyChord
-	DebugBeginReturnValueCullDepth i8
-	DebugItemPickerActive bool
-	DebugItemPickerMouseButton u8
-	DebugItemPickerBreakId imgui.ID
-	DebugFlashStyleColorTime f32
-	DebugFlashStyleColorBackup ImVec4_c
-	DebugMetricsConfig imgui.MetricsConfig
-	DebugItemPathQuery imgui.DebugItemPathQuery
-	DebugIDStackTool imgui.IDStackTool
-	DebugAllocInfo imgui.DebugAllocInfo
-	DebugHoveredDockNode &imgui.DockNode
-	FramerateSecPerFrame [60]f32
-	FramerateSecPerFrameIdx i32
-	FramerateSecPerFrameCount i32
-	FramerateSecPerFrameAccum f32
-	WantCaptureMouseNextFrame i32
-	WantCaptureKeyboardNextFrame i32
-	WantTextInputNextFrame i32
-	TempBuffer ImVector_char
-	TempKeychordName [64]i8
-}
-
-
-pub type ImGuiWindowTempData = C.ImGuiWindowTempData
-@[typedef]
-pub struct C.ImGuiWindowTempData {
-pub mut:
-	CursorPos ImVec2_c
-	CursorPosPrevLine ImVec2_c
-	CursorStartPos ImVec2_c
-	CursorMaxPos ImVec2_c
-	IdealMaxPos ImVec2_c
-	CurrLineSize ImVec2_c
-	PrevLineSize ImVec2_c
-	CurrLineTextBaseOffset f32
-	PrevLineTextBaseOffset f32
-	IsSameLine bool
-	IsSetPos bool
-	Indent ImVec1
-	ColumnsOffset ImVec1
-	GroupOffset ImVec1
-	CursorStartPosLossyness ImVec2_c
-	NavLayerCurrent imgui.NavLayer
-	NavLayersActiveMask i16
-	NavLayersActiveMaskNext i16
-	NavIsScrollPushableX bool
-	NavHideHighlightOneFrame bool
-	NavWindowHasScrollY bool
-	MenuBarAppending bool
-	MenuBarOffset ImVec2_c
-	MenuColumns imgui.MenuColumns
-	TreeDepth i32
-	TreeHasStackDataDepthMask u32
-	TreeRecordsClippedNodesY2Mask u32
-	ChildWindows ImVector_ImGuiWindowPtr
-	StateStorage &imgui.Storage
-	CurrentColumns &imgui.OldColumns
-	CurrentTableIdx i32
-	LayoutType imgui.LayoutType
-	ParentLayoutType imgui.LayoutType
-	ModalDimBgColor u32
-	WindowItemStatusFlags imgui.ItemStatusFlags
-	ChildItemStatusFlags imgui.ItemStatusFlags
-	DockTabItemStatusFlags imgui.ItemStatusFlags
-	DockTabItemRect ImRect_c
-	ItemWidth f32
-	ItemWidthDefault f32
-	TextWrapPos f32
-	ItemWidthStack ImVector_float
-	TextWrapPosStack ImVector_float
-}
-
-
-pub type ImVector_ImGuiOldColumns = C.ImVector_ImGuiOldColumns
-@[typedef]
-pub struct C.ImVector_ImGuiOldColumns {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.OldColumns
-}
-
-
-pub type ImGuiWindow = C.ImGuiWindow
-@[typedef]
-pub struct C.ImGuiWindow {
-pub mut:
-	Ctx &imgui.Context
-	Name &char
-	ID imgui.ID
-	Flags imgui.WindowFlags
-	FlagsPreviousFrame imgui.WindowFlags
-	ChildFlags imgui.ChildFlags
-	WindowClass imgui.WindowClass
-	Viewport &imgui.ViewportP
-	ViewportId imgui.ID
-	ViewportPos ImVec2_c
-	ViewportAllowPlatformMonitorExtend i32
-	Pos ImVec2_c
-	Size ImVec2_c
-	SizeFull ImVec2_c
-	ContentSize ImVec2_c
-	ContentSizeIdeal ImVec2_c
-	ContentSizeExplicit ImVec2_c
-	WindowPadding ImVec2_c
-	WindowRounding f32
-	WindowBorderSize f32
-	TitleBarHeight f32
-	MenuBarHeight f32
-	DecoOuterSizeX1 f32
-	DecoOuterSizeY1 f32
-	DecoOuterSizeX2 f32
-	DecoOuterSizeY2 f32
-	DecoInnerSizeX1 f32
-	DecoInnerSizeY1 f32
-	NameBufLen i32
-	MoveId imgui.ID
-	TabId imgui.ID
-	ChildId imgui.ID
-	PopupId imgui.ID
-	Scroll ImVec2_c
-	ScrollMax ImVec2_c
-	ScrollTarget ImVec2_c
-	ScrollTargetCenterRatio ImVec2_c
-	ScrollTargetEdgeSnapDist ImVec2_c
-	ScrollbarSizes ImVec2_c
-	ScrollbarX bool
-	ScrollbarY bool
-	ScrollbarXStabilizeEnabled bool
-	ScrollbarXStabilizeToggledHistory u8
-	ViewportOwned bool
-	Active bool
-	WasActive bool
-	WriteAccessed bool
-	Collapsed bool
-	WantCollapseToggle bool
-	SkipItems bool
-	SkipRefresh bool
-	Appearing bool
-	Hidden bool
-	IsFallbackWindow bool
-	IsExplicitChild bool
-	HasCloseButton bool
-	ResizeBorderHovered i8
-	ResizeBorderHeld i8
-	BeginCount i16
-	BeginCountPreviousFrame i16
-	BeginOrderWithinParent i16
-	BeginOrderWithinContext i16
-	FocusOrder i16
-	AutoPosLastDirection imgui.Dir
-	AutoFitFramesX i8
-	AutoFitFramesY i8
-	AutoFitOnlyGrows bool
-	HiddenFramesCanSkipItems i8
-	HiddenFramesCannotSkipItems i8
-	HiddenFramesForRenderOnly i8
-	DisableInputsFrames i8
-	BgClickFlags imgui.WindowBgClickFlags
-	SetWindowPosAllowFlags imgui.Cond
-	SetWindowSizeAllowFlags imgui.Cond
-	SetWindowCollapsedAllowFlags imgui.Cond
-	SetWindowDockAllowFlags imgui.Cond
-	SetWindowPosVal ImVec2_c
-	SetWindowPosPivot ImVec2_c
-	IDStack ImVector_ImGuiID
-	DC imgui.WindowTempData
-	OuterRectClipped ImRect_c
-	InnerRect ImRect_c
-	InnerClipRect ImRect_c
-	WorkRect ImRect_c
-	ParentWorkRect ImRect_c
-	ClipRect ImRect_c
-	ContentRegionRect ImRect_c
-	HitTestHoleSize ImVec2ih
-	HitTestHoleOffset ImVec2ih
-	LastFrameActive i32
-	LastFrameJustFocused i32
-	LastTimeActive f32
-	StateStorage imgui.Storage
-	ColumnsStorage ImVector_ImGuiOldColumns
-	FontWindowScale f32
-	FontWindowScaleParents f32
-	FontRefSize f32
-	SettingsOffset i32
-	DrawList &imgui.ImDrawList
-	DrawListInst imgui.ImDrawList
-	ParentWindow &imgui.Window
-	ParentWindowInBeginStack &imgui.Window
-	RootWindow &imgui.Window
-	RootWindowPopupTree &imgui.Window
-	RootWindowDockTree &imgui.Window
-	RootWindowForTitleBarHighlight &imgui.Window
-	RootWindowForNav &imgui.Window
-	ParentWindowForFocusRoute &imgui.Window
-	NavLastChildNavWindow &imgui.Window
-	NavLastIds [2]imgui.ID
-	NavRectRel [2]ImRect_c
-	NavPreferredScoringPosRel [2]ImVec2_c
-	NavRootFocusScopeId imgui.ID
-	MemoryDrawListIdxCapacity i32
-	MemoryDrawListVtxCapacity i32
-	MemoryCompacted bool
-	DockIsActive bool
-	DockNodeIsVisible bool
-	DockTabIsVisible bool
-	DockTabWantClose bool
-	DockOrder i16
-	DockStyle imgui.WindowDockStyle
-	DockNode &imgui.DockNode
-	DockNodeAsHost &imgui.DockNode
-	DockId imgui.ID
-}
+pub type ImGuiDemoMarkerCallback = fn(&char, i32, &char)
+
+pub type ImVector_ImFontAtlasPtr = imgui.ImVector_ImFontAtlasPtr
+
+pub type ImVector_ImGuiInputEvent = imgui.ImVector_InputEvent
+
+pub type ImVector_ImGuiWindowStackData = imgui.ImVector_WindowStackData
+
+pub type ImVector_ImGuiColorMod = imgui.ImVector_ColorMod
+
+pub type ImVector_ImGuiStyleMod = imgui.ImVector_StyleMod
+
+pub type ImVector_ImFontStackData = imgui.ImVector_ImFontStackData
+
+pub type ImVector_ImGuiFocusScopeData = imgui.ImVector_FocusScopeData
+
+pub type ImVector_ImGuiItemFlags = imgui.ImVector_ItemFlags
+
+pub type ImVector_ImGuiGroupData = imgui.ImVector_GroupData
+
+pub type ImVector_ImGuiPopupData = imgui.ImVector_PopupData
+
+pub type ImVector_ImGuiTreeNodeStackData = imgui.ImVector_TreeNodeStackData
+
+pub type ImVector_ImGuiViewportPPtr = imgui.ImVector_ViewportPPtr
+
+pub type ImVector_unsigned_char = imgui.ImVector_unsigned_char
+
+pub type ImVector_ImGuiListClipperData = imgui.ImVector_ListClipperData
+
+pub type ImVector_ImGuiTableTempData = imgui.ImVector_TableTempData
+
+pub type ImVector_ImGuiTable = imgui.ImVector_Table
+
+pub type ImPool_ImGuiTable = imgui.ImPool_Table
+
+pub type ImVector_ImGuiTabBar = imgui.ImVector_TabBar
+
+pub type ImPool_ImGuiTabBar = imgui.ImPool_TabBar
+
+pub type ImVector_ImGuiPtrOrIndex = imgui.ImVector_PtrOrIndex
+
+pub type ImVector_ImGuiShrinkWidthItem = imgui.ImVector_ShrinkWidthItem
+
+pub type ImVector_ImGuiMultiSelectTempData = imgui.ImVector_MultiSelectTempData
+
+pub type ImVector_ImGuiMultiSelectState = imgui.ImVector_MultiSelectState
+
+pub type ImPool_ImGuiMultiSelectState = imgui.ImPool_MultiSelectState
+
+pub type ImVector_ImGuiID = imgui.ImVector_ID
+
+pub type ImVector_ImGuiSettingsHandler = imgui.ImVector_SettingsHandler
+
+pub type ImChunkStream_ImGuiWindowSettings = imgui.ImChunkStream_WindowSettings
+
+pub type ImChunkStream_ImGuiTableSettings = imgui.ImChunkStream_TableSettings
+
+pub type ImVector_ImGuiContextHook = imgui.ImVector_ContextHook
+
+pub type ImGuiContext = imgui.Context
+
+pub type ImGuiWindowTempData = imgui.WindowTempData
+
+pub type ImVector_ImGuiOldColumns = imgui.ImVector_OldColumns
+
+pub type ImGuiWindow = imgui.Window
 
 
 pub enum ImGuiTabBarFlagsPrivate_ {
@@ -4482,510 +2008,59 @@ pub enum ImGuiTabItemFlagsPrivate_ {
  unsorted                           = 1 << 23
 }
 
+pub type ImGuiTabItem = imgui.TabItem
 
-pub type ImGuiTabItem = C.ImGuiTabItem
-@[typedef]
-pub struct C.ImGuiTabItem {
-pub mut:
-	ID imgui.ID
-	Flags imgui.TabItemFlags
-	Window &imgui.Window
-	LastFrameVisible i32
-	LastFrameSelected i32
-	Offset f32
-	Width f32
-	ContentWidth f32
-	RequestedWidth f32
-	NameOffset i32
-	BeginOrder i16
-	IndexDuringLayout i16
-	WantClose bool
-}
+pub type ImVector_ImGuiTabItem = imgui.ImVector_TabItem
 
+pub type ImGuiTabBar = imgui.TabBar
 
-pub type ImVector_ImGuiTabItem = C.ImVector_ImGuiTabItem
-@[typedef]
-pub struct C.ImVector_ImGuiTabItem {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.TabItem
-}
+pub type ImGuiTableColumn = imgui.TableColumn
 
+pub type ImGuiTableCellData = imgui.TableCellData
 
-pub type ImGuiTabBar = C.ImGuiTabBar
-@[typedef]
-pub struct C.ImGuiTabBar {
-pub mut:
-	Window &imgui.Window
-	Tabs ImVector_ImGuiTabItem
-	Flags imgui.TabBarFlags
-	ID imgui.ID
-	SelectedTabId imgui.ID
-	NextSelectedTabId imgui.ID
-	NextScrollToTabId imgui.ID
-	VisibleTabId imgui.ID
-	CurrFrameVisible i32
-	PrevFrameVisible i32
-	BarRect ImRect_c
-	BarRectPrevWidth f32
-	CurrTabsContentsHeight f32
-	PrevTabsContentsHeight f32
-	WidthAllTabs f32
-	WidthAllTabsIdeal f32
-	ScrollingAnim f32
-	ScrollingTarget f32
-	ScrollingTargetDistToVisibility f32
-	ScrollingSpeed f32
-	ScrollingRectMinX f32
-	ScrollingRectMaxX f32
-	SeparatorMinX f32
-	SeparatorMaxX f32
-	ReorderRequestTabId imgui.ID
-	ReorderRequestOffset i16
-	BeginCount i8
-	WantLayout bool
-	VisibleTabWasSubmitted bool
-	TabsAddedNew bool
-	ScrollButtonEnabled bool
-	TabsActiveCount i16
-	LastTabItemIdx i16
-	ItemSpacingY f32
-	FramePadding ImVec2_c
-	BackupCursorPos ImVec2_c
-	TabsNames imgui.TextBuffer
-}
+pub type ImGuiTableHeaderData = imgui.TableHeaderData
 
+pub type ImGuiTableInstanceData = imgui.TableInstanceData
 
-pub type ImGuiTableColumn = C.ImGuiTableColumn
-@[typedef]
-pub struct C.ImGuiTableColumn {
-pub mut:
-	Flags imgui.TableColumnFlags
-	WidthGiven f32
-	MinX f32
-	MaxX f32
-	WidthRequest f32
-	WidthAuto f32
-	WidthMax f32
-	StretchWeight f32
-	InitStretchWeightOrWidth f32
-	ClipRect ImRect_c
-	UserID imgui.ID
-	WorkMinX f32
-	WorkMaxX f32
-	ItemWidth f32
-	ContentMaxXFrozen f32
-	ContentMaxXUnfrozen f32
-	ContentMaxXHeadersUsed f32
-	ContentMaxXHeadersIdeal f32
-	NameOffset i16
-	DisplayOrder imgui.TableColumnIdx
-	IndexWithinEnabledSet imgui.TableColumnIdx
-	PrevEnabledColumn imgui.TableColumnIdx
-	NextEnabledColumn imgui.TableColumnIdx
-	SortOrder imgui.TableColumnIdx
-	DrawChannelCurrent imgui.TableDrawChannelIdx
-	DrawChannelFrozen imgui.TableDrawChannelIdx
-	DrawChannelUnfrozen imgui.TableDrawChannelIdx
-	IsEnabled bool
-	IsUserEnabled bool
-	IsUserEnabledNextFrame bool
-	IsVisibleX bool
-	IsVisibleY bool
-	IsRequestOutput bool
-	IsSkipItems bool
-	IsPreserveWidthAuto bool
-	NavLayerCurrent i8
-	AutoFitQueue u8
-	CannotSkipItemsQueue u8
-	SortDirection u8
-	SortDirectionsAvailCount u8
-	SortDirectionsAvailMask u8
-	SortDirectionsAvailList u8
-}
+pub type ImSpan_ImGuiTableColumn = imgui.ImSpan_TableColumn
 
+pub type ImSpan_ImGuiTableColumnIdx = imgui.ImSpan_TableColumnIdx
 
-pub type ImGuiTableCellData = C.ImGuiTableCellData
-@[typedef]
-pub struct C.ImGuiTableCellData {
-pub mut:
-	BgColor u32
-	Column imgui.TableColumnIdx
-}
+pub type ImSpan_ImGuiTableCellData = imgui.ImSpan_TableCellData
 
+pub type ImVector_ImGuiTableInstanceData = imgui.ImVector_TableInstanceData
 
-pub type ImGuiTableHeaderData = C.ImGuiTableHeaderData
-@[typedef]
-pub struct C.ImGuiTableHeaderData {
-pub mut:
-	Index imgui.TableColumnIdx
-	TextColor u32
-	BgColor0 u32
-	BgColor1 u32
-}
+pub type ImVector_ImGuiTableColumnSortSpecs = imgui.ImVector_TableColumnSortSpecs
 
+pub type ImGuiTable = imgui.Table
 
-pub type ImGuiTableInstanceData = C.ImGuiTableInstanceData
-@[typedef]
-pub struct C.ImGuiTableInstanceData {
-pub mut:
-	TableInstanceID imgui.ID
-	LastOuterHeight f32
-	LastTopHeadersRowHeight f32
-	LastFrozenHeight f32
-	HoveredRowLast i32
-	HoveredRowNext i32
-}
+pub type ImVector_ImGuiTableHeaderData = imgui.ImVector_TableHeaderData
 
+pub type ImGuiTableTempData = imgui.TableTempData
 
-pub type ImSpan_ImGuiTableColumn = C.ImSpan_ImGuiTableColumn
-@[typedef]
-pub struct C.ImSpan_ImGuiTableColumn {
-pub mut:
-	Data &imgui.TableColumn
-	DataEnd &imgui.TableColumn
-}
+pub type ImGuiTableColumnSettings = imgui.TableColumnSettings
 
+pub type ImGuiTableSettings = imgui.TableSettings
 
-pub type ImSpan_ImGuiTableColumnIdx = C.ImSpan_ImGuiTableColumnIdx
-@[typedef]
-pub struct C.ImSpan_ImGuiTableColumnIdx {
-pub mut:
-	Data &imgui.TableColumnIdx
-	DataEnd &imgui.TableColumnIdx
-}
+pub type ImFontLoader = imgui.ImFontLoader
 
+pub type ImFontAtlasRectEntry = imgui.ImFontAtlasRectEntry
 
-pub type ImSpan_ImGuiTableCellData = C.ImSpan_ImGuiTableCellData
-@[typedef]
-pub struct C.ImSpan_ImGuiTableCellData {
-pub mut:
-	Data &imgui.TableCellData
-	DataEnd &imgui.TableCellData
-}
-
-
-pub type ImVector_ImGuiTableInstanceData = C.ImVector_ImGuiTableInstanceData
-@[typedef]
-pub struct C.ImVector_ImGuiTableInstanceData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.TableInstanceData
-}
-
-
-pub type ImVector_ImGuiTableColumnSortSpecs = C.ImVector_ImGuiTableColumnSortSpecs
-@[typedef]
-pub struct C.ImVector_ImGuiTableColumnSortSpecs {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.TableColumnSortSpecs
-}
-
-
-pub type ImGuiTable = C.ImGuiTable
-@[typedef]
-pub struct C.ImGuiTable {
-pub mut:
-	ID imgui.ID
-	Flags imgui.TableFlags
-	RawData voidptr
-	TempData &imgui.TableTempData
-	Columns ImSpan_ImGuiTableColumn
-	DisplayOrderToIndex ImSpan_ImGuiTableColumnIdx
-	RowCellData ImSpan_ImGuiTableCellData
-	EnabledMaskByDisplayOrder ImBitArrayPtr
-	EnabledMaskByIndex ImBitArrayPtr
-	VisibleMaskByIndex ImBitArrayPtr
-	SettingsLoadedFlags imgui.TableFlags
-	SettingsOffset i32
-	LastFrameActive i32
-	ColumnsCount i32
-	CurrentRow i32
-	CurrentColumn i32
-	InstanceCurrent i16
-	InstanceInteracted i16
-	RowPosY1 f32
-	RowPosY2 f32
-	RowMinHeight f32
-	RowCellPaddingY f32
-	RowTextBaseline f32
-	RowIndentOffsetX f32
-	RowFlags imgui.TableRowFlags
-	LastRowFlags imgui.TableRowFlags
-	RowBgColorCounter i32
-	RowBgColor [2]u32
-	BorderColorStrong u32
-	BorderColorLight u32
-	BorderX1 f32
-	BorderX2 f32
-	HostIndentX f32
-	MinColumnWidth f32
-	OuterPaddingX f32
-	CellPaddingX f32
-	CellSpacingX1 f32
-	CellSpacingX2 f32
-	InnerWidth f32
-	ColumnsGivenWidth f32
-	ColumnsAutoFitWidth f32
-	ColumnsStretchSumWeights f32
-	ResizedColumnNextWidth f32
-	ResizeLockMinContentsX2 f32
-	RefScale f32
-	AngledHeadersHeight f32
-	AngledHeadersSlope f32
-	OuterRect ImRect_c
-	InnerRect ImRect_c
-	WorkRect ImRect_c
-	InnerClipRect ImRect_c
-	BgClipRect ImRect_c
-	Bg0ClipRectForDrawCmd ImRect_c
-	Bg2ClipRectForDrawCmd ImRect_c
-	HostClipRect ImRect_c
-	HostBackupInnerClipRect ImRect_c
-	OuterWindow &imgui.Window
-	InnerWindow &imgui.Window
-	ColumnsNames imgui.TextBuffer
-	DrawSplitter &imgui.ImDrawListSplitter
-	InstanceDataFirst imgui.TableInstanceData
-	InstanceDataExtra ImVector_ImGuiTableInstanceData
-	SortSpecsSingle imgui.TableColumnSortSpecs
-	SortSpecsMulti ImVector_ImGuiTableColumnSortSpecs
-	SortSpecs imgui.TableSortSpecs
-	SortSpecsCount imgui.TableColumnIdx
-	ColumnsEnabledCount imgui.TableColumnIdx
-	ColumnsEnabledFixedCount imgui.TableColumnIdx
-	DeclColumnsCount imgui.TableColumnIdx
-	AngledHeadersCount imgui.TableColumnIdx
-	HoveredColumnBody imgui.TableColumnIdx
-	HoveredColumnBorder imgui.TableColumnIdx
-	HighlightColumnHeader imgui.TableColumnIdx
-	AutoFitSingleColumn imgui.TableColumnIdx
-	ResizedColumn imgui.TableColumnIdx
-	LastResizedColumn imgui.TableColumnIdx
-	HeldHeaderColumn imgui.TableColumnIdx
-	LastHeldHeaderColumn imgui.TableColumnIdx
-	ReorderColumn imgui.TableColumnIdx
-	ReorderColumnDstOrder imgui.TableColumnIdx
-	LeftMostEnabledColumn imgui.TableColumnIdx
-	RightMostEnabledColumn imgui.TableColumnIdx
-	LeftMostStretchedColumn imgui.TableColumnIdx
-	RightMostStretchedColumn imgui.TableColumnIdx
-	ContextPopupColumn imgui.TableColumnIdx
-	FreezeRowsRequest imgui.TableColumnIdx
-	FreezeRowsCount imgui.TableColumnIdx
-	FreezeColumnsRequest imgui.TableColumnIdx
-	FreezeColumnsCount imgui.TableColumnIdx
-	RowCellDataCurrent imgui.TableColumnIdx
-	DummyDrawChannel imgui.TableDrawChannelIdx
-	Bg2DrawChannelCurrent imgui.TableDrawChannelIdx
-	Bg2DrawChannelUnfrozen imgui.TableDrawChannelIdx
-	NavLayer i8
-	IsLayoutLocked bool
-	IsInsideRow bool
-	IsInitializing bool
-	IsSortSpecsDirty bool
-	IsUsingHeaders bool
-	IsContextPopupOpen bool
-	DisableDefaultContextMenu bool
-	IsSettingsRequestLoad bool
-	IsSettingsDirty bool
-	IsDefaultDisplayOrder bool
-	IsResetAllRequest bool
-	IsResetDisplayOrderRequest bool
-	IsUnfrozenRows bool
-	IsDefaultSizingPolicy bool
-	IsActiveIdAliveBeforeTable bool
-	IsActiveIdInTable bool
-	HasScrollbarYCurr bool
-	HasScrollbarYPrev bool
-	MemoryCompacted bool
-	HostSkipItems bool
-}
-
-
-pub type ImVector_ImGuiTableHeaderData = C.ImVector_ImGuiTableHeaderData
-@[typedef]
-pub struct C.ImVector_ImGuiTableHeaderData {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.TableHeaderData
-}
-
-
-pub type ImGuiTableTempData = C.ImGuiTableTempData
-@[typedef]
-pub struct C.ImGuiTableTempData {
-pub mut:
-	WindowID imgui.ID
-	TableIndex i32
-	LastTimeActive f32
-	AngledHeadersExtraWidth f32
-	AngledHeadersRequests ImVector_ImGuiTableHeaderData
-	UserOuterSize ImVec2_c
-	DrawSplitter imgui.ImDrawListSplitter
-	HostBackupWorkRect ImRect_c
-	HostBackupParentWorkRect ImRect_c
-	HostBackupPrevLineSize ImVec2_c
-	HostBackupCurrLineSize ImVec2_c
-	HostBackupCursorMaxPos ImVec2_c
-	HostBackupColumnsOffset ImVec1
-	HostBackupItemWidth f32
-	HostBackupItemWidthStackSize i32
-}
-
-
-pub type ImGuiTableColumnSettings = C.ImGuiTableColumnSettings
-@[typedef]
-pub struct C.ImGuiTableColumnSettings {
-pub mut:
-	WidthOrWeight f32
-	UserID imgui.ID
-	Index imgui.TableColumnIdx
-	DisplayOrder imgui.TableColumnIdx
-	SortOrder imgui.TableColumnIdx
-	SortDirection u8
-	IsEnabled i8
-	IsStretch u8
-}
-
-
-pub type ImGuiTableSettings = C.ImGuiTableSettings
-@[typedef]
-pub struct C.ImGuiTableSettings {
-pub mut:
-	ID imgui.ID
-	SaveFlags imgui.TableFlags
-	RefScale f32
-	ColumnsCount imgui.TableColumnIdx
-	ColumnsCountMax imgui.TableColumnIdx
-	WantApply bool
-}
-
-
-pub type ImFontLoader = C.ImFontLoader
-@[typedef]
-pub struct C.ImFontLoader {
-pub mut:
-	Name &char
-	LoaderInit fn (&imgui.ImFontAtlas) bool
-	LoaderShutdown fn (&imgui.ImFontAtlas)
-	FontSrcInit fn (&imgui.ImFontAtlas, &imgui.ImFontConfig) bool
-	FontSrcDestroy fn (&imgui.ImFontAtlas, &imgui.ImFontConfig)
-	FontSrcContainsGlyph fn (&imgui.ImFontAtlas, &imgui.ImFontConfig, u32) bool
-	FontBakedInit fn (&imgui.ImFontAtlas, &imgui.ImFontConfig, &imgui.ImFontBaked, voidptr) bool
-	FontBakedDestroy fn (&imgui.ImFontAtlas, &imgui.ImFontConfig, &imgui.ImFontBaked, voidptr)
-	FontBakedLoadGlyph fn (&imgui.ImFontAtlas, &imgui.ImFontConfig, &imgui.ImFontBaked, voidptr, u32, &imgui.ImFontGlyph, &f32) bool
-	FontBakedSrcLoaderDataSize usize
-}
-
-
-pub type ImFontAtlasRectEntry = C.ImFontAtlasRectEntry
-@[typedef]
-pub struct C.ImFontAtlasRectEntry {
-pub mut:
-	TargetIndex i32
-	Generation u32
-	IsUsed u32
-}
-
-
-pub type ImFontAtlasPostProcessData = C.ImFontAtlasPostProcessData
-@[typedef]
-pub struct C.ImFontAtlasPostProcessData {
-pub mut:
-	FontAtlas &imgui.ImFontAtlas
-	Font &imgui.ImFont
-	FontSrc &imgui.ImFontConfig
-	FontBaked &imgui.ImFontBaked
-	Glyph &imgui.ImFontGlyph
-	Pixels voidptr
-	Format ImTextureFormat
-	Pitch i32
-	Width i32
-	Height i32
-}
+pub type ImFontAtlasPostProcessData = imgui.ImFontAtlasPostProcessData
 
 pub type Stbrp_node_im = C.stbrp_node
 
+pub type Stbrp_context_opaque = imgui.Stbrp_context_opaque
 
-pub type Stbrp_context_opaque = C.Stbrp_context_opaque
-@[typedef]
-pub struct C.Stbrp_context_opaque {
-pub mut:
-	Data [80]i8
-}
+pub type ImVector_stbrp_node_im = imgui.ImVector_stbrp_node_im
 
+pub type ImVector_ImFontAtlasRectEntry = imgui.ImVector_ImFontAtlasRectEntry
 
-pub type ImVector_stbrp_node_im = C.ImVector_stbrp_node_im
-@[typedef]
-pub struct C.ImVector_stbrp_node_im {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &Stbrp_node_im
-}
+pub type ImVector_ImFontBakedPtr = imgui.ImVector_ImFontBakedPtr
 
+pub type ImStableVector_ImFontBaked__32 = imgui.ImStableVector_ImFontBaked__32
 
-pub type ImVector_ImFontAtlasRectEntry = C.ImVector_ImFontAtlasRectEntry
-@[typedef]
-pub struct C.ImVector_ImFontAtlasRectEntry {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &imgui.ImFontAtlasRectEntry
-}
-
-
-pub type ImVector_ImFontBakedPtr = C.ImVector_ImFontBakedPtr
-@[typedef]
-pub struct C.ImVector_ImFontBakedPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&imgui.ImFontBaked
-}
-
-
-pub type ImStableVector_ImFontBaked__32 = C.ImStableVector_ImFontBaked__32
-@[typedef]
-pub struct C.ImStableVector_ImFontBaked__32 {
-pub mut:
-	Size i32
-	Capacity i32
-	Blocks ImVector_ImFontBakedPtr
-}
-
-
-pub type ImTextureRef = C.ImTextureRef
-@[typedef]
-pub struct C.ImTextureRef {
-pub mut:
-	PackContext Stbrp_context_opaque
-	PackNodes ImVector_stbrp_node_im
-	Rects ImVector_ImTextureRect
-	RectsIndex ImVector_ImFontAtlasRectEntry
-	TempBuffer ImVector_unsigned_char
-	RectsIndexFreeListStart i32
-	RectsPackedCount i32
-	RectsPackedSurface i32
-	RectsDiscardedCount i32
-	RectsDiscardedSurface i32
-	FrameCount i32
-	MaxRectSize ImVec2i_c
-	MaxRectBounds ImVec2i_c
-	LockDisableResize bool
-	PreloadedAllGlyphsRanges bool
-	BakedPool ImStableVector_ImFontBaked__32
-	BakedMap imgui.Storage
-	BakedDiscardedCount i32
-	PackIdMouseCursors imgui.ImFontAtlasRectId
-	PackIdLinesTexData imgui.ImFontAtlasRectId
-}
+pub type ImTextureRef = imgui.ImTextureRef
 
 /////////////////////////hand written functions
 // no appendfV
@@ -5046,40 +2121,75 @@ pub mut:
 pub const implot_auto = -1
 
 pub type ImAxis = i32
+
 pub type Prop = i32
+
 pub type Flags = i32
+
 pub type AxisFlags = i32
+
 pub type SubplotFlags = i32
+
 pub type LegendFlags = i32
+
 pub type MouseTextFlags = i32
+
 pub type DragToolFlags = i32
+
 pub type ColormapScaleFlags = i32
+
 pub type ItemFlags = i32
+
 pub type LineFlags = i32
+
 pub type ScatterFlags = i32
+
 pub type BubblesFlags = i32
+
 pub type PolygonFlags = i32
+
 pub type StairsFlags = i32
+
 pub type ShadedFlags = i32
+
 pub type BarsFlags = i32
+
 pub type BarGroupsFlags = i32
+
 pub type ErrorBarsFlags = i32
+
 pub type StemsFlags = i32
+
 pub type InfLinesFlags = i32
+
 pub type PieChartFlags = i32
+
 pub type HeatmapFlags = i32
+
 pub type HistogramFlags = i32
+
 pub type DigitalFlags = i32
+
 pub type ImageFlags = i32
+
 pub type TextFlags = i32
+
 pub type DummyFlags = i32
+
 pub type Cond = i32
+
 pub type Col = i32
+
 pub type StyleVar = i32
+
 pub type Scale = i32
+
 pub type Marker = i32
+
 pub type Colormap = i32
+
 pub type Location = i32
+
 pub type Bin = i32
 
 
@@ -5551,11 +2661,11 @@ pub mut:
 	ZoomRate f32
 }
 
-pub type Formatter = fn (f64, &char, i32, voidptr) i32
+pub type Formatter = fn(f64, &char, i32, voidptr) i32
 
-pub type Getter = fn (i32, voidptr) Point_c
+pub type Getter = fn(i32, voidptr) Point_c
 
-pub type Transform = fn (f64, voidptr) f64
+pub type Transform = fn(f64, voidptr) f64
 
 pub const implot_min_time = f64(0)
 
@@ -5564,8 +2674,11 @@ pub const implot_max_time = f64(32503680000)
 pub const implot_label_max_size = 32
 
 pub type TimeUnit = i32
+
 pub type DateFmt = i32
+
 pub type TimeFmt = i32
+
 pub type MarkerInternal = i32
 
 
@@ -5610,7 +2723,7 @@ pub enum MarkerInternal_ {
  marker_invalid                     = -3
 }
 
-pub type Locator = fn (&Ticker, Range_c, f32, bool, Formatter, voidptr)
+pub type Locator = fn(&Ticker, Range_c, f32, bool, Formatter, voidptr)
 
 
 pub type DateTimeSpec_c = C.ImPlotDateTimeSpec_c
@@ -6137,7 +3250,7 @@ pub mut:
 }
 
 // Point getters manually wrapped use this
-pub type Point_getter = fn (voidptr, i32, &Point_c) voidptr
+pub type Point_getter = fn(voidptr, i32, &Point_c) voidptr
 
 
 @[keep_args_alive]
