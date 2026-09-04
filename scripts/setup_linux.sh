@@ -70,6 +70,23 @@ if command -v pkg-config >/dev/null 2>&1; then
 	done
 fi
 
+volk_found=0
+for volk_header in \
+	/usr/include/volk.h \
+	/usr/include/volk/volk.h \
+	"${VULKAN_SDK:-/usr}/include/volk.h" \
+	"${VULKAN_SDK:-/usr}/include/volk/volk.h"; do
+	if [[ -f "$volk_header" ]]; then
+		printf '[ok]      Volk header: %s\n' "$volk_header"
+		volk_found=1
+		break
+	fi
+done
+if ((volk_found == 0)); then
+	echo '[missing] Volk header (install libvulkan-volk-dev or use a Vulkan SDK containing Volk)'
+	missing=1
+fi
+
 if command -v vulkaninfo >/dev/null 2>&1; then
 	vulkan_summary=$(mktemp)
 	trap 'rm -f "$vulkan_summary"' EXIT
