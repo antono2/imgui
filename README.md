@@ -2,6 +2,9 @@
 
 # [V](https://vlang.io) binding generator for [Dear ImGui](https://github.com/ocornut/imgui)
 
+For a fresh-clone setup and a one-command GLFW/Vulkan demo, see
+[`QUICKSTART.md`](QUICKSTART.md).
+
 This is an automated process to generate `imgui.v` and `implot.v`
  - generate C for imgui using [cimgui](https://github.com/cimgui/cimgui)
  - generate C for implot using [cimplot](https://github.com/cimgui/cimplot)

@@ -16,4 +16,5 @@ _deps/
 cmake_install.cmake
 generate
 /lib/
+/build/
 /impl_vulkan/*.assertissues__v__
