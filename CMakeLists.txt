@@ -31,6 +31,11 @@ include_directories(cimgui/generator/output/)
 add_definitions("-DIMGUI_USER_CONFIG=\"../include/cimconfig.h\"")
 add_definitions("-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=1")
 
+option(CIMGUI_NO_EXPORT "Do not export cimgui/cimplot API symbols from a Windows DLL" ON)
+if(CIMGUI_NO_EXPORT)
+	add_compile_definitions(CIMGUI_NO_EXPORT)
+endif()
+
 set(IMGUI_SOURCES 
 cimgui/cimgui.cpp 
 cimgui/imgui/imgui.cpp 
@@ -44,16 +49,9 @@ cimplot/implot/implot_demo.cpp
 cimplot/implot/implot_items.cpp
 )
 
-if(APPLE)
-    set(BASEDIR @loader_path)
-else()
-    set(BASEDIR ${CMAKE_CURRENT_BINARY_DIR})
-endif()
-# LIBDIR is absolute path
-set(LIBDIR "${BASEDIR}/lib")
+set(VIMGUI_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/lib" CACHE PATH "Output directory for libvimgui")
+set(LIBDIR "${VIMGUI_OUTPUT_DIR}")
 message(STATUS "LIBDIR: ${LIBDIR}")
-
-set(CMAKE_INSTALL_PREFIX ${BASEDIR})
 
 set(IMGUI_LIBRARIES )
 
@@ -78,31 +76,28 @@ include_directories(${Vulkan_INCLUDE_DIRS})
 # GLFW
 list(APPEND IMGUI_SOURCES ${BACKENDS_FOLDER}/imgui_impl_glfw.cpp)
 
-set(GLFW_VERSION 3.4)
-include(FetchContent)
-	FetchContent_Declare(
-   	 glfw
-   	 URL https://github.com/glfw/glfw/archive/refs/tags/${GLFW_VERSION}.tar.gz)
+set(VIMGUI_GLFW_PROVIDER "system" CACHE STRING "GLFW provider: system or bundled")
+set_property(CACHE VIMGUI_GLFW_PROVIDER PROPERTY STRINGS system bundled)
+set(VIMGUI_GLFW_VERSION "3.3" CACHE STRING "Bundled GLFW release tag")
 
-FetchContent_GetProperties(glfw)
-if (NOT glfw_POPULATED)
-	set(FETCHCONTENT_QUIET NO)
-	FetchContent_Populate(glfw)
+if(VIMGUI_GLFW_PROVIDER STREQUAL "system")
+	find_package(glfw3 CONFIG REQUIRED)
+elseif(VIMGUI_GLFW_PROVIDER STREQUAL "bundled")
+	include(FetchContent)
+	FetchContent_Declare(glfw
+		URL "https://github.com/glfw/glfw/archive/refs/tags/${VIMGUI_GLFW_VERSION}.tar.gz"
+		DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 	set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 	set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 	set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-	if (NOT STATIC_BUILD)
+	set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+	if(NOT STATIC_BUILD)
 		set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 	endif()
-	#add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR} EXCLUDE_FROM_ALL)
-	add_subdirectory(${glfw_SOURCE_DIR} ${glfw_BINARY_DIR})
-endif()
-include_directories(${glfw_SOURCE_DIR}/include)
-
-# If dynamic glfw then install
-if (NOT STATIC_BUILD)
-  install(TARGETS glfw RUNTIME DESTINATION ${LIBDIR} LIBRARY DESTINATION ${LIBDIR})
-  #FIND_PACKAGE(glfw3 PATHS "C:/LuaGL/gitsources/BUILDS/GLFW/install" REQUIRED)
+	FetchContent_MakeAvailable(glfw)
+	include_directories(${glfw_SOURCE_DIR}/include)
+else()
+	message(FATAL_ERROR "VIMGUI_GLFW_PROVIDER must be system or bundled")
 endif()
 
 # Create target
@@ -118,6 +113,11 @@ set_target_properties(${NAME} PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${LIBDIR}
     RUNTIME_OUTPUT_DIRECTORY ${LIBDIR}
 )
+
+if(UNIX AND NOT APPLE AND NOT STATIC_BUILD)
+	# Resolve a packaged GLFW beside libvimgui rather than from this build tree.
+	set_target_properties(${NAME} PROPERTIES BUILD_RPATH "\$ORIGIN" INSTALL_RPATH "\$ORIGIN")
+endif()
 
 if(UNIX)
     set_property(TARGET ${NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -136,5 +136,3 @@ endif(WIN32)
 target_compile_definitions(${NAME} PUBLIC -DCIMGUI_USE_VULKAN -DCIMGUI_USE_GLFW)
 
 target_link_libraries(${NAME} PUBLIC ${IMGUI_LIBRARIES} glfw)
-
-

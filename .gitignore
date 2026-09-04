@@ -15,5 +15,5 @@ Makefile
 _deps/
 cmake_install.cmake
 generate
-lib/libvimgui.so
-
+/lib/
+/impl_vulkan/*.assertissues__v__
