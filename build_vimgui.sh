@@ -50,10 +50,7 @@ cmake -S "$SCRIPT_DIR" -B "$build_dir" \
 	-DVIMGUI_GLFW_PROVIDER="$glfw_provider" \
 	-DVIMGUI_GLFW_VERSION="$glfw_version" \
 	-DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}" \
-	-DCIMGUI_DEFINE_ENUMS_AND_STRUCTS=ON \
-	-DIMGUI_STATIC=OFF \
-	-DCIMGUI_NO_EXPORT=ON \
-	-DCIMGUI_USE_GLFW=ON
+	-DCIMGUI_NO_EXPORT=ON
 cmake --build "$build_dir" --parallel
 
 echo "Built $SCRIPT_DIR/lib/libvimgui.$library_suffix (GLFW: $glfw_provider${glfw_provider:+, version $glfw_version})"

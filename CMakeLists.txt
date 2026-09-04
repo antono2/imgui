@@ -135,4 +135,11 @@ endif(WIN32)
 
 target_compile_definitions(${NAME} PUBLIC -DCIMGUI_USE_VULKAN -DCIMGUI_USE_GLFW)
 
+# GCC can report a false-positive bounds warning from ImVector::push_back while
+# optimizing the upstream Vulkan backend. Keep warnings from our own sources
+# visible while silencing this known header-level diagnostic.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	target_compile_options(${NAME} PRIVATE -Wno-stringop-overflow)
+endif()
+
 target_link_libraries(${NAME} PUBLIC ${IMGUI_LIBRARIES} glfw)
