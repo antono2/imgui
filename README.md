@@ -49,6 +49,24 @@ reproducible application bundle:
 same choices as environment variables. System GLFW is preferable for distro
 packages. Bundled GLFW is preferable when shipping a matching `libglfw.so.3`
 beside `libvimgui.so`; use an `$ORIGIN` runtime path in the application package.
+
+### Vulkan loader ownership
+
+`libvimgui` is built with `IMGUI_IMPL_VULKAN_NO_PROTOTYPES` and intentionally
+does not link directly to `libvulkan`. A Volk-based application must initialize
+in this order:
+
+1. Call `volkInitialize()` before GLFW performs Vulkan discovery.
+2. Create the Vulkan instance and call `volkLoadInstance(instance)`.
+3. Immediately call `imgui.impl_vulkan.load_functions(...)` with a callback
+   backed by `vkGetInstanceProcAddr`.
+4. Only then call helpers such as `select_physical_device`,
+   `select_queue_family_index`, or `vkinit`.
+
+Calling an ImGui Vulkan helper before step 3 can produce an early segmentation
+fault with little or no stack trace. Do not combine the directly linked Vulkan
+prototype path with Volk's global dispatch table in the same application.
+
 ## Examples
 Using GLFW and Dear ImGui [antono2/v_imgui_examples](https://github.com/antono2/v_imgui_examples)
 

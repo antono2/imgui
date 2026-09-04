@@ -65,7 +65,11 @@ if(IMGUI_FREETYPE)
 	add_definitions("-DCIMGUI_FREETYPE=1")
 endif(IMGUI_FREETYPE)
 
-# Vulkan
+# Vulkan headers are required, but do not link Vulkan::Vulkan here. Applications
+# in this repository use Volk, whose vk* globals share names with loader entry
+# points. Mixing both dispatch strategies caused calls through uninitialized
+# storage on some systems. IMGUI_IMPL_VULKAN_NO_PROTOTYPES below gives ImGui a
+# private function table populated through ImGui_ImplVulkan_LoadFunctions.
 find_package(Vulkan REQUIRED)
 list(APPEND IMGUI_SOURCES ${BACKENDS_FOLDER}/imgui_impl_vulkan.cpp)
 include_directories(${Vulkan_INCLUDE_DIRS})
