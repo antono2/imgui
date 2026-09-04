@@ -52,6 +52,17 @@ beside `libvimgui.so`; use an `$ORIGIN` runtime path in the application package.
 ## Examples
 Using GLFW and Dear ImGui [antono2/v_imgui_examples](https://github.com/antono2/v_imgui_examples)
 
+For most users, a release archive containing the already compiled demo and its
+runtime libraries is the recommended route. Compiling the generated ImGui and
+ImPlot V bindings can currently require about 11 GiB of memory and therefore
+uses V's `-no-memory-limit` option. `scripts/run_demo.sh` is intended as the
+source/developer fallback, not as a prerequisite for running a binary release.
+
+Release binaries should be published for the useful platform combinations
+(Ubuntu 24.04 x86_64 and Windows x64 initially). Native-library linkage and the
+GLFW provider remain build-time choices for developers; they do not need to
+multiply the end-user demo downloads.
+
 ## Generate
 On `Ubuntu`
 ```bash

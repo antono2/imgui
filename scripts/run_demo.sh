@@ -5,7 +5,8 @@ case "${1:-}" in
 	'') ;;
 	-h|--help)
 		echo 'Usage: run_demo.sh'
-		echo 'Build libvimgui and launch the pinned GLFW/Vulkan visual demo.'
+		echo 'Build libvimgui and launch the pinned GLFW/Vulkan visual demo from source.'
+		echo 'This may require about 11 GiB of memory; prefer a prebuilt release when available.'
 		exit 0
 		;;
 	*) echo "Unknown option: $1" >&2; exit 2 ;;
@@ -39,4 +40,4 @@ export VULKAN_SDK=${VULKAN_SDK:-/usr}
 export GLFW_INCLUDE=${GLFW_INCLUDE:-/usr/include}
 export GLFW_LIB=${GLFW_LIB:-/usr/lib/x86_64-linux-gnu}
 
-exec v -path "$repo_parent|@vlib|@vmodules" run "$demo_dir/examples/glfw_vulkan"
+exec v -no-memory-limit -path "$repo_parent|@vlib|@vmodules" run "$demo_dir"
