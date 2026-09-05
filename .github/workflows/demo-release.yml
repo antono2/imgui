@@ -48,6 +48,8 @@ jobs:
           ref: 7ae52915c30bf4949029cb917c26a6c8709e4925
           path: source/demo
       - uses: prantlf/setup-v-action@v4
+        with:
+          version: master
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
       - name: Build native ImGui library
