@@ -86,6 +86,11 @@ if !os.is_file(os.join_path(repo_dir, 'CMakeLists.txt'))
 }
 
 static_build := if linkage == 'static' { 'ON' } else { 'OFF' }
+mut no_export := 'ON'
+$if windows {
+	// A Windows DLL needs cimgui/cimplot API exports and an import library.
+	no_export = 'OFF'
+}
 build_type := if os.getenv('CMAKE_BUILD_TYPE') == '' {
 	'Release'
 } else {
@@ -110,8 +115,8 @@ run([
 	'-DVIMGUI_GLFW_PROVIDER=${glfw_provider}',
 	'-DVIMGUI_GLFW_VERSION=${glfw_version}',
 	'-DCMAKE_BUILD_TYPE=${build_type}',
-	'-DCIMGUI_NO_EXPORT=ON',
+	'-DCIMGUI_NO_EXPORT=${no_export}',
 ])
-run(['cmake', '--build', build_dir, '--parallel'])
+run(['cmake', '--build', build_dir, '--config', build_type, '--parallel'])
 
 println('Built vimgui in ${output_dir} (linkage: ${linkage}, GLFW: ${glfw_provider}, version: ${glfw_version})')

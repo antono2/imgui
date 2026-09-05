@@ -1,13 +1,23 @@
+param(
+    [switch]$BundledGlfw
+)
+
 $ErrorActionPreference = "Stop"
 $Missing = $false
 
-foreach ($Command in @("v", "git", "cmake", "cl", "vulkaninfo")) {
+foreach ($Command in @("v", "git", "cmake", "cl")) {
     if (Get-Command $Command -ErrorAction SilentlyContinue) {
         Write-Host "[ok]      $Command"
     } else {
         Write-Host "[missing] $Command"
         $Missing = $true
     }
+}
+
+if (Get-Command "vulkaninfo" -ErrorAction SilentlyContinue) {
+    Write-Host "[ok]      vulkaninfo"
+} else {
+    Write-Host "[optional] vulkaninfo (needed only for runtime diagnostics)"
 }
 
 if (-not $env:VULKAN_SDK) {
@@ -20,18 +30,22 @@ if (-not $env:VULKAN_SDK) {
     Write-Host "[ok]      VULKAN_SDK=$env:VULKAN_SDK"
 }
 
-if (-not $env:GLFW_INCLUDE) {
-    Write-Host "[missing] GLFW_INCLUDE environment variable"
-    $Missing = $true
+if ($BundledGlfw) {
+    Write-Host "[ok]      GLFW will be downloaded by CMake"
 } else {
-    Write-Host "[ok]      GLFW_INCLUDE=$env:GLFW_INCLUDE"
-}
+    if (-not $env:GLFW_INCLUDE) {
+        Write-Host "[missing] GLFW_INCLUDE environment variable"
+        $Missing = $true
+    } else {
+        Write-Host "[ok]      GLFW_INCLUDE=$env:GLFW_INCLUDE"
+    }
 
-if (-not $env:GLFW_LIB) {
-    Write-Host "[missing] GLFW_LIB environment variable"
-    $Missing = $true
-} else {
-    Write-Host "[ok]      GLFW_LIB=$env:GLFW_LIB"
+    if (-not $env:GLFW_LIB) {
+        Write-Host "[missing] GLFW_LIB environment variable"
+        $Missing = $true
+    } else {
+        Write-Host "[ok]      GLFW_LIB=$env:GLFW_LIB"
+    }
 }
 
 if ($Missing) {
