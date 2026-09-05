@@ -20,6 +20,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: imgui-demo-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ubuntu24:
     runs-on: ubuntu-24.04
@@ -47,9 +51,6 @@ jobs:
           repository: antono2/v_imgui_examples
           ref: b04d7fc527542d5447afbb9f87faa4246479b024
           path: source/demo
-      - uses: prantlf/setup-v-action@v4
-        with:
-          version: master
       - uses: actions/checkout@v7
         with:
           repository: antono3/v
