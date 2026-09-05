@@ -7,6 +7,8 @@ NOTES.txt
 tmp.perl
 imgui.so
 include/c2v.toml
+include/cimgui.json
+include/cimplot.json
 content_tmp.txt
 tmp*.txt
 CMakeCache.txt
@@ -15,5 +17,6 @@ Makefile
 _deps/
 cmake_install.cmake
 generate
-lib/libvimgui.so
-
+/lib/
+/build/
+/impl_vulkan/*.assertissues__v__
