@@ -8,6 +8,7 @@ on:
       - packaging/demo/**
       - scripts/run_demo.sh
       - build_vimgui.sh
+      - build_vimgui.vsh
       - CMakeLists.txt
       - imgui.v
       - implot/**
@@ -65,7 +66,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
       - name: Build native ImGui library
         working-directory: source/modules/imgui
-        run: ./build_vimgui.sh --linkage shared --glfw system
+        run: |
+          v run build_vimgui.vsh --help
+          v run build_vimgui.vsh --linkage shared --glfw system
       - name: Compile V demo
         run: v -no-memory-limit -cc gcc -o "$RUNNER_TEMP/v_imgui_demo" source/demo
       - name: Package and verify

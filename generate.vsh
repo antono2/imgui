@@ -140,7 +140,7 @@ sh('v fmt -w ${wd}/imgui.v')
 sh('v fmt -w ${wd}/implot/implot.v')
 
 println('--- Build vimgui')
-sh('${wd}/build_vimgui.sh')
+sh('v run ${wd}/build_vimgui.vsh')
 
 println('GENERATED')
 println('${wd}/imgui.v')

@@ -28,7 +28,7 @@ done
 if [[ -d "$repo_dir/.git" ]]; then
 	git -C "$repo_dir" submodule update --init --recursive
 fi
-"$repo_dir/build_vimgui.sh" --linkage shared --glfw system
+v run "$repo_dir/build_vimgui.vsh" --linkage shared --glfw system
 
 if [[ ! -d "$demo_dir/.git" ]]; then
 	git clone https://github.com/antono2/v_imgui_examples.git "$demo_dir"
