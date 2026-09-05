@@ -7,6 +7,8 @@ on:
       - .github/workflows/demo-release.yml
       - packaging/demo/**
       - scripts/run_demo.sh
+      - scripts/run_demo_windows.ps1
+      - scripts/check_windows.ps1
       - build_vimgui.sh
       - build_vimgui.vsh
       - CMakeLists.txt
@@ -102,3 +104,30 @@ jobs:
           path: ${{ runner.temp }}/v-imgui-demo-ubuntu24-amd64.zip
           retention-days: 7
           if-no-files-found: error
+
+  windows-native:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: prantlf/setup-v-action@v4
+        with:
+          version: latest
+      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: NcStudios/VulkanCI@v1.2
+        with:
+          sdkVersion: 1.4.309.0
+      - name: Exercise Windows demo setup and native build
+        shell: pwsh
+        run: ./scripts/run_demo_windows.ps1 -NativeOnly
+      - name: Verify native outputs
+        shell: pwsh
+        run: |
+          if (-not (Test-Path lib/vimgui.dll)) { throw "Missing lib/vimgui.dll" }
+          if (-not (Test-Path lib/vimgui.lib)) { throw "Missing lib/vimgui.lib" }
+          $GlfwDll = Get-ChildItem build/shared-bundled-3.4 -Recurse -Filter glfw3.dll | Select-Object -First 1
+          $GlfwLib = Get-ChildItem build/shared-bundled-3.4 -Recurse -Include glfw3dll.lib, glfw3.lib | Select-Object -First 1
+          if (-not $GlfwDll) { throw "Missing glfw3.dll" }
+          if (-not $GlfwLib) { throw "Missing GLFW import library" }

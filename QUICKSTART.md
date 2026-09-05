@@ -46,19 +46,20 @@ v run build_vimgui.vsh --linkage shared --glfw system
 
 ## Windows 10/11 x64
 
-Install V, Git, CMake, Visual Studio Build Tools with C++, the Vulkan SDK, and
-GLFW 3.4. In a Developer PowerShell set `GLFW_INCLUDE` and `GLFW_LIB`, then run:
+Install V, Git, CMake, Visual Studio Build Tools with C++, and the Vulkan SDK.
+Then run these commands from a Developer PowerShell:
 
 ```powershell
-.\scripts\check_windows.ps1
-v install https://github.com/antono2/vulkan
-v install https://github.com/antono2/glfw
-v run build_vimgui.vsh --linkage shared --glfw bundled --glfw-version 3.4
+.\scripts\check_windows.ps1 -BundledGlfw
+.\scripts\run_demo_windows.ps1
 ```
 
-This builds the native library without requiring a separately installed GLFW.
-A one-command Windows demo/package script is still TODO. The Linux demo runner
-is not intended for PowerShell.
+The runner downloads GLFW 3.4 through CMake, installs the two small V module
+dependencies, checks out the tested demo revision, builds it, and launches it.
+Use `-BuildOnly` to compile without opening a window. Until
+[`vlang/v#28368`](https://github.com/vlang/v/pull/28368) is merged, the source
+demo requires a V compiler containing that change. The prebuilt Linux release
+does not have this source-build requirement.
 
 ## Build choices
 

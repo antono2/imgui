@@ -15,7 +15,7 @@ esac
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
 repo_dir=$(cd -- "$script_dir/.." >/dev/null 2>&1 && pwd)
 repo_parent=$(dirname -- "$repo_dir")
-demo_revision=051c462792feab4d0963e8715188b8b0e7695b3e
+demo_revision=5673324866e9825e217dfd1927145250d60f9e84
 demo_dir="$repo_dir/build/v_imgui_examples"
 
 for command_name in git cmake v; do

@@ -115,6 +115,17 @@ set_target_properties(${NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${LIBDIR}
 )
 
+# Multi-config generators such as Visual Studio otherwise append a Release or
+# Debug subdirectory, while the V module looks for the import library directly
+# in lib/. Keep every supported configuration in the documented location.
+foreach(OUTPUT_CONFIG Debug Release RelWithDebInfo MinSizeRel)
+	string(TOUPPER "${OUTPUT_CONFIG}" OUTPUT_CONFIG_UPPER)
+	set_target_properties(${NAME} PROPERTIES
+		LIBRARY_OUTPUT_DIRECTORY_${OUTPUT_CONFIG_UPPER} ${LIBDIR}
+		ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG_UPPER} ${LIBDIR}
+		RUNTIME_OUTPUT_DIRECTORY_${OUTPUT_CONFIG_UPPER} ${LIBDIR})
+endforeach()
+
 if(UNIX AND NOT APPLE AND NOT STATIC_BUILD)
 	# Resolve a packaged GLFW beside libvimgui rather than from this build tree.
 	set_target_properties(${NAME} PROPERTIES BUILD_RPATH "\$ORIGIN" INSTALL_RPATH "\$ORIGIN")
