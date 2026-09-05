@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 7e77dcba217b084f3e147b89e4f5efb80934dc82
+          ref: b04d7fc527542d5447afbb9f87faa4246479b024
           path: source/demo
       - uses: prantlf/setup-v-action@v4
         with:
