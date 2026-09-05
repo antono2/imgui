@@ -40,7 +40,7 @@ Install the two V dependencies and then use the same build and demo commands:
 ```sh
 v install https://github.com/antono2/vulkan
 v install https://github.com/antono2/glfw
-./build_vimgui.sh --linkage shared --glfw system
+v run build_vimgui.vsh --linkage shared --glfw system
 ./scripts/run_demo.sh
 ```
 
@@ -53,30 +53,32 @@ GLFW 3.4. In a Developer PowerShell set `GLFW_INCLUDE` and `GLFW_LIB`, then run:
 .\scripts\check_windows.ps1
 v install https://github.com/antono2/vulkan
 v install https://github.com/antono2/glfw
+v run build_vimgui.vsh --linkage shared --glfw bundled --glfw-version 3.4
 ```
 
-The native CMake build is supported, but a one-command Windows demo/package
-script is still TODO. The Linux demo runner is not intended for PowerShell.
+This builds the native library without requiring a separately installed GLFW.
+A one-command Windows demo/package script is still TODO. The Linux demo runner
+is not intended for PowerShell.
 
 ## Build choices
 
 The default is a shared library using system GLFW:
 
 ```sh
-./build_vimgui.sh --linkage shared --glfw system
+v run build_vimgui.vsh --linkage shared --glfw system
 ```
 
 A static library requires the matching V definition in consuming programs:
 
 ```sh
-./build_vimgui.sh --linkage static --glfw system
+v run build_vimgui.vsh --linkage static --glfw system
 v -d imgui_static run your_app.v
 ```
 
 For a reproducible bundled GLFW build:
 
 ```sh
-./build_vimgui.sh --linkage shared --glfw bundled --glfw-version 3.4
+v run build_vimgui.vsh --linkage shared --glfw bundled --glfw-version 3.4
 ```
 
 ## Regenerating bindings

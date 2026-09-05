@@ -107,6 +107,6 @@ v fmt -w imgui.v
 # collapses `Marker Marker` to `Marker`, producing invalid V source.
 
 printf " --- Build vimgui\n\n"
-./build_vimgui.sh
+v run build_vimgui.vsh
 
 popd >/dev/null
