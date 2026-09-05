@@ -1,0 +1,88 @@
+name: Prebuilt demo
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - .github/workflows/demo-release.yml
+      - packaging/demo/**
+      - scripts/run_demo.sh
+      - build_vimgui.sh
+      - CMakeLists.txt
+      - imgui.v
+      - implot/**
+      - impl_glfw/**
+      - impl_vulkan/**
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu24:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      VMODULES: ${{ github.workspace }}/source/modules
+      VULKAN_SDK: /usr
+      GLFW_INCLUDE: /usr/include
+      GLFW_LIB: /usr/lib/x86_64-linux-gnu
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: source/modules/imgui
+          submodules: recursive
+      - uses: actions/checkout@v7
+        with:
+          repository: antono2/vulkan
+          path: source/modules/vulkan
+      - uses: actions/checkout@v7
+        with:
+          repository: antono2/glfw
+          path: source/modules/glfw
+      - uses: actions/checkout@v7
+        with:
+          repository: antono2/v_imgui_examples
+          ref: 7ae52915c30bf4949029cb917c26a6c8709e4925
+          path: source/demo
+      - uses: prantlf/setup-v-action@v4
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
+      - name: Build native ImGui library
+        working-directory: source/modules/imgui
+        run: ./build_vimgui.sh --linkage shared --glfw system
+      - name: Compile V demo
+        run: v -no-memory-limit -cc gcc -o "$RUNNER_TEMP/v_imgui_demo" source/demo
+      - name: Package and verify
+        run: |
+          set -euo pipefail
+          package="$RUNNER_TEMP/v-imgui-demo-ubuntu24-amd64"
+          install -d "$package/lib"
+          install -m 0755 "$RUNNER_TEMP/v_imgui_demo" "$package/v_imgui_demo"
+          install -m 0755 source/modules/imgui/lib/libvimgui.so "$package/lib/libvimgui.so"
+          install -m 0755 /usr/lib/x86_64-linux-gnu/libglfw.so.3 "$package/lib/libglfw.so.3"
+          install -m 0755 /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "$package/lib/libstdc++.so.6"
+          install -m 0755 /lib/x86_64-linux-gnu/libgcc_s.so.1 "$package/lib/libgcc_s.so.1"
+          install -m 0755 source/modules/imgui/packaging/demo/ubuntu24/run.sh "$package/run.sh"
+          install -m 0644 source/modules/imgui/packaging/demo/ubuntu24/README.txt "$package/README.txt"
+          strip --strip-unneeded "$package/v_imgui_demo" "$package/lib/libvimgui.so"
+          patchelf --set-rpath '$ORIGIN/lib' "$package/v_imgui_demo"
+          patchelf --set-rpath '$ORIGIN' "$package/lib/libvimgui.so"
+          test "$(patchelf --print-rpath "$package/v_imgui_demo")" = '$ORIGIN/lib'
+          test "$(patchelf --print-rpath "$package/lib/libvimgui.so")" = '$ORIGIN'
+          ldd "$package/v_imgui_demo" | tee "$RUNNER_TEMP/ldd.txt"
+          ! grep -q 'not found' "$RUNNER_TEMP/ldd.txt"
+          for library in libvimgui.so libglfw.so.3 libstdc++.so.6 libgcc_s.so.1; do
+            grep -F "$package/lib/$library" "$RUNNER_TEMP/ldd.txt"
+          done
+          (cd "$RUNNER_TEMP" && zip -qr v-imgui-demo-ubuntu24-amd64.zip v-imgui-demo-ubuntu24-amd64)
+          unzip -t "$RUNNER_TEMP/v-imgui-demo-ubuntu24-amd64.zip" >/dev/null
+          sha256sum "$RUNNER_TEMP/v-imgui-demo-ubuntu24-amd64.zip"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: v-imgui-demo-ubuntu24-amd64
+          path: ${{ runner.temp }}/v-imgui-demo-ubuntu24-amd64.zip
+          retention-days: 7
+          if-no-files-found: error
