@@ -54,16 +54,9 @@ jobs:
           repository: antono2/v_imgui_examples
           ref: 5673324866e9825e217dfd1927145250d60f9e84
           path: source/demo
-      - uses: actions/checkout@v7
+      - uses: prantlf/setup-v-action@v4
         with:
-          repository: vlang/v
-          ref: master
-          path: toolchain/v-master
-      - name: Build V compiler from upstream master
-        working-directory: toolchain/v-master
-        run: |
-          make
-          echo "$GITHUB_WORKSPACE/toolchain/v-master" >> "$GITHUB_PATH"
+          version: latest
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
       - name: Build native ImGui library

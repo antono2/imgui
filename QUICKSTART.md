@@ -56,10 +56,7 @@ Then run these commands from a Developer PowerShell:
 
 The runner downloads GLFW 3.4 through CMake, installs the two small V module
 dependencies, checks out the tested demo revision, builds it, and launches it.
-Use `-BuildOnly` to compile without opening a window. Until the compiler change
-from [`vlang/v#28368`](https://github.com/vlang/v/pull/28368) is included in a
-tagged V release, build V from current `master` for this source demo. The
-prebuilt Linux release does not have this source-build requirement.
+Use `-BuildOnly` to compile without opening a window.
 
 ## Build choices
 

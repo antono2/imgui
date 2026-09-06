@@ -70,7 +70,7 @@ $Executable = Join-Path $RuntimeDirectory "v_imgui_demo.exe"
 $ModulePath = "$RepositoryParent|@vlib|@vmodules"
 & v -no-memory-limit -path $ModulePath -cc msvc -cflags /MT -o $Executable $DemoDirectory
 if ($LASTEXITCODE -ne 0) {
-    throw "The demo did not compile. Use current V master or a tagged release containing the alias declaration fix from vlang/v#28368."
+    throw "The demo did not compile. Update V and review QUICKSTART.md for current requirements."
 }
 
 Copy-Item $VimguiDll.FullName $RuntimeDirectory -Force
