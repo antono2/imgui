@@ -56,14 +56,14 @@ jobs:
           path: source/demo
       - uses: actions/checkout@v7
         with:
-          repository: antono3/v
-          ref: imgui_glfw_vulkan
-          path: toolchain/v-pr28368
-      - name: Build V compiler with pull request 28368
-        working-directory: toolchain/v-pr28368
+          repository: vlang/v
+          ref: master
+          path: toolchain/v-master
+      - name: Build V compiler from upstream master
+        working-directory: toolchain/v-master
         run: |
           make
-          echo "$GITHUB_WORKSPACE/toolchain/v-pr28368" >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/toolchain/v-master" >> "$GITHUB_PATH"
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
       - name: Build native ImGui library
