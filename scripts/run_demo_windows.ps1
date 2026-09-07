@@ -27,7 +27,7 @@ if ($NativeOnly) {
 }
 
 foreach ($Module in @("vulkan", "glfw")) {
-    & v install "https://github.com/antono2/$Module"
+    & v install "antono2.$Module"
     if ($LASTEXITCODE -ne 0) { throw "Could not install the $Module V module." }
 }
 

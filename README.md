@@ -12,14 +12,14 @@ This is an automated process to generate `imgui.v` and `implot.v`
  - `cleanup_imgui.perl` and `cleanup_implot.perl` to fix some errors
 
 ## Dependencies
-`v install https://github.com/antono2/vulkan`<br>
-`v install https://github.com/antono2/glfw`
+`v install antono2.vulkan`<br>
+`v install antono2.glfw`
 
 ## Install
 ```bash
-v install https://github.com/antono2/imgui
+v install antono2.imgui
 # Build libvimgui for this machine (without regenerating V bindings)
-cd ~/.vmodules/imgui
+cd ~/.vmodules/antono2/imgui
 v run build_vimgui.vsh
 ```
 
@@ -86,13 +86,13 @@ multiply the end-user demo downloads.
 On `Ubuntu`
 ```bash
 sudo apt install -y luajit
-~/.vmodules/imgui/generate_v.sh
+~/.vmodules/antono2/imgui/generate_v.sh
 ```
 
 Or
 ```bash
 # Install luajit for your OS
-# Go to vmodules/imgui
+# Go to the installed antono2/imgui module
 v generate.vsh
 ```
 

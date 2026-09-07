@@ -18,7 +18,7 @@ my %CFG = (
   implot => {
     module => 'implot', prefix => 'ImPlot', lower => 'im_plot_', c_prefix => 'ImPlot',
     in => 'src/implot.v', fallback => 'cimplot.v', out => 'src/implot.v', header => 'cimplot/cimplot.h', version_macro => 'IMPLOT',
-    imports => "\n\nimport imgui\n// C.tm is used by translated callback signatures. Keep the import explicitly.\nimport time as _",
+    imports => "\n\nimport antono2.imgui\n// C.tm is used by translated callback signatures. Keep the import explicitly.\nimport time as _",
   },
 );
 

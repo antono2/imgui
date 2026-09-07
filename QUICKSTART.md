@@ -38,8 +38,8 @@ Install `gcc-c++`, `cmake`, `git`, `glfw-devel`, `vulkan-loader-devel`,
 Install the two V dependencies and then use the same build and demo commands:
 
 ```sh
-v install https://github.com/antono2/vulkan
-v install https://github.com/antono2/glfw
+v install antono2.vulkan
+v install antono2.glfw
 v run build_vimgui.vsh --linkage shared --glfw system
 ./scripts/run_demo.sh
 ```

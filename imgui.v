@@ -19,7 +19,7 @@ Covered cases and examples:
 4. Value backing structs such as ImVec2_c/ImVec4_c/ImColor_c/ImRect_c back public
    aliases ImVec2/ImVec4/ImColor/ImRect. Do not emit duplicate empty C structs.
    Vector fields remain lowercase x/y/z/w for V literals.
-5. Remove self-module prefixes: imgui.v must not refer to Type; implot.v
+5. Remove self-module prefixes: v must not refer to Type; implot.v
    must not refer to implot.Type, because each file is already inside that module.
 6. STB rectpack names are intentionally preserved from C when c2v produces
    aliases like:
@@ -1073,7 +1073,7 @@ pub mut:
 	AntiAliasedFill                  bool
 	CurveTessellationTol             f32
 	CircleTessellationMaxError       f32
-	Colors                           [62]imgui.ImVec4_c
+	Colors                           [62]ImVec4_c
 	HoverStationaryDelay             f32
 	HoverDelayShort                  f32
 	HoverDelayNormal                 f32
@@ -1200,7 +1200,7 @@ pub mut:
 	KeysData                                      [155]KeyData
 	WantCaptureMouseUnlessPopupClose              bool
 	MousePosPrev                                  ImVec2_c
-	MouseClickedPos                               [5]imgui.ImVec2_c
+	MouseClickedPos                               [5]ImVec2_c
 	MouseClickedTime                              [5]f64
 	MouseClicked                                  [5]bool
 	MouseDoubleClicked                            [5]bool
@@ -1214,7 +1214,7 @@ pub mut:
 	MouseCtrlLeftAsRightClick                     bool
 	MouseDownDuration                             [5]f32
 	MouseDownDurationPrev                         [5]f32
-	MouseDragMaxDistanceAbs                       [5]imgui.ImVec2_c
+	MouseDragMaxDistanceAbs                       [5]ImVec2_c
 	MouseDragMaxDistanceSqr                       [5]f32
 	PenPressure                                   f32
 	AppFocusLost                                  bool
@@ -1460,7 +1460,7 @@ pub mut:
 	Size                    i32
 	PreserveOrder           bool
 	UserData                voidptr
-	AdapterIndexToStorageId fn (&imgui.SelectionBasicStorage, i32) imgui.ID
+	AdapterIndexToStorageId fn (&SelectionBasicStorage, i32) ID
 	_SelectionOrder         i32
 	_Storage                Storage
 }
@@ -1471,7 +1471,7 @@ pub type SelectionExternalStorage = C.ImGuiSelectionExternalStorage
 pub struct C.ImGuiSelectionExternalStorage {
 pub mut:
 	UserData               voidptr
-	AdapterSetItemSelected fn (&imgui.SelectionExternalStorage, i32, bool)
+	AdapterSetItemSelected fn (&SelectionExternalStorage, i32, bool)
 }
 
 pub type ImDrawIdx = u16
@@ -1901,7 +1901,7 @@ pub mut:
 	TexUvWhitePixel     ImVec2_c
 	Fonts               ImVector_ImFontPtr
 	Sources             ImVector_ImFontConfig
-	TexUvLines          [33]imgui.ImVec4_c
+	TexUvLines          [33]ImVec4_c
 	TexNextUniqueID     i32
 	FontNextUniqueID    i32
 	DrawListSharedDatas ImVector_ImDrawListSharedDataPtr
@@ -2073,42 +2073,42 @@ pub type PlatformIO = C.ImGuiPlatformIO
 @[typedef]
 pub struct C.ImGuiPlatformIO {
 pub mut:
-	Platform_GetClipboardTextFn        fn (&imgui.Context) &char
-	Platform_SetClipboardTextFn        fn (&imgui.Context, &char)
+	Platform_GetClipboardTextFn        fn (&Context) &char
+	Platform_SetClipboardTextFn        fn (&Context, &char)
 	Platform_ClipboardUserData         voidptr
-	Platform_OpenInShellFn             fn (&imgui.Context, &char) bool
+	Platform_OpenInShellFn             fn (&Context, &char) bool
 	Platform_OpenInShellUserData       voidptr
-	Platform_SetImeDataFn              fn (&imgui.Context, &imgui.Viewport, &imgui.PlatformImeData)
+	Platform_SetImeDataFn              fn (&Context, &Viewport, &PlatformImeData)
 	Platform_ImeUserData               voidptr
 	Platform_LocaleDecimalPoint        ImWchar
 	Renderer_TextureMaxWidth           i32
 	Renderer_TextureMaxHeight          i32
 	Renderer_RenderState               voidptr
-	Platform_CreateWindow              fn (&imgui.Viewport)
-	Platform_DestroyWindow             fn (&imgui.Viewport)
-	Platform_ShowWindow                fn (&imgui.Viewport)
-	Platform_SetWindowPos              fn (&imgui.Viewport, imgui.ImVec2_c)
-	Platform_GetWindowPos              fn (&imgui.Viewport) imgui.ImVec2_c
-	Platform_SetWindowSize             fn (&imgui.Viewport, imgui.ImVec2_c)
-	Platform_GetWindowSize             fn (&imgui.Viewport) imgui.ImVec2_c
-	Platform_GetWindowFramebufferScale fn (&imgui.Viewport) imgui.ImVec2_c
-	Platform_SetWindowFocus            fn (&imgui.Viewport)
-	Platform_GetWindowFocus            fn (&imgui.Viewport) bool
-	Platform_GetWindowMinimized        fn (&imgui.Viewport) bool
-	Platform_SetWindowTitle            fn (&imgui.Viewport, &char)
-	Platform_SetWindowAlpha            fn (&imgui.Viewport, f32)
-	Platform_UpdateWindow              fn (&imgui.Viewport)
-	Platform_RenderWindow              fn (&imgui.Viewport, voidptr)
-	Platform_SwapBuffers               fn (&imgui.Viewport, voidptr)
-	Platform_GetWindowDpiScale         fn (&imgui.Viewport) f32
-	Platform_OnChangedViewport         fn (&imgui.Viewport)
-	Platform_GetWindowWorkAreaInsets   fn (&imgui.Viewport) imgui.ImVec4_c
-	Platform_CreateVkSurface           fn (&imgui.Viewport, imgui.ImU64, voidptr, &imgui.ImU64) i32
-	Renderer_CreateWindow              fn (&imgui.Viewport)
-	Renderer_DestroyWindow             fn (&imgui.Viewport)
-	Renderer_SetWindowSize             fn (&imgui.Viewport, imgui.ImVec2_c)
-	Renderer_RenderWindow              fn (&imgui.Viewport, voidptr)
-	Renderer_SwapBuffers               fn (&imgui.Viewport, voidptr)
+	Platform_CreateWindow              fn (&Viewport)
+	Platform_DestroyWindow             fn (&Viewport)
+	Platform_ShowWindow                fn (&Viewport)
+	Platform_SetWindowPos              fn (&Viewport, ImVec2_c)
+	Platform_GetWindowPos              fn (&Viewport) ImVec2_c
+	Platform_SetWindowSize             fn (&Viewport, ImVec2_c)
+	Platform_GetWindowSize             fn (&Viewport) ImVec2_c
+	Platform_GetWindowFramebufferScale fn (&Viewport) ImVec2_c
+	Platform_SetWindowFocus            fn (&Viewport)
+	Platform_GetWindowFocus            fn (&Viewport) bool
+	Platform_GetWindowMinimized        fn (&Viewport) bool
+	Platform_SetWindowTitle            fn (&Viewport, &char)
+	Platform_SetWindowAlpha            fn (&Viewport, f32)
+	Platform_UpdateWindow              fn (&Viewport)
+	Platform_RenderWindow              fn (&Viewport, voidptr)
+	Platform_SwapBuffers               fn (&Viewport, voidptr)
+	Platform_GetWindowDpiScale         fn (&Viewport) f32
+	Platform_OnChangedViewport         fn (&Viewport)
+	Platform_GetWindowWorkAreaInsets   fn (&Viewport) ImVec4_c
+	Platform_CreateVkSurface           fn (&Viewport, ImU64, voidptr, &ImU64) i32
+	Renderer_CreateWindow              fn (&Viewport)
+	Renderer_DestroyWindow             fn (&Viewport)
+	Renderer_SetWindowSize             fn (&Viewport, ImVec2_c)
+	Renderer_RenderWindow              fn (&Viewport, voidptr)
+	Renderer_SwapBuffers               fn (&Viewport, voidptr)
 	Monitors                           ImVector_PlatformMonitor
 	Textures                           ImVector_ImTextureDataPtr
 	Viewports                          ImVector_ViewportPtr
@@ -2261,7 +2261,7 @@ pub mut:
 	TempBuffer            ImVector_ImVec2
 	DrawLists             ImVector_ImDrawListPtr
 	Context               &Context
-	ArcFastVtx            [48]imgui.ImVec2_c
+	ArcFastVtx            [48]ImVec2_c
 	ArcFastRadiusCutoff   f32
 	CircleSegmentCounts   [64]ImU8
 }
@@ -3260,7 +3260,7 @@ pub mut:
 	MergedFlags            DockNodeFlags
 	State                  DockNodeState
 	ParentNode             &DockNode
-	ChildNodes             [2]&imgui.DockNode
+	ChildNodes             [2]&DockNode
 	Windows                ImVector_WindowPtr
 	TabBar                 &TabBar
 	Pos                    ImVec2_c
@@ -3405,12 +3405,12 @@ pub struct C.ImGuiSettingsHandler {
 pub mut:
 	TypeName   &char
 	TypeHash   ID
-	ClearAllFn fn (&imgui.Context, &imgui.SettingsHandler)
-	ReadInitFn fn (&imgui.Context, &imgui.SettingsHandler)
-	ReadOpenFn fn (&imgui.Context, &imgui.SettingsHandler, &char) voidptr
-	ReadLineFn fn (&imgui.Context, &imgui.SettingsHandler, voidptr, &char)
-	ApplyAllFn fn (&imgui.Context, &imgui.SettingsHandler)
-	WriteAllFn fn (&imgui.Context, &imgui.SettingsHandler, &imgui.TextBuffer)
+	ClearAllFn fn (&Context, &SettingsHandler)
+	ReadInitFn fn (&Context, &SettingsHandler)
+	ReadOpenFn fn (&Context, &SettingsHandler, &char) voidptr
+	ReadLineFn fn (&Context, &SettingsHandler, voidptr, &char)
+	ApplyAllFn fn (&Context, &SettingsHandler)
+	WriteAllFn fn (&Context, &SettingsHandler, &TextBuffer)
 	UserData   voidptr
 }
 
@@ -4142,7 +4142,7 @@ pub mut:
 	PlatformImeDataPrev                PlatformImeData
 	UserTextures                       ImVector_ImTextureDataPtr
 	DockContext                        DockContext
-	DockNodeWindowMenuHandler          fn (&imgui.Context, &imgui.DockNode, &imgui.TabBar)
+	DockNodeWindowMenuHandler          fn (&Context, &DockNode, &TabBar)
 	SettingsLoaded                     bool
 	SettingsDirtyTimer                 f32
 	SettingsIniData                    TextBuffer
@@ -4378,9 +4378,9 @@ pub mut:
 	RootWindowForNav                   &Window
 	ParentWindowForFocusRoute          &Window
 	NavLastChildNavWindow              &Window
-	NavLastIds                         [2]imgui.ID
+	NavLastIds                         [2]ID
 	NavRectRel                         [2]ImRect_c
-	NavPreferredScoringPosRel          [2]imgui.ImVec2_c
+	NavPreferredScoringPosRel          [2]ImVec2_c
 	NavRootFocusScopeId                ID
 	MemoryDrawListIdxCapacity          i32
 	MemoryDrawListVtxCapacity          i32
@@ -4800,14 +4800,14 @@ pub type ImFontLoader = C.ImFontLoader
 pub struct C.ImFontLoader {
 pub mut:
 	Name                       &char
-	LoaderInit                 fn (&imgui.ImFontAtlas) bool
-	LoaderShutdown             fn (&imgui.ImFontAtlas)
-	FontSrcInit                fn (&imgui.ImFontAtlas, &imgui.ImFontConfig) bool
-	FontSrcDestroy             fn (&imgui.ImFontAtlas, &imgui.ImFontConfig)
-	FontSrcContainsGlyph       fn (&imgui.ImFontAtlas, &imgui.ImFontConfig, imgui.ImWchar) bool
-	FontBakedInit              fn (&imgui.ImFontAtlas, &imgui.ImFontConfig, &imgui.ImFontBaked, voidptr) bool
-	FontBakedDestroy           fn (&imgui.ImFontAtlas, &imgui.ImFontConfig, &imgui.ImFontBaked, voidptr)
-	FontBakedLoadGlyph         fn (&imgui.ImFontAtlas, &imgui.ImFontConfig, &imgui.ImFontBaked, voidptr, imgui.ImWchar, &imgui.ImFontGlyph, &f32) bool
+	LoaderInit                 fn (&ImFontAtlas) bool
+	LoaderShutdown             fn (&ImFontAtlas)
+	FontSrcInit                fn (&ImFontAtlas, &ImFontConfig) bool
+	FontSrcDestroy             fn (&ImFontAtlas, &ImFontConfig)
+	FontSrcContainsGlyph       fn (&ImFontAtlas, &ImFontConfig, ImWchar) bool
+	FontBakedInit              fn (&ImFontAtlas, &ImFontConfig, &ImFontBaked, voidptr) bool
+	FontBakedDestroy           fn (&ImFontAtlas, &ImFontConfig, &ImFontBaked, voidptr)
+	FontBakedLoadGlyph         fn (&ImFontAtlas, &ImFontConfig, &ImFontBaked, voidptr, ImWchar, &ImFontGlyph, &f32) bool
 	FontBakedSrcLoaderDataSize usize
 }
 

@@ -1,8 +1,8 @@
 @[translated]
 module impl_vulkan
 
-import vulkan as vk
-import imgui
+import antono2.vulkan as vk
+import antono2.imgui
 
 #flag -I @VMODROOT/include/imgui/backends
 #define IMGUI_DISABLE

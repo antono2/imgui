@@ -358,7 +358,7 @@ sub rewrite_type_aliases {
 my $content = slurp_file($file_in);
 $content =~ s/\r//g;
 $content =~ s/\@\[translated\]\s*//g;
-$content =~ s/^module\s+main\s*$/module implot\n\nimport imgui\nimport time/mg;
+$content =~ s/^module\s+main\s*$/module implot\n\nimport antono2.imgui\nimport time/mg;
 $content =~ s/\bmain\.//g;
 $content =~ s/\bMain\.//g;
 

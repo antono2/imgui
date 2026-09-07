@@ -1,6 +1,6 @@
 module implot
 
-import imgui
+import antono2.imgui
 // C.tm is used by translated callback signatures. Keep the import explicitly.
 import time as _
 

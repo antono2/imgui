@@ -39,16 +39,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          path: source/modules/imgui
+          path: source/modules/antono2/imgui
           submodules: recursive
       - uses: actions/checkout@v7
         with:
           repository: antono2/vulkan
-          path: source/modules/vulkan
+          path: source/modules/antono2/vulkan
       - uses: actions/checkout@v7
         with:
           repository: antono2/glfw
-          path: source/modules/glfw
+          path: source/modules/antono2/glfw
       - uses: actions/checkout@v7
         with:
           repository: antono2/v_imgui_examples
@@ -67,24 +67,24 @@ jobs:
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
       - name: Build native ImGui library
-        working-directory: source/modules/imgui
+        working-directory: source/modules/antono2/imgui
         run: |
           v run build_vimgui.vsh --help
           v run build_vimgui.vsh --linkage shared --glfw system
       - name: Compile V demo
-        run: v -no-memory-limit -cc gcc -o "$RUNNER_TEMP/v_imgui_demo" source/demo
+        run: v -no-memory-limit -path "$GITHUB_WORKSPACE/source/modules/antono2|@vlib|@vmodules" -cc gcc -o "$RUNNER_TEMP/v_imgui_demo" source/demo
       - name: Package and verify
         run: |
           set -euo pipefail
           package="$RUNNER_TEMP/v-imgui-demo-ubuntu24-amd64"
           install -d "$package/lib"
           install -m 0755 "$RUNNER_TEMP/v_imgui_demo" "$package/v_imgui_demo"
-          install -m 0755 source/modules/imgui/lib/libvimgui.so "$package/lib/libvimgui.so"
+          install -m 0755 source/modules/antono2/imgui/lib/libvimgui.so "$package/lib/libvimgui.so"
           install -m 0755 /usr/lib/x86_64-linux-gnu/libglfw.so.3 "$package/lib/libglfw.so.3"
           install -m 0755 /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "$package/lib/libstdc++.so.6"
           install -m 0755 /lib/x86_64-linux-gnu/libgcc_s.so.1 "$package/lib/libgcc_s.so.1"
-          install -m 0755 source/modules/imgui/packaging/demo/ubuntu24/run.sh "$package/run.sh"
-          install -m 0644 source/modules/imgui/packaging/demo/ubuntu24/README.txt "$package/README.txt"
+          install -m 0755 source/modules/antono2/imgui/packaging/demo/ubuntu24/run.sh "$package/run.sh"
+          install -m 0644 source/modules/antono2/imgui/packaging/demo/ubuntu24/README.txt "$package/README.txt"
           strip --strip-unneeded "$package/v_imgui_demo" "$package/lib/libvimgui.so"
           patchelf --set-rpath '$ORIGIN/lib' "$package/v_imgui_demo"
           patchelf --set-rpath '$ORIGIN' "$package/lib/libvimgui.so"
