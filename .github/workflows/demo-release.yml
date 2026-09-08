@@ -54,16 +54,16 @@ jobs:
           repository: antono2/v_imgui_examples
           ref: 5673324866e9825e217dfd1927145250d60f9e84
           path: source/demo
-      - uses: prantlf/setup-v-action@v4
-        id: setup-v
+      - uses: actions/checkout@v7
         with:
-          version: master
-          force-build: true
-      - name: Install V compatibility compiler
+          repository: vlang/v
+          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          path: toolchain/v
+      - name: Build official V compiler
+        working-directory: toolchain/v
         run: |
-          fallback=$(find "$RUNNER_WORKSPACE" -maxdepth 2 -type f -name v1_fallback -print -quit)
-          test -n "$fallback"
-          install -m 0755 "$fallback" "${{ steps.setup-v.outputs.bin-path }}/v1_fallback"
+          make
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
       - name: Build native ImGui library
