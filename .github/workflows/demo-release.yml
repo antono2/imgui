@@ -59,9 +59,11 @@ jobs:
         with:
           version: master
           force-build: true
-      - name: Build V compatibility compiler
-        working-directory: ${{ steps.setup-v.outputs.bin-path }}
-        run: make
+      - name: Install V compatibility compiler
+        run: |
+          fallback=$(find "$RUNNER_WORKSPACE" -maxdepth 2 -type f -name v1_fallback -print -quit)
+          test -n "$fallback"
+          install -m 0755 "$fallback" "${{ steps.setup-v.outputs.bin-path }}/v1_fallback"
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
       - name: Build native ImGui library
