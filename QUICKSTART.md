@@ -57,9 +57,10 @@ Then run these commands from a Developer PowerShell:
 The runner downloads GLFW 3.4 through CMake, installs the two small V module
 dependencies, checks out the tested demo revision, builds it, and launches it.
 Use `-BuildOnly` to compile without opening a window. The required compiler
-support landed in V through
-[`vlang/v#28368`](https://github.com/vlang/v/pull/28368), so a current stable V
-compiler is sufficient.
+support landed upstream through
+[`vlang/v#28368`](https://github.com/vlang/v/pull/28368), so use a current
+compiler from the official `vlang/v` master branch until that change reaches a
+tagged V release; a custom fork is no longer required.
 
 ## Build choices
 
