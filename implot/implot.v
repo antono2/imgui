@@ -70,15 +70,6 @@ SOFTWARE.
 pub const version = '1.1 WIP'
 pub const version_num = 10100
 
-@[typedef]
-pub struct C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN {}
-
-@[typedef]
-pub struct C.STB_TexteditState {}
-
-@[typedef]
-pub struct C.stbrp_node {}
-
 pub type Va_list = imgui.Va_list
 
 @[typedef]
@@ -99,7 +90,7 @@ pub type Spec_c = C.ImPlotSpec_c
 @[typedef]
 pub struct C.ImPlotSpec_c {}
 
-pub type ImVec2_c = imgui.ImVec2_c
+pub type ImVec2_c = imgui.ImVec2
 
 // docking branch
 pub type ImColor = ImColor_c
@@ -108,7 +99,7 @@ pub type ImRect = ImRect_c
 
 pub type ImTextureRef = ImTextureRef_c
 
-pub type ImVec2 = imgui.ImVec2_c
+pub type ImVec2 = imgui.ImVec2
 
 pub type ImVec2i = ImVec2i_c
 
@@ -116,15 +107,7 @@ pub type ImVec4 = ImVec4_c
 
 pub type Stbrp_node = imgui.Stbrp_node_im
 
-
-pub type ImVector_const_charPtr = C.ImVector_const_charPtr
-@[typedef]
-pub struct C.ImVector_const_charPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&u8
-}
+pub type ImVector_const_charPtr = imgui.ImVector_const_charPtr
 
 pub type ImGuiID = u32
 
