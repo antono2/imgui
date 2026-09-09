@@ -41,7 +41,7 @@ Covered cases and examples:
 /*
 MIT License
 
-Copyright Anton Oreskin | https://oreskin.de
+Copyright (c) 2025-2026 Anton Oreskin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
