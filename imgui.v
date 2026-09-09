@@ -19,13 +19,13 @@ Covered cases and examples:
 4. Value backing structs such as ImVec2_c/ImVec4_c/ImColor_c/ImRect_c back public
    aliases ImVec2/ImVec4/ImColor/ImRect. Do not emit duplicate empty C structs.
    Vector fields remain lowercase x/y/z/w for V literals.
-5. Remove self-module prefixes: v must not refer to Type; implot.v
+5. Remove self-module prefixes: imgui.v must not refer to Type; implot.v
    must not refer to implot.Type, because each file is already inside that module.
-6. STB rectpack names are intentionally preserved from C when c2v produces
-   aliases like:
+6. STB rectpack names are intentionally preserved from C when c2v title-cases
+   lower-case C identifiers in aliases like:
      example: `pub type Stbrp_node_im = Stbrp_node`
-   Normalize the RHS to C.stbrp_node and emit an opaque C.stbrp_node typedef
-   generically through C-backed alias handling.
+   Normalize those references to C.stbrp_node/C.stbrp_context_opaque and emit
+   their C-backed declarations with the identifiers used by the headers.
 7. Enum aliases are handled dynamically, never by member-name lists. V enums
    reject duplicate integer values, while C/C++ enums often define aliases:
      any_popup = 1 << 10 | 1 << 11
@@ -62,33 +62,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-pub const version = '1.92.7'
-pub const version_num = 19270
-
-pub type DockNodeSettings = C.ImGuiDockNodeSettings
-
-@[typedef]
-pub struct C.ImGuiDockNodeSettings {}
-
-pub type DockRequest = C.ImGuiDockRequest
-
-@[typedef]
-pub struct C.ImGuiDockRequest {}
-
-pub type ImColor = C.ImColor_c
-
-pub type ImFontAtlasBuilder = C.ImFontAtlasBuilder
-
-@[typedef]
-pub struct C.ImFontAtlasBuilder {}
-
-pub type ImRect = C.ImRect_c
-
-pub type ImVec2 = C.ImVec2_c
-
-pub type ImVec2i = C.ImVec2i_c
-
-pub type ImVec4 = C.ImVec4_c
+pub const version = '1.92.9b'
+pub const version_num = 19291
 
 pub type ImWchar = u32
 
@@ -96,20 +71,60 @@ pub type InputTextCallback = fn (&InputTextCallbackData) i32
 
 pub type SizeCallback = fn (&SizeCallbackData)
 
-pub type TextFilter = C.ImGuiTextFilter
-
-@[typedef]
-pub struct C.ImGuiTextFilter {}
-
 pub type Va_list = C.va_list
 
 @[typedef]
 pub struct C.va_list {}
 
+// External C type declarations (from headers)
+
+pub type ImVec2_c = C.ImVec2_c
+
 @[typedef]
-pub struct C.stbrp_node {}
+pub struct C.ImVec2_c {}
 
 // docking branch
+pub type ImColor = ImColor_c
+
+pub type ImRect = ImRect_c
+
+pub type ImTextureRef = ImTextureRef_c
+
+pub type ImVec2 = C.ImVec2_c
+
+pub type ImVec2i = ImVec2i_c
+
+pub type ImVec4 = ImVec4_c
+
+pub type TextFilter = C.ImGuiTextFilter
+
+@[typedef]
+pub struct C.ImGuiTextFilter {}
+
+pub type DockRequest = C.ImGuiDockRequest
+
+@[typedef]
+pub struct C.ImGuiDockRequest {}
+
+pub type DockNodeSettings = C.ImGuiDockNodeSettings
+
+@[typedef]
+pub struct C.ImGuiDockNodeSettings {}
+
+pub type InputTextDeactivateData = C.ImGuiInputTextDeactivateData
+
+@[typedef]
+pub struct C.ImGuiInputTextDeactivateData {}
+
+pub type TableColumnsSettings = C.ImGuiTableColumnsSettings
+
+@[typedef]
+pub struct C.ImGuiTableColumnsSettings {}
+
+pub type Stbrp_node = C.stbrp_node
+
+@[typedef]
+pub struct C.stbrp_node {}
 
 pub type ImVector_const_charPtr = C.ImVector_const_charPtr
 
@@ -122,68 +137,110 @@ pub mut:
 }
 
 pub type ID = u32
+
 pub type ImS8 = i8
+
 pub type ImU8 = u8
+
 pub type ImS16 = i16
+
 pub type ImU16 = u16
+
 pub type ImS32 = i32
+
 pub type ImU32 = u32
+
 pub type ImS64 = i64
+
 pub type ImU64 = i64
+
 pub type Col = i32
+
 pub type Cond = i32
+
 pub type DataType = i32
+
 pub type MouseButton = i32
+
 pub type MouseCursor = i32
+
 pub type StyleVar = i32
+
 pub type TableBgTarget = i32
+
 pub type ImDrawFlags = i32
+
 pub type ImDrawListFlags = i32
+
 pub type ImDrawTextFlags = i32
+
 pub type ImFontFlags = i32
+
 pub type ImFontAtlasFlags = i32
+
 pub type BackendFlags = i32
+
 pub type ButtonFlags = i32
+
 pub type ChildFlags = i32
+
 pub type ColorEditFlags = i32
+
 pub type ConfigFlags = i32
+
 pub type ComboFlags = i32
+
 pub type DockNodeFlags = i32
+
 pub type DragDropFlags = i32
+
 pub type FocusedFlags = i32
+
 pub type HoveredFlags = i32
+
 pub type InputFlags = i32
+
 pub type InputTextFlags = i32
+
 pub type ItemFlags = i32
+
 pub type KeyChord = i32
+
 pub type ListClipperFlags = i32
+
 pub type PopupFlags = i32
+
 pub type MultiSelectFlags = i32
+
 pub type SelectableFlags = i32
+
 pub type SliderFlags = i32
+
 pub type TabBarFlags = i32
+
 pub type TabItemFlags = i32
+
 pub type TableFlags = i32
+
 pub type TableColumnFlags = i32
+
 pub type TableRowFlags = i32
+
 pub type TreeNodeFlags = i32
+
 pub type ViewportFlags = i32
+
 pub type WindowFlags = i32
+
 pub type ImWchar32 = u32
+
 pub type ImWchar16 = u16
+
 pub type SelectionUserData = i64
+
 pub type MemAllocFunc = fn (usize, voidptr) voidptr
 
 pub type MemFreeFunc = fn (voidptr, voidptr)
-
-pub type ImVec2_c = C.ImVec2_c
-
-@[typedef]
-pub struct C.ImVec2_c {
-pub mut:
-	x f32
-	y f32
-}
 
 pub type ImVec4_c = C.ImVec4_c
 
@@ -192,8 +249,6 @@ pub struct C.ImVec4_c {
 pub mut:
 	x f32
 	y f32
-	z f32
-	w f32
 }
 
 pub type ImTextureID = i64
@@ -254,14 +309,17 @@ pub enum ChildFlags_ {
 }
 
 pub enum ItemFlags_ {
-	none                 = 0
-	no_tab_stop          = 1 << 0
-	no_nav               = 1 << 1
-	no_nav_default_focus = 1 << 2
-	button_repeat        = 1 << 3
-	auto_close_popups    = 1 << 4
-	allow_duplicate_id   = 1 << 5
-	disabled             = 1 << 6
+	none                      = 0
+	no_tab_stop               = 1 << 0
+	no_nav                    = 1 << 1
+	no_nav_default_focus      = 1 << 2
+	button_repeat             = 1 << 3
+	auto_close_popups         = 1 << 4
+	allow_duplicate_id        = 1 << 5
+	disabled                  = 1 << 6
+	live_edit_on_input_text   = 1 << 7
+	live_edit_on_input_scalar = 1 << 8
+	live_edit_on_input        = 1 << 7 | 1 << 8
 }
 
 pub enum InputTextFlags_ {
@@ -331,7 +389,7 @@ pub enum PopupFlags_ {
 	any_popup                   = 1 << 10 | 1 << 11
 	mouse_button_shift_         = 1 << 1
 	// mouse_button_mask_ = 1 << 2 | 1 << 3
-	invalid_mask_ = 1 << 0 | 1 << 1
+	invalid_mask_               = 1 << 0 | 1 << 1
 }
 
 pub enum SelectableFlags_ {
@@ -481,8 +539,8 @@ pub enum SortDirection {
 }
 
 pub enum Key {
-	none            = 0
-	named_key_begin = 512
+	none                   = 0
+	named_key_begin        = 512
 	// tab = 512
 	left_arrow             = 513
 	right_arrow            = 514
@@ -641,11 +699,11 @@ pub enum Key {
 	named_key_end          = 667
 	named_key_count        = 155
 	// mod_none = 0
-	mod_ctrl  = 4096
-	mod_shift = 8192
-	mod_alt   = 16384
-	mod_super = 32768
-	mod_mask_ = 61440
+	mod_ctrl               = 4096
+	mod_shift              = 8192
+	mod_alt                = 16384
+	mod_super              = 32768
+	mod_mask_              = 61440
 }
 
 pub enum InputFlags_ {
@@ -708,6 +766,7 @@ pub enum Col_ {
 	scrollbar_grab_hovered
 	scrollbar_grab_active
 	check_mark
+	checkbox_selected_bg
 	slider_grab
 	slider_grab_active
 	button
@@ -790,6 +849,9 @@ pub enum StyleVar_ {
 	table_angled_headers_text_align
 	tree_lines_size
 	tree_lines_rounding
+	menu_item_rounding
+	selectable_rounding
+	drag_drop_target_rounding
 	button_text_align
 	selectable_text_align
 	separator_size
@@ -835,14 +897,15 @@ pub enum ColorEditFlags_ {
 	float              = 1 << 24
 	picker_hue_bar     = 1 << 25
 	picker_hue_wheel   = 1 << 26
-	input_rgb          = 1 << 27
-	input_hsv          = 1 << 28
-	default_options_   = 1 << 20 | 1 << 23 | 1 << 25 | 1 << 27
+	picker_no_rotate   = 1 << 27
+	input_rgb          = 1 << 28
+	input_hsv          = 1 << 29
+	default_options_   = 1 << 20 | 1 << 23 | 1 << 25 | 1 << 28
 	alpha_mask_        = 1 << 1 | 1 << 12 | 1 << 13 | 1 << 14
 	display_mask_      = 1 << 20 | 1 << 21 | 1 << 22
 	data_type_mask_    = 1 << 23 | 1 << 24
 	picker_mask_       = 1 << 25 | 1 << 26
-	input_mask_        = 1 << 27 | 1 << 28
+	input_mask_        = 1 << 28 | 1 << 29
 }
 
 pub enum SliderFlags_ {
@@ -1052,6 +1115,8 @@ pub mut:
 	TreeLinesFlags                   TreeNodeFlags
 	TreeLinesSize                    f32
 	TreeLinesRounding                f32
+	MenuItemRounding                 f32
+	SelectableRounding               f32
 	DragDropTargetRounding           f32
 	DragDropTargetBorderSize         f32
 	DragDropTargetPadding            f32
@@ -1059,6 +1124,7 @@ pub mut:
 	ColorButtonPosition              Dir
 	ButtonTextAlign                  ImVec2_c
 	SelectableTextAlign              ImVec2_c
+	InputTextCursorSize              f32
 	SeparatorSize                    f32
 	SeparatorTextBorderSize          f32
 	SeparatorTextAlign               ImVec2_c
@@ -1073,7 +1139,7 @@ pub mut:
 	AntiAliasedFill                  bool
 	CurveTessellationTol             f32
 	CircleTessellationMaxError       f32
-	Colors                           [62]ImVec4_c
+	Colors                           [63]ImVec4_c
 	HoverStationaryDelay             f32
 	HoverDelayShort                  f32
 	HoverDelayNormal                 f32
@@ -1140,19 +1206,24 @@ pub mut:
 	ConfigViewportsPlatformFocusSetsImGuiFocus    bool
 	ConfigDpiScaleFonts                           bool
 	ConfigDpiScaleViewports                       bool
-	MouseDrawCursor                               bool
 	ConfigMacOSXBehaviors                         bool
 	ConfigInputTrickleEventQueue                  bool
 	ConfigInputTextCursorBlink                    bool
 	ConfigInputTextEnterKeepActive                bool
+	ConfigColorEditFlags                          ColorEditFlags
 	ConfigDragClickToInputText                    bool
 	ConfigWindowsResizeFromEdges                  bool
 	ConfigWindowsMoveFromTitleBarOnly             bool
 	ConfigWindowsCopyContentsWithCtrlC            bool
 	ConfigScrollbarScrollByPage                   bool
+	ConfigIniSettingsSaveLastUsedDate             bool
+	ConfigIniSettingsAutoDiscardMonths            i32
+	ConfigDebugIniSettings                        bool
+	MouseDrawCursor                               bool
 	ConfigMemoryCompactTimer                      f32
 	MouseDoubleClickTime                          f32
 	MouseDoubleClickMaxDist                       f32
+	MouseSingleClickDelay                         f32
 	MouseDragThreshold                            f32
 	KeyRepeatDelay                                f32
 	KeyRepeatRate                                 f32
@@ -1166,7 +1237,6 @@ pub mut:
 	ConfigDebugBeginReturnValueOnce               bool
 	ConfigDebugBeginReturnValueLoop               bool
 	ConfigDebugIgnoreFocusLoss                    bool
-	ConfigDebugIniSettings                        bool
 	BackendPlatformName                           &char
 	BackendRendererName                           &char
 	BackendPlatformUserData                       voidptr
@@ -1270,6 +1340,7 @@ pub mut:
 	DockNodeFlagsOverrideSet   DockNodeFlags
 	DockingAlwaysTabBar        bool
 	DockingAllowUnclassed      bool
+	PlatformIconData           voidptr
 }
 
 pub type Payload = C.ImGuiPayload
@@ -1409,6 +1480,7 @@ pub enum MultiSelectFlags_ {
 	nav_wrap_x                = 1 << 16
 	no_select_on_right_click  = 1 << 17
 	select_on_mask_           = 1 << 13 | 1 << 14 | 1 << 15
+	checkbox_mode_            = 1 << 20
 }
 
 pub type ImVector_SelectionRequest = C.ImVector_ImGuiSelectionRequest
@@ -1475,6 +1547,7 @@ pub mut:
 }
 
 pub type ImDrawIdx = u16
+
 pub type ImDrawCallback = fn (&ImDrawList, &ImDrawCmd)
 
 pub type ImDrawCmd = C.ImDrawCmd
@@ -1564,19 +1637,20 @@ pub mut:
 
 pub enum ImDrawFlags_ {
 	none                       = 0
-	closed                     = 1 << 0
 	round_corners_top_left     = 1 << 4
 	round_corners_top_right    = 1 << 5
 	round_corners_bottom_left  = 1 << 6
 	round_corners_bottom_right = 1 << 7
 	round_corners_none         = 1 << 8
+	round_corners_all          = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
+	// round_corners_default_ = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
 	round_corners_top          = 1 << 4 | 1 << 5
 	round_corners_bottom       = 1 << 6 | 1 << 7
 	round_corners_left         = 1 << 4 | 1 << 6
 	round_corners_right        = 1 << 5 | 1 << 7
-	round_corners_all          = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
-	// round_corners_default_ = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
-	round_corners_mask_ = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8
+	round_corners_mask_        = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8
+	closed                     = 1 << 9
+	invalid_mask_              = -2147483633
 }
 
 pub enum ImDrawListFlags_ {
@@ -1585,6 +1659,7 @@ pub enum ImDrawListFlags_ {
 	anti_aliased_lines_use_tex = 1 << 1
 	anti_aliased_fill          = 1 << 2
 	allow_vtx_offset           = 1 << 3
+	text_no_pixel_snap         = 1 << 4
 }
 
 pub type ImVector_ImDrawVert = C.ImVector_ImDrawVert
@@ -1686,7 +1761,7 @@ pub type ImDrawData = C.ImDrawData
 pub struct C.ImDrawData {
 pub mut:
 	Valid            bool
-	CmdListsCount    i32
+	FrameCount       i32
 	TotalIdxCount    i32
 	TotalVtxCount    i32
 	CmdLists         ImVector_ImDrawListPtr
@@ -1739,6 +1814,7 @@ pub mut:
 	UniqueID             i32
 	Status               ImTextureStatus
 	BackendUserData      voidptr
+	QueueUserData        voidptr
 	TexID                ImTextureID
 	Format               ImTextureFormat
 	Width                i32
@@ -1969,10 +2045,11 @@ pub mut:
 }
 
 pub enum ImFontFlags_ {
-	none             = 0
-	no_load_error    = 1 << 1
-	no_load_glyphs   = 1 << 2
-	lock_baked_sizes = 1 << 3
+	none              = 0
+	no_load_error     = 1 << 1
+	no_load_glyphs    = 1 << 2
+	lock_baked_sizes  = 1 << 3
+	implicit_ref_size = 1 << 4
 }
 
 pub type ImVector_ImFontConfigPtr = C.ImVector_ImFontConfigPtr
@@ -2040,6 +2117,7 @@ pub mut:
 	DrawData              &ImDrawData
 	RendererUserData      voidptr
 	PlatformUserData      voidptr
+	PlatformIconData      voidptr
 	PlatformHandle        voidptr
 	PlatformHandleRaw     voidptr
 	PlatformWindowCreated bool
@@ -2081,9 +2159,13 @@ pub mut:
 	Platform_SetImeDataFn              fn (&Context, &Viewport, &PlatformImeData)
 	Platform_ImeUserData               voidptr
 	Platform_LocaleDecimalPoint        ImWchar
+	Platform_SessionDate               i32
 	Renderer_TextureMaxWidth           i32
 	Renderer_TextureMaxHeight          i32
 	Renderer_RenderState               voidptr
+	DrawCallback_ResetRenderState      ImDrawCallback
+	DrawCallback_SetSamplerLinear      ImDrawCallback
+	DrawCallback_SetSamplerNearest     ImDrawCallback
 	Platform_CreateWindow              fn (&Viewport)
 	Platform_DestroyWindow             fn (&Viewport)
 	Platform_ShowWindow                fn (&Viewport)
@@ -2139,26 +2221,46 @@ pub mut:
 	ViewportId      ID
 }
 
-pub type DataAuthority = i32
+pub type DataAuthority = u32
+
 pub type LayoutType = i32
+
 pub type ActivateFlags = i32
+
 pub type DebugLogFlags = i32
+
 pub type FocusRequestFlags = i32
+
 pub type ItemStatusFlags = i32
+
 pub type OldColumnFlags = i32
+
 pub type LogFlags = i32
+
 pub type NavRenderCursorFlags = i32
+
 pub type NavMoveFlags = i32
+
 pub type NextItemDataFlags = i32
+
 pub type NextWindowDataFlags = i32
+
 pub type ScrollFlags = i32
+
 pub type SeparatorFlags = i32
+
 pub type TextFlags = i32
+
 pub type TooltipFlags = i32
+
 pub type TypingSelectFlags = i32
+
 pub type WindowBgClickFlags = i32
+
 pub type WindowRefreshFlags = i32
+
 pub type TableColumnIdx = i16
+
 pub type TableDrawChannelIdx = u16
 
 pub enum ImDrawTextFlags_ {
@@ -2179,18 +2281,14 @@ pub type ImFileHandle = &C.FILE
 pub type ImVec1 = C.ImVec1
 
 @[typedef]
-pub struct C.ImVec1 {
-pub mut:
-	X f32
-}
+pub struct C.ImVec1 {}
 
 pub type ImVec2i_c = C.ImVec2i_c
 
 @[typedef]
 pub struct C.ImVec2i_c {
 pub mut:
-	x i32
-	y i32
+	X f32
 }
 
 pub type ImVec2ih = C.ImVec2ih
@@ -2242,28 +2340,38 @@ pub mut:
 	EndOffset i32
 }
 
+pub type PackedDate = C.ImGuiPackedDate
+
+@[typedef]
+pub struct C.ImGuiPackedDate {
+pub mut:
+	Year  ImU16
+	Month ImU16
+	Day   ImU16
+}
+
 pub type ImDrawListSharedData = C.ImDrawListSharedData
 
 @[typedef]
 pub struct C.ImDrawListSharedData {
 pub mut:
-	TexUvWhitePixel       ImVec2_c
-	TexUvLines            &ImVec4_c
-	FontAtlas             &ImFontAtlas
-	Font                  &ImFont
-	FontSize              f32
-	FontScale             f32
-	CurveTessellationTol  f32
-	CircleSegmentMaxError f32
-	InitialFringeScale    f32
-	InitialFlags          ImDrawListFlags
-	ClipRectFullscreen    ImVec4_c
-	TempBuffer            ImVector_ImVec2
-	DrawLists             ImVector_ImDrawListPtr
-	Context               &Context
-	ArcFastVtx            [48]ImVec2_c
-	ArcFastRadiusCutoff   f32
-	CircleSegmentCounts   [64]ImU8
+	TexUvWhitePixel            ImVec2_c
+	TexUvLines                 &ImVec4_c
+	FontAtlas                  &ImFontAtlas
+	Font                       &ImFont
+	FontSize                   f32
+	FontScale                  f32
+	CurveTessellationTol       f32
+	CircleTessellationMaxError f32
+	InitialFringeScale         f32
+	InitialFlags               ImDrawListFlags
+	ClipRectFullscreen         ImVec4_c
+	TempBuffer                 ImVector_ImVec2
+	DrawLists                  ImVector_ImDrawListPtr
+	Context                    &Context
+	ArcFastVtx                 [48]ImVec2_c
+	ArcFastRadiusCutoff        f32
+	CircleSegmentCounts        [64]ImU8
 }
 
 pub type ImDrawDataBuilder = C.ImDrawDataBuilder
@@ -2347,7 +2455,7 @@ pub enum ItemFlagsPrivate_ {
 	inputable                  = 1 << 20
 	has_selection_user_data    = 1 << 21
 	is_multi_select            = 1 << 22
-	default_                   = 1 << 4
+	default_                   = 1 << 4 | 1 << 7
 }
 
 pub enum ItemStatusFlags_ {
@@ -2363,6 +2471,7 @@ pub enum ItemStatusFlags_ {
 	visible           = 1 << 8
 	has_clip_rect     = 1 << 9
 	has_shortcut      = 1 << 10
+	edited_internal   = 1 << 11
 }
 
 pub enum HoveredFlagsPrivate_ {
@@ -2490,20 +2599,20 @@ pub type GroupData = C.ImGuiGroupData
 @[typedef]
 pub struct C.ImGuiGroupData {
 pub mut:
-	WindowID                             ID
-	BackupCursorPos                      ImVec2_c
-	BackupCursorMaxPos                   ImVec2_c
-	BackupCursorPosPrevLine              ImVec2_c
-	BackupIndent                         ImVec1
-	BackupGroupOffset                    ImVec1
-	BackupCurrLineSize                   ImVec2_c
-	BackupCurrLineTextBaseOffset         f32
-	BackupActiveIdIsAlive                ID
-	BackupActiveIdHasBeenEditedThisFrame bool
-	BackupDeactivatedIdIsAlive           bool
-	BackupHoveredIdIsAlive               bool
-	BackupIsSameLine                     bool
-	EmitItem                             bool
+	WindowID                          ID
+	BackupCursorPos                   ImVec2_c
+	BackupCursorMaxPos                ImVec2_c
+	BackupCursorPosPrevLine           ImVec2_c
+	BackupIndent                      ImVec1
+	BackupGroupOffset                 ImVec1
+	BackupCurrLineSize                ImVec2_c
+	BackupCurrLineTextBaseOffset      f32
+	BackupActiveIdIsAlive             ID
+	BackupAnyIdHasBeenEditedThisFrame bool
+	BackupDeactivatedIdIsAlive        bool
+	BackupHoveredIdIsAlive            bool
+	BackupIsSameLine                  bool
+	EmitItem                          bool
 }
 
 pub type MenuColumns = C.ImGuiMenuColumns
@@ -2526,8 +2635,9 @@ pub type InputTextDeactivatedState = C.ImGuiInputTextDeactivatedState
 @[typedef]
 pub struct C.ImGuiInputTextDeactivatedState {
 pub mut:
-	ID    ID
-	TextA ImVector_char
+	ID          ID
+	ElapseFrame i32
+	TextA       ImVector_char
 }
 
 pub type ImStbTexteditState = C.STB_TexteditState
@@ -2641,7 +2751,7 @@ pub type NextItemData = C.ImGuiNextItemData
 pub struct C.ImGuiNextItemData {
 pub mut:
 	HasFlags          NextItemDataFlags
-	ItemFlags         ItemFlags
+	ItemFlagsSet      ItemFlags
 	FocusScopeId      ID
 	SelectionUserData SelectionUserData
 	Width             f32
@@ -2932,14 +3042,14 @@ pub enum InputFlagsPrivate_ {
 	repeat_until_mask_                     = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
 	repeat_mask_                           = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
 	// cond_mask_ = 1 << 22 | 1 << 23
-	route_type_mask_    = 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13
-	route_options_mask_ = 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
+	route_type_mask_                       = 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13
+	route_options_mask_                    = 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
 	// supported_by_is_key_pressed = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
-	supported_by_is_mouse_clicked       = 1 << 0
-	supported_by_shortcut               = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
-	supported_by_set_next_item_shortcut = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17 | 1 << 18
-	supported_by_set_key_owner          = 1 << 20 | 1 << 21
-	supported_by_set_item_key_owner     = 1 << 20 | 1 << 21 | 1 << 22 | 1 << 23
+	supported_by_is_mouse_clicked          = 1 << 0
+	supported_by_shortcut                  = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
+	supported_by_set_next_item_shortcut    = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17 | 1 << 18
+	supported_by_set_key_owner             = 1 << 20 | 1 << 21
+	supported_by_set_item_key_owner        = 1 << 20 | 1 << 21 | 1 << 22 | 1 << 23
 }
 
 pub type ListClipperRange = C.ImGuiListClipperRange
@@ -3003,7 +3113,6 @@ pub enum NavRenderCursorFlags_ {
 	none        = 0
 	compact     = 1 << 1
 	always_draw = 1 << 2
-	no_rounding = 1 << 3
 }
 
 pub enum NavMoveFlags_ {
@@ -3162,6 +3271,7 @@ pub mut:
 	Window                &Window
 	UnclipMode            bool
 	UnclipRect            ImRect_c
+	UnclipRects           [2]ImRect_c
 	BoxSelectRectPrev     ImRect_c
 	BoxSelectRectCurr     ImRect_c
 }
@@ -3171,22 +3281,22 @@ pub type MultiSelectTempData = C.ImGuiMultiSelectTempData
 @[typedef]
 pub struct C.ImGuiMultiSelectTempData {
 pub mut:
-	IO                 MultiSelectIO
-	Storage            &MultiSelectState
-	FocusScopeId       ID
-	Flags              MultiSelectFlags
-	ScopeRectMin       ImVec2_c
-	BackupCursorMaxPos ImVec2_c
-	LastSubmittedItem  SelectionUserData
-	BoxSelectId        ID
-	KeyMods            KeyChord
-	LoopRequestSetAll  ImS8
-	IsEndIO            bool
-	IsFocused          bool
-	IsKeyboardSetRange bool
-	NavIdPassedBy      bool
-	RangeSrcPassedBy   bool
-	RangeDstPassedBy   bool
+	IO                           MultiSelectIO
+	Storage                      &MultiSelectState
+	FocusScopeId                 ID
+	Flags                        MultiSelectFlags
+	ScopeRectMin                 ImVec2_c
+	BackupCursorMaxPos           ImVec2_c
+	BoxSelectId                  ID
+	KeyMods                      KeyChord
+	LoopRequestSetAll            ImS8
+	IsEndIO                      bool
+	IsFocused                    bool
+	IsKeyboardSetRange           bool
+	NavIdPassedBy                bool
+	RangeSrcPassedBy             bool
+	RangeDstPassedBy             bool
+	IsSoleOrUnknownSelectionSize bool
 }
 
 pub type MultiSelectState = C.ImGuiMultiSelectState
@@ -3267,8 +3377,8 @@ pub mut:
 	Size                   ImVec2_c
 	SizeRef                ImVec2_c
 	SplitAxis              Axis
-	WindowClass            WindowClass
 	LastBgColor            ImU32
+	WindowClass            WindowClass
 	HostWindow             &Window
 	VisibleWindow          &Window
 	CentralNode            &DockNode
@@ -3281,9 +3391,9 @@ pub mut:
 	SelectedTabId          ID
 	WantCloseTabId         ID
 	RefViewportId          ID
-	AuthorityForPos        DataAuthority
-	AuthorityForSize       DataAuthority
-	AuthorityForViewport   DataAuthority
+	AuthorityForPos        ImU8
+	AuthorityForSize       ImU8
+	AuthorityForViewport   ImU8
 	IsVisible              bool
 	IsFocused              bool
 	IsBgDrawnThisFrame     bool
@@ -3384,18 +3494,33 @@ pub type WindowSettings = C.ImGuiWindowSettings
 @[typedef]
 pub struct C.ImGuiWindowSettings {
 pub mut:
-	ID          ID
-	Pos         ImVec2ih
-	Size        ImVec2ih
-	ViewportPos ImVec2ih
-	ViewportId  ID
-	DockId      ID
-	ClassId     ID
-	DockOrder   i16
-	Collapsed   bool
-	IsChild     bool
-	WantApply   bool
-	WantDelete  bool
+	ID           ID
+	Pos          ImVec2ih
+	Size         ImVec2ih
+	ViewportPos  ImVec2ih
+	ViewportId   ID
+	DockId       ID
+	ClassId      ID
+	DockOrder    i16
+	LastUsedDate PackedDate
+	Collapsed    bool
+	IsChild      bool
+	WantApply    bool
+	WantDelete   bool
+}
+
+pub type SettingsCleanupArgs = C.ImGuiSettingsCleanupArgs
+
+@[typedef]
+pub struct C.ImGuiSettingsCleanupArgs {
+pub mut:
+	TypeHashFilter                       ID
+	DiscardOlderThanMonths               i32
+	DiscardWhenMissingDate               bool
+	DiscardAll                           bool
+	SetCurrentSessionDateToAll           bool
+	SetCurrentSessionDateWhenMissingDate bool
+	_DiscardOlderThanDate                i32
 }
 
 pub type SettingsHandler = C.ImGuiSettingsHandler
@@ -3419,16 +3544,18 @@ pub enum LocKey {
 	table_size_one                      = 1
 	table_size_all_fit                  = 2
 	table_size_all_default              = 3
-	table_reset_order                   = 4
-	windowing_main_menu_bar             = 5
-	windowing_popup                     = 6
-	windowing_untitled                  = 7
-	open_link_s                         = 8
-	copy_link                           = 9
-	docking_hide_tab_bar                = 10
-	docking_hold_shift_to_dock          = 11
-	docking_drag_to_undock_or_move_node = 12
-	count                               = 13
+	table_reset                         = 4
+	table_reset_order                   = 5
+	table_reset_visibility              = 6
+	windowing_main_menu_bar             = 7
+	windowing_popup                     = 8
+	windowing_untitled                  = 9
+	open_link_s                         = 10
+	copy_link                           = 11
+	docking_hide_tab_bar                = 12
+	docking_hold_shift_to_dock          = 13
+	docking_drag_to_undock_or_move_node = 14
+	count                               = 15
 }
 
 pub type LocEntry = C.ImGuiLocEntry
@@ -3456,7 +3583,8 @@ pub enum DebugLogFlags_ {
 	event_input_routing   = 1 << 9
 	event_docking         = 1 << 10
 	event_viewport        = 1 << 11
-	event_mask_           = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9 | 1 << 10 | 1 << 11
+	event_table           = 1 << 12
+	event_mask_           = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9 | 1 << 10 | 1 << 11 | 1 << 12
 	output_to_tty         = 1 << 20
 	output_to_debugger    = 1 << 21
 	output_to_test_engine = 1 << 22
@@ -3488,21 +3616,23 @@ pub type MetricsConfig = C.ImGuiMetricsConfig
 @[typedef]
 pub struct C.ImGuiMetricsConfig {
 pub mut:
-	ShowDebugLog             bool
-	ShowIDStackTool          bool
-	ShowWindowsRects         bool
-	ShowWindowsBeginOrder    bool
-	ShowTablesRects          bool
-	ShowDrawCmdMesh          bool
-	ShowDrawCmdBoundingBoxes bool
-	ShowTextEncodingViewer   bool
-	ShowTextureUsedRect      bool
-	ShowDockingNodes         bool
-	ShowWindowsRectsType     i32
-	ShowTablesRectsType      i32
-	HighlightMonitorIdx      i32
-	HighlightViewportID      ID
-	ShowFontPreview          bool
+	ShowDebugLog                bool
+	ShowIDStackTool             bool
+	ShowWindowsRects            bool
+	ShowWindowsBeginOrder       bool
+	ShowTablesRects             bool
+	ShowDrawCmdMesh             bool
+	ShowDrawCmdBoundingBoxes    bool
+	ShowTextEncodingViewer      bool
+	ShowTextureUsedRect         bool
+	ShowDockingNodes            bool
+	ShowWindowsRectsType        i32
+	ShowTablesRectsType         i32
+	HighlightMonitorIdx         i32
+	HighlightViewportID         ID
+	SettingsDiscardMonths       i32
+	SettingsHighlightOldEntries bool
+	ShowFontPreview             bool
 }
 
 pub type StackLevelInfo = C.ImGuiStackLevelInfo
@@ -3898,6 +4028,7 @@ pub mut:
 	CurrentDpiScale                    f32
 	DrawListSharedData                 ImDrawListSharedData
 	WithinEndChildID                   ID
+	WithinEndPopupID                   ID
 	TestEngine                         voidptr
 	InputEventsQueue                   ImVector_InputEvent
 	InputEventsTrail                   ImVector_InputEvent
@@ -3933,10 +4064,13 @@ pub mut:
 	HoveredIdAllowOverlap              bool
 	HoveredIdIsDisabled                bool
 	ItemUnclipByLog                    bool
+	AnyIdHasBeenEditedThisFrame        bool
 	ActiveId                           ID
 	ActiveIdIsAlive                    ID
 	ActiveIdTimer                      f32
 	ActiveIdIsJustActivated            bool
+	ActiveIdWasSelected                bool
+	ActiveIdWasSoleSelected            bool
 	ActiveIdAllowOverlap               bool
 	ActiveIdNoClearOnFocusLoss         bool
 	ActiveIdHasBeenPressedBefore       bool
@@ -3953,6 +4087,8 @@ pub mut:
 	ActiveIdValueOnActivation          DataTypeStorage
 	LastActiveId                       ID
 	LastActiveIdTimer                  f32
+	LastActiveIdWasSelected            bool
+	LastActiveIdWasSoleSelected        bool
 	LastKeyModsChangeTime              f64
 	LastKeyModsChangeFromNoneTime      f64
 	LastKeyboardKeyPressTime           f64
@@ -4113,7 +4249,6 @@ pub mut:
 	DataTypeZeroValue                  DataTypeStorage
 	BeginMenuDepth                     i32
 	BeginComboDepth                    i32
-	ColorEditOptions                   ColorEditFlags
 	ColorEditCurrentID                 ID
 	ColorEditSavedID                   ID
 	ColorEditSavedHue                  f32
@@ -4143,6 +4278,7 @@ pub mut:
 	UserTextures                       ImVector_ImTextureDataPtr
 	DockContext                        DockContext
 	DockNodeWindowMenuHandler          fn (&Context, &DockNode, &TabBar)
+	SessionDate                        PackedDate
 	SettingsLoaded                     bool
 	SettingsDirtyTimer                 f32
 	SettingsIniData                    TextBuffer
@@ -4152,7 +4288,7 @@ pub mut:
 	Hooks                              ImVector_ContextHook
 	HookIdNext                         ID
 	DemoMarkerCallback                 DemoMarkerCallback
-	LocalizationTable                  [13]&char
+	LocalizationTable                  [15]&char
 	LogEnabled                         bool
 	LogLineFirstItem                   bool
 	LogFlags                           LogFlags
@@ -4499,7 +4635,8 @@ pub mut:
 	StretchWeight            f32
 	InitStretchWeightOrWidth f32
 	ClipRect                 ImRect_c
-	UserID                   ID
+	ID                       ID
+	UserData                 ID
 	WorkMinX                 f32
 	WorkMaxX                 f32
 	ItemWidth                f32
@@ -4524,6 +4661,10 @@ pub mut:
 	IsRequestOutput          bool
 	IsSkipItems              bool
 	IsPreserveWidthAuto      bool
+	IsJustCreated            bool
+	IsLoadedSettings         bool
+	IsNeedReconcileSrc       bool
+	IsNeedReconcileDst       bool
 	NavLayerCurrent          ImS8
 	AutoFitQueue             ImU8
 	CannotSkipItemsQueue     ImU8
@@ -4531,6 +4672,21 @@ pub mut:
 	SortDirectionsAvailCount ImU8
 	SortDirectionsAvailMask  ImU8
 	SortDirectionsAvailList  ImU8
+}
+
+pub type TableReconcileColumnData = C.ImGuiTableReconcileColumnData
+
+@[typedef]
+pub struct C.ImGuiTableReconcileColumnData {
+pub mut:
+	ID                ID
+	NameOffset        ImS16
+	Flags             TableColumnFlags
+	InitWidthOrWeight f32
+	UserData          ID
+	ColumnNewIdx      TableColumnIdx
+	ColumnOldIdx      TableColumnIdx
+	ColumnOldData     TableColumn
 }
 
 pub type TableCellData = C.ImGuiTableCellData
@@ -4715,6 +4871,7 @@ pub mut:
 	IsLayoutLocked             bool
 	IsInsideRow                bool
 	IsInitializing             bool
+	IsReconcileMode            bool
 	IsSortSpecsDirty           bool
 	IsUsingHeaders             bool
 	IsContextPopupOpen         bool
@@ -4722,8 +4879,10 @@ pub mut:
 	IsSettingsRequestLoad      bool
 	IsSettingsDirty            bool
 	IsDefaultDisplayOrder      bool
+	IsDefaultVisibility        bool
 	IsResetAllRequest          bool
 	IsResetDisplayOrderRequest bool
+	IsResetVisibilityRequest   bool
 	IsUnfrozenRows             bool
 	IsDefaultSizingPolicy      bool
 	IsActiveIdAliveBeforeTable bool
@@ -4744,6 +4903,16 @@ pub mut:
 	Data     &TableHeaderData
 }
 
+pub type ImVector_TableReconcileColumnData = C.ImVector_ImGuiTableReconcileColumnData
+
+@[typedef]
+pub struct C.ImVector_ImGuiTableReconcileColumnData {
+pub mut:
+	Size     i32
+	Capacity i32
+	Data     &TableReconcileColumnData
+}
+
 pub type TableTempData = C.ImGuiTableTempData
 
 @[typedef]
@@ -4754,6 +4923,9 @@ pub mut:
 	LastTimeActive               f32
 	AngledHeadersExtraWidth      f32
 	AngledHeadersRequests        ImVector_TableHeaderData
+	ReconcileColumnsRequests     ImVector_TableReconcileColumnData
+	OldColumnsRawData            voidptr
+	OldColumnsData               ImSpan_TableColumn
 	UserOuterSize                ImVec2_c
 	DrawSplitter                 ImDrawListSplitter
 	HostBackupWorkRect           ImRect_c
@@ -4772,13 +4944,14 @@ pub type TableColumnSettings = C.ImGuiTableColumnSettings
 pub struct C.ImGuiTableColumnSettings {
 pub mut:
 	WidthOrWeight f32
-	UserID        ID
+	ID            ID
 	Index         TableColumnIdx
 	DisplayOrder  TableColumnIdx
 	SortOrder     TableColumnIdx
 	SortDirection ImU8
 	IsEnabled     ImS8
 	IsStretch     ImU8
+	IsLoaded      bool
 }
 
 pub type TableSettings = C.ImGuiTableSettings
@@ -4791,6 +4964,7 @@ pub mut:
 	RefScale        f32
 	ColumnsCount    TableColumnIdx
 	ColumnsCountMax TableColumnIdx
+	LastUsedDate    PackedDate
 	WantApply       bool
 }
 
@@ -4840,10 +5014,10 @@ pub mut:
 
 pub type Stbrp_node_im = C.stbrp_node
 
-pub type Stbrp_context_opaque = C.Stbrp_context_opaque
+pub type Stbrp_context_opaque = C.stbrp_context_opaque
 
 @[typedef]
-pub struct C.Stbrp_context_opaque {
+pub struct C.stbrp_context_opaque {
 pub mut:
 	Data [80]i8
 }
@@ -4888,10 +5062,10 @@ pub mut:
 	Blocks   ImVector_ImFontBakedPtr
 }
 
-pub type ImTextureRef = C.ImTextureRef
+pub type ImFontAtlasBuilder = C.ImFontAtlasBuilder
 
 @[typedef]
-pub struct C.ImTextureRef {
+pub struct C.ImFontAtlasBuilder {
 pub mut:
 	PackContext              Stbrp_context_opaque
 	PackNodes                ImVector_stbrp_node_im
@@ -4913,6 +5087,67 @@ pub mut:
 	BakedDiscardedCount      i32
 	PackIdMouseCursors       ImFontAtlasRectId
 	PackIdLinesTexData       ImFontAtlasRectId
+}
+
+pub type StbUndoRecord = C.StbUndoRecord
+
+@[typedef]
+pub struct C.StbUndoRecord {
+pub mut:
+	Where         i32
+	Insert_length i32
+	Delete_length i32
+	Char_storage  i32
+}
+
+pub type StbUndoState = C.StbUndoState
+
+@[typedef]
+pub struct C.StbUndoState {
+pub mut:
+	Undo_rec        [99]StbUndoRecord
+	Undo_char       [999]i8
+	Undo_point      i16
+	Redo_point      i16
+	Undo_char_point i32
+	Redo_char_point i32
+}
+
+pub type STB_TexteditState = C.STB_TexteditState
+
+@[typedef]
+pub struct C.STB_TexteditState {
+pub mut:
+	Cursor                i32
+	Select_start          i32
+	Select_end            i32
+	Insert_mode           u8
+	Row_count_per_page    i32
+	Cursor_at_end_of_line u8
+	Initialized           u8
+	Has_preferred_x       u8
+	Single_line           u8
+	Padding1              u8
+	Padding2              u8
+	Padding3              u8
+	Preferred_x           f32
+	Undostate             StbUndoState
+}
+
+pub type StbTexteditRow = C.StbTexteditRow
+
+@[typedef]
+pub struct C.StbTexteditRow {}
+
+@[typedef]
+pub struct C.ImTextureRef {
+pub mut:
+	X0               f32
+	X1               f32
+	Baseline_y_delta f32
+	Ymin             f32
+	Ymax             f32
+	Num_chars        i32
 }
 
 @[keep_args_alive]
@@ -5111,7 +5346,7 @@ pub fn show_debug_log_window(p_open &bool) {
 fn C.igShowIDStackToolWindow(p_open &bool)
 
 @[inline]
-pub fn show_ids_tack_tool_window(p_open &bool) {
+pub fn show_id_stack_tool_window(p_open &bool) {
 	C.igShowIDStackToolWindow(p_open)
 }
 
@@ -6020,10 +6255,10 @@ pub fn text(const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igTextV(const_fmt &char, args Va_list)
+fn C.igTextV(const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn text_v(const_fmt &char, args Va_list) {
+pub fn text_v(const_fmt &char, args C.va_list) {
 	C.igTextV(const_fmt, args)
 }
 
@@ -6036,10 +6271,10 @@ pub fn text_colored(col ImVec4_c, const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igTextColoredV(col ImVec4_c, const_fmt &char, args Va_list)
+fn C.igTextColoredV(col ImVec4_c, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn text_colored_v(col ImVec4_c, const_fmt &char, args Va_list) {
+pub fn text_colored_v(col ImVec4_c, const_fmt &char, args C.va_list) {
 	C.igTextColoredV(col, const_fmt, args)
 }
 
@@ -6052,10 +6287,10 @@ pub fn text_disabled(const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igTextDisabledV(const_fmt &char, args Va_list)
+fn C.igTextDisabledV(const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn text_disabled_v(const_fmt &char, args Va_list) {
+pub fn text_disabled_v(const_fmt &char, args C.va_list) {
 	C.igTextDisabledV(const_fmt, args)
 }
 
@@ -6068,10 +6303,10 @@ pub fn text_wrapped(const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igTextWrappedV(const_fmt &char, args Va_list)
+fn C.igTextWrappedV(const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn text_wrapped_v(const_fmt &char, args Va_list) {
+pub fn text_wrapped_v(const_fmt &char, args C.va_list) {
 	C.igTextWrappedV(const_fmt, args)
 }
 
@@ -6084,10 +6319,10 @@ pub fn label_text(const_label &char, const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igLabelTextV(const_label &char, const_fmt &char, args Va_list)
+fn C.igLabelTextV(const_label &char, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn label_text_v(const_label &char, const_fmt &char, args Va_list) {
+pub fn label_text_v(const_label &char, const_fmt &char, args C.va_list) {
 	C.igLabelTextV(const_label, const_fmt, args)
 }
 
@@ -6100,10 +6335,10 @@ pub fn bullet_text(const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igBulletTextV(const_fmt &char, args Va_list)
+fn C.igBulletTextV(const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn bullet_text_v(const_fmt &char, args Va_list) {
+pub fn bullet_text_v(const_fmt &char, args C.va_list) {
 	C.igBulletTextV(const_fmt, args)
 }
 
@@ -6140,10 +6375,10 @@ pub fn invisible_button(const_str_id &char, size ImVec2_c, flags ButtonFlags) bo
 }
 
 @[keep_args_alive]
-fn C.igArrowButton(const_str_id &char, dir Dir) bool
+fn C.igArrowButton(const_str_id &char, dir i32) bool
 
 @[inline]
-pub fn arrow_button(const_str_id &char, dir Dir) bool {
+pub fn arrow_button(const_str_id &char, dir i32) bool {
 	return C.igArrowButton(const_str_id, dir)
 }
 
@@ -6264,8 +6499,7 @@ fn C.igCombo_Str_arr(const_label &char, current_item &i32, items &&u8, items_cou
 
 @[inline]
 pub fn combo_str_arr(const_label &char, current_item &i32, items &&u8, items_count i32, popup_max_height_in_items i32) bool {
-	return C.igCombo_Str_arr(const_label, current_item, items, items_count,
-		popup_max_height_in_items)
+	return C.igCombo_Str_arr(const_label, current_item, items, items_count, popup_max_height_in_items)
 }
 
 @[keep_args_alive]
@@ -6273,8 +6507,7 @@ fn C.igCombo_Str(const_label &char, current_item &i32, items_separated_by_zeros 
 
 @[inline]
 pub fn combo_str(const_label &char, current_item &i32, items_separated_by_zeros &char, popup_max_height_in_items i32) bool {
-	return C.igCombo_Str(const_label, current_item, items_separated_by_zeros,
-		popup_max_height_in_items)
+	return C.igCombo_Str(const_label, current_item, items_separated_by_zeros, popup_max_height_in_items)
 }
 
 @[keep_args_alive]
@@ -6282,8 +6515,7 @@ fn C.igCombo_FnStrPtr(const_label &char, current_item &i32, getter fn (voidptr, 
 
 @[inline]
 pub fn combo_fn_str_ptr(const_label &char, current_item &i32, getter fn (voidptr, i32) &char, user_data voidptr, items_count i32, popup_max_height_in_items i32) bool {
-	return C.igCombo_FnStrPtr(const_label, current_item, getter, user_data, items_count,
-		popup_max_height_in_items)
+	return C.igCombo_FnStrPtr(const_label, current_item, getter, user_data, items_count, popup_max_height_in_items)
 }
 
 @[keep_args_alive]
@@ -6323,8 +6555,7 @@ fn C.igDragFloatRange2(const_label &char, v_current_min &f32, v_current_max &f32
 
 @[inline]
 pub fn drag_float_range2(const_label &char, v_current_min &f32, v_current_max &f32, v_speed f32, v_min f32, v_max f32, format &char, format_max &char, flags SliderFlags) bool {
-	return C.igDragFloatRange2(const_label, v_current_min, v_current_max, v_speed, v_min, v_max,
-		format, format_max, flags)
+	return C.igDragFloatRange2(const_label, v_current_min, v_current_max, v_speed, v_min, v_max, format, format_max, flags)
 }
 
 @[keep_args_alive]
@@ -6364,8 +6595,7 @@ fn C.igDragIntRange2(const_label &char, v_current_min &i32, v_current_max &i32, 
 
 @[inline]
 pub fn drag_int_range2(const_label &char, v_current_min &i32, v_current_max &i32, v_speed f32, v_min i32, v_max i32, format &char, format_max &char, flags SliderFlags) bool {
-	return C.igDragIntRange2(const_label, v_current_min, v_current_max, v_speed, v_min, v_max,
-		format, format_max, flags)
+	return C.igDragIntRange2(const_label, v_current_min, v_current_max, v_speed, v_min, v_max, format, format_max, flags)
 }
 
 @[keep_args_alive]
@@ -6381,8 +6611,7 @@ fn C.igDragScalarN(const_label &char, data_type DataType, p_data voidptr, compon
 
 @[inline]
 pub fn drag_scalar_n(const_label &char, data_type DataType, p_data voidptr, components i32, v_speed f32, p_min voidptr, p_max voidptr, format &char, flags SliderFlags) bool {
-	return C.igDragScalarN(const_label, data_type, p_data, components, v_speed, p_min, p_max,
-		format, flags)
+	return C.igDragScalarN(const_label, data_type, p_data, components, v_speed, p_min, p_max, format, flags)
 }
 
 @[keep_args_alive]
@@ -6470,8 +6699,7 @@ fn C.igSliderScalarN(const_label &char, data_type DataType, p_data voidptr, comp
 
 @[inline]
 pub fn slider_scalar_n(const_label &char, data_type DataType, p_data voidptr, components i32, p_min voidptr, p_max voidptr, format &char, flags SliderFlags) bool {
-	return C.igSliderScalarN(const_label, data_type, p_data, components, p_min, p_max, format,
-		flags)
+	return C.igSliderScalarN(const_label, data_type, p_data, components, p_min, p_max, format, flags)
 }
 
 @[keep_args_alive]
@@ -6607,8 +6835,7 @@ fn C.igInputScalarN(const_label &char, data_type DataType, p_data voidptr, compo
 
 @[inline]
 pub fn input_scalar_n(const_label &char, data_type DataType, p_data voidptr, components i32, p_step voidptr, p_step_fast voidptr, format &char, flags InputTextFlags) bool {
-	return C.igInputScalarN(const_label, data_type, p_data, components, p_step, p_step_fast,
-		format, flags)
+	return C.igInputScalarN(const_label, data_type, p_data, components, p_step, p_step_fast, format, flags)
 }
 
 @[keep_args_alive]
@@ -6652,14 +6879,6 @@ pub fn color_button(desc_id &char, col ImVec4_c, flags ColorEditFlags, size ImVe
 }
 
 @[keep_args_alive]
-fn C.igSetColorEditOptions(flags ColorEditFlags)
-
-@[inline]
-pub fn set_color_edit_options(flags ColorEditFlags) {
-	C.igSetColorEditOptions(flags)
-}
-
-@[keep_args_alive]
 fn C.igTreeNode_Str(const_label &char) bool
 
 @[inline]
@@ -6684,18 +6903,18 @@ pub fn tree_node_ptr(ptr_id voidptr, const_fmt &char) bool {
 }
 
 @[keep_args_alive]
-fn C.igTreeNodeV_Str(const_str_id &char, const_fmt &char, args Va_list) bool
+fn C.igTreeNodeV_Str(const_str_id &char, const_fmt &char, args C.va_list) bool
 
 @[inline]
-pub fn tree_node_v_str(const_str_id &char, const_fmt &char, args Va_list) bool {
+pub fn tree_node_v_str(const_str_id &char, const_fmt &char, args C.va_list) bool {
 	return C.igTreeNodeV_Str(const_str_id, const_fmt, args)
 }
 
 @[keep_args_alive]
-fn C.igTreeNodeV_Ptr(ptr_id voidptr, const_fmt &char, args Va_list) bool
+fn C.igTreeNodeV_Ptr(ptr_id voidptr, const_fmt &char, args C.va_list) bool
 
 @[inline]
-pub fn tree_node_v_ptr(ptr_id voidptr, const_fmt &char, args Va_list) bool {
+pub fn tree_node_v_ptr(ptr_id voidptr, const_fmt &char, args C.va_list) bool {
 	return C.igTreeNodeV_Ptr(ptr_id, const_fmt, args)
 }
 
@@ -6724,18 +6943,18 @@ pub fn tree_node_ex_ptr(ptr_id voidptr, flags TreeNodeFlags, const_fmt &char) bo
 }
 
 @[keep_args_alive]
-fn C.igTreeNodeExV_Str(const_str_id &char, flags TreeNodeFlags, const_fmt &char, args Va_list) bool
+fn C.igTreeNodeExV_Str(const_str_id &char, flags TreeNodeFlags, const_fmt &char, args C.va_list) bool
 
 @[inline]
-pub fn tree_node_ex_v_str(const_str_id &char, flags TreeNodeFlags, const_fmt &char, args Va_list) bool {
+pub fn tree_node_ex_v_str(const_str_id &char, flags TreeNodeFlags, const_fmt &char, args C.va_list) bool {
 	return C.igTreeNodeExV_Str(const_str_id, flags, const_fmt, args)
 }
 
 @[keep_args_alive]
-fn C.igTreeNodeExV_Ptr(ptr_id voidptr, flags TreeNodeFlags, const_fmt &char, args Va_list) bool
+fn C.igTreeNodeExV_Ptr(ptr_id voidptr, flags TreeNodeFlags, const_fmt &char, args C.va_list) bool
 
 @[inline]
-pub fn tree_node_ex_v_ptr(ptr_id voidptr, flags TreeNodeFlags, const_fmt &char, args Va_list) bool {
+pub fn tree_node_ex_v_ptr(ptr_id voidptr, flags TreeNodeFlags, const_fmt &char, args C.va_list) bool {
 	return C.igTreeNodeExV_Ptr(ptr_id, flags, const_fmt, args)
 }
 
@@ -6888,8 +7107,7 @@ fn C.igListBox_FnStrPtr(const_label &char, current_item &i32, getter fn (voidptr
 
 @[inline]
 pub fn list_box_fn_str_ptr(const_label &char, current_item &i32, getter fn (voidptr, i32) &char, user_data voidptr, items_count i32, height_in_items i32) bool {
-	return C.igListBox_FnStrPtr(const_label, current_item, getter, user_data, items_count,
-		height_in_items)
+	return C.igListBox_FnStrPtr(const_label, current_item, getter, user_data, items_count, height_in_items)
 }
 
 @[keep_args_alive]
@@ -6897,8 +7115,7 @@ fn C.igPlotLines_FloatPtr(const_label &char, values &f32, values_count i32, valu
 
 @[inline]
 pub fn plot_lines_float_ptr(const_label &char, values &f32, values_count i32, values_offset i32, overlay_text &char, scale_min f32, scale_max f32, graph_size ImVec2_c, stride i32) {
-	C.igPlotLines_FloatPtr(const_label, values, values_count, values_offset, overlay_text,
-		scale_min, scale_max, graph_size, stride)
+	C.igPlotLines_FloatPtr(const_label, values, values_count, values_offset, overlay_text, scale_min, scale_max, graph_size, stride)
 }
 
 @[keep_args_alive]
@@ -6906,8 +7123,7 @@ fn C.igPlotLines_FnFloatPtr(const_label &char, values_getter fn (voidptr, i32) f
 
 @[inline]
 pub fn plot_lines_fn_float_ptr(const_label &char, values_getter fn (voidptr, i32) f32, data voidptr, values_count i32, values_offset i32, overlay_text &char, scale_min f32, scale_max f32, graph_size ImVec2_c) {
-	C.igPlotLines_FnFloatPtr(const_label, values_getter, data, values_count, values_offset,
-		overlay_text, scale_min, scale_max, graph_size)
+	C.igPlotLines_FnFloatPtr(const_label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, graph_size)
 }
 
 @[keep_args_alive]
@@ -6915,8 +7131,7 @@ fn C.igPlotHistogram_FloatPtr(const_label &char, values &f32, values_count i32, 
 
 @[inline]
 pub fn plot_histogram_float_ptr(const_label &char, values &f32, values_count i32, values_offset i32, overlay_text &char, scale_min f32, scale_max f32, graph_size ImVec2_c, stride i32) {
-	C.igPlotHistogram_FloatPtr(const_label, values, values_count, values_offset, overlay_text,
-		scale_min, scale_max, graph_size, stride)
+	C.igPlotHistogram_FloatPtr(const_label, values, values_count, values_offset, overlay_text, scale_min, scale_max, graph_size, stride)
 }
 
 @[keep_args_alive]
@@ -6924,8 +7139,7 @@ fn C.igPlotHistogram_FnFloatPtr(const_label &char, values_getter fn (voidptr, i3
 
 @[inline]
 pub fn plot_histogram_fn_float_ptr(const_label &char, values_getter fn (voidptr, i32) f32, data voidptr, values_count i32, values_offset i32, overlay_text &char, scale_min f32, scale_max f32, graph_size ImVec2_c) {
-	C.igPlotHistogram_FnFloatPtr(const_label, values_getter, data, values_count, values_offset,
-		overlay_text, scale_min, scale_max, graph_size)
+	C.igPlotHistogram_FnFloatPtr(const_label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, graph_size)
 }
 
 @[keep_args_alive]
@@ -7049,10 +7263,10 @@ pub fn set_tooltip(const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igSetTooltipV(const_fmt &char, args Va_list)
+fn C.igSetTooltipV(const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn set_tooltip_v(const_fmt &char, args Va_list) {
+pub fn set_tooltip_v(const_fmt &char, args C.va_list) {
 	C.igSetTooltipV(const_fmt, args)
 }
 
@@ -7073,10 +7287,10 @@ pub fn set_item_tooltip(const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igSetItemTooltipV(const_fmt &char, args Va_list)
+fn C.igSetItemTooltipV(const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn set_item_tooltip_v(const_fmt &char, args Va_list) {
+pub fn set_item_tooltip_v(const_fmt &char, args C.va_list) {
 	C.igSetItemTooltipV(const_fmt, args)
 }
 
@@ -7105,27 +7319,27 @@ pub fn end_popup() {
 }
 
 @[keep_args_alive]
-fn C.igOpenPopup_Str(const_str_id &char, popup_flags PopupFlags)
+fn C.igOpenPopup_Str(const_str_id &char, popup_flags PopupFlags) bool
 
 @[inline]
-pub fn open_popup_str(const_str_id &char, popup_flags PopupFlags) {
-	C.igOpenPopup_Str(const_str_id, popup_flags)
+pub fn open_popup_str(const_str_id &char, popup_flags PopupFlags) bool {
+	return C.igOpenPopup_Str(const_str_id, popup_flags)
 }
 
 @[keep_args_alive]
-fn C.igOpenPopup_ID(id ID, popup_flags PopupFlags)
+fn C.igOpenPopup_ID(id ID, popup_flags PopupFlags) bool
 
 @[inline]
-pub fn open_popup_id(id ID, popup_flags PopupFlags) {
-	C.igOpenPopup_ID(id, popup_flags)
+pub fn open_popup_id(id ID, popup_flags PopupFlags) bool {
+	return C.igOpenPopup_ID(id, popup_flags)
 }
 
 @[keep_args_alive]
-fn C.igOpenPopupOnItemClick(const_str_id &char, popup_flags PopupFlags)
+fn C.igOpenPopupOnItemClick(const_str_id &char, popup_flags PopupFlags) bool
 
 @[inline]
-pub fn open_popup_on_item_click(const_str_id &char, popup_flags PopupFlags) {
-	C.igOpenPopupOnItemClick(const_str_id, popup_flags)
+pub fn open_popup_on_item_click(const_str_id &char, popup_flags PopupFlags) bool {
+	return C.igOpenPopupOnItemClick(const_str_id, popup_flags)
 }
 
 @[keep_args_alive]
@@ -7209,11 +7423,11 @@ pub fn table_set_column_index(column_n i32) bool {
 }
 
 @[keep_args_alive]
-fn C.igTableSetupColumn(const_label &char, flags TableColumnFlags, init_width_or_weight f32, user_id ID)
+fn C.igTableSetupColumn(const_label &char, flags TableColumnFlags, init_width_or_weight f32, user_data ID)
 
 @[inline]
-pub fn table_setup_column(const_label &char, flags TableColumnFlags, init_width_or_weight f32, user_id ID) {
-	C.igTableSetupColumn(const_label, flags, init_width_or_weight, user_id)
+pub fn table_setup_column(const_label &char, flags TableColumnFlags, init_width_or_weight f32, user_data ID) {
+	C.igTableSetupColumn(const_label, flags, init_width_or_weight, user_data)
 }
 
 @[keep_args_alive]
@@ -7529,10 +7743,10 @@ pub fn log_text(const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igLogTextV(const_fmt &char, args Va_list)
+fn C.igLogTextV(const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn log_text_v(const_fmt &char, args Va_list) {
+pub fn log_text_v(const_fmt &char, args C.va_list) {
 	C.igLogTextV(const_fmt, args)
 }
 
@@ -7801,6 +8015,14 @@ pub fn get_item_flags() ItemFlags {
 }
 
 @[keep_args_alive]
+fn C.igGetItemClickedCountWithSingleClickDelay(mouse_button MouseButton, delay f32) i32
+
+@[inline]
+pub fn get_item_clicked_count_with_single_click_delay(mouse_button MouseButton, delay f32) i32 {
+	return C.igGetItemClickedCountWithSingleClickDelay(mouse_button, delay)
+}
+
+@[keep_args_alive]
 fn C.igGetMainViewport() &Viewport
 
 @[inline]
@@ -7916,7 +8138,7 @@ pub fn color_convert_float4_to_u32(in_ ImVec4_c) ImU32 {
 fn C.igColorConvertRGBtoHSV(r f32, g f32, b f32, out_h &f32, out_s &f32, out_v &f32)
 
 @[inline]
-pub fn color_convert_rgb_to_hsv(r f32, g f32, b f32, out_h &f32, out_s &f32, out_v &f32) {
+pub fn color_convert_rg_bto_hsv(r f32, g f32, b f32, out_h &f32, out_s &f32, out_v &f32) {
 	C.igColorConvertRGBtoHSV(r, g, b, out_h, out_s, out_v)
 }
 
@@ -7924,31 +8146,31 @@ pub fn color_convert_rgb_to_hsv(r f32, g f32, b f32, out_h &f32, out_s &f32, out
 fn C.igColorConvertHSVtoRGB(h f32, s f32, v f32, out_r &f32, out_g &f32, out_b &f32)
 
 @[inline]
-pub fn color_convert_hsv_to_rgb(h f32, s f32, v f32, out_r &f32, out_g &f32, out_b &f32) {
+pub fn color_convert_hs_vto_rgb(h f32, s f32, v f32, out_r &f32, out_g &f32, out_b &f32) {
 	C.igColorConvertHSVtoRGB(h, s, v, out_r, out_g, out_b)
 }
 
 @[keep_args_alive]
-fn C.igIsKeyDown_Nil(key Key) bool
+fn C.igIsKeyDown_Nil(key i32) bool
 
 @[inline]
-pub fn is_key_down_nil(key Key) bool {
+pub fn is_key_down_nil(key i32) bool {
 	return C.igIsKeyDown_Nil(key)
 }
 
 @[keep_args_alive]
-fn C.igIsKeyPressed_Bool(key Key, repeat bool) bool
+fn C.igIsKeyPressed_Bool(key i32, repeat bool) bool
 
 @[inline]
-pub fn is_key_pressed_bool(key Key, repeat bool) bool {
+pub fn is_key_pressed_bool(key i32, repeat bool) bool {
 	return C.igIsKeyPressed_Bool(key, repeat)
 }
 
 @[keep_args_alive]
-fn C.igIsKeyReleased_Nil(key Key) bool
+fn C.igIsKeyReleased_Nil(key i32) bool
 
 @[inline]
-pub fn is_key_released_nil(key Key) bool {
+pub fn is_key_released_nil(key i32) bool {
 	return C.igIsKeyReleased_Nil(key)
 }
 
@@ -7961,18 +8183,18 @@ pub fn is_key_chord_pressed_nil(key_chord KeyChord) bool {
 }
 
 @[keep_args_alive]
-fn C.igGetKeyPressedAmount(key Key, repeat_delay f32, rate f32) i32
+fn C.igGetKeyPressedAmount(key i32, repeat_delay f32, rate f32) i32
 
 @[inline]
-pub fn get_key_pressed_amount(key Key, repeat_delay f32, rate f32) i32 {
+pub fn get_key_pressed_amount(key i32, repeat_delay f32, rate f32) i32 {
 	return C.igGetKeyPressedAmount(key, repeat_delay, rate)
 }
 
 @[keep_args_alive]
-fn C.igGetKeyName(key Key) &char
+fn C.igGetKeyName(key i32) &char
 
 @[inline]
-pub fn get_key_name(key Key) &char {
+pub fn get_key_name(key i32) &char {
 	return C.igGetKeyName(key)
 }
 
@@ -8001,11 +8223,11 @@ pub fn set_next_item_shortcut(key_chord KeyChord, flags InputFlags) {
 }
 
 @[keep_args_alive]
-fn C.igSetItemKeyOwner_Nil(key Key)
+fn C.igSetItemKeyOwner_Nil(key i32) bool
 
 @[inline]
-pub fn set_item_key_owner_nil(key Key) {
-	C.igSetItemKeyOwner_Nil(key)
+pub fn set_item_key_owner_nil(key i32) bool {
+	return C.igSetItemKeyOwner_Nil(key)
 }
 
 @[keep_args_alive]
@@ -8221,8 +8443,7 @@ fn C.igDebugCheckVersionAndDataLayout(version_str &char, sz_io usize, sz_style u
 
 @[inline]
 pub fn debug_check_version_and_data_layout(version_str &char, sz_io usize, sz_style usize, sz_vec2 usize, sz_vec4 usize, sz_drawvert usize, sz_drawidx usize) bool {
-	return C.igDebugCheckVersionAndDataLayout(version_str, sz_io, sz_style, sz_vec2, sz_vec4,
-		sz_drawvert, sz_drawidx)
+	return C.igDebugCheckVersionAndDataLayout(version_str, sz_io, sz_style, sz_vec2, sz_vec4, sz_drawvert, sz_drawidx)
 }
 
 @[keep_args_alive]
@@ -8234,10 +8455,10 @@ pub fn debug_log(const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igDebugLogV(const_fmt &char, args Va_list)
+fn C.igDebugLogV(const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn debug_log_v(const_fmt &char, args Va_list) {
+pub fn debug_log_v(const_fmt &char, args C.va_list) {
 	C.igDebugLogV(const_fmt, args)
 }
 
@@ -8370,18 +8591,18 @@ pub fn style_scale_all_sizes(self &Style, scale_factor f32) {
 }
 
 @[keep_args_alive]
-fn C.ImGuiIO_AddKeyEvent(self &IO, key Key, down bool)
+fn C.ImGuiIO_AddKeyEvent(self &IO, key i32, down bool)
 
 @[inline]
-pub fn io_add_key_event(self &IO, key Key, down bool) {
+pub fn io_add_key_event(self &IO, key i32, down bool) {
 	C.ImGuiIO_AddKeyEvent(self, key, down)
 }
 
 @[keep_args_alive]
-fn C.ImGuiIO_AddKeyAnalogEvent(self &IO, key Key, down bool, v f32)
+fn C.ImGuiIO_AddKeyAnalogEvent(self &IO, key i32, down bool, v f32)
 
 @[inline]
-pub fn io_add_key_analog_event(self &IO, key Key, down bool, v f32) {
+pub fn io_add_key_analog_event(self &IO, key i32, down bool, v f32) {
 	C.ImGuiIO_AddKeyAnalogEvent(self, key, down, v)
 }
 
@@ -8410,10 +8631,10 @@ pub fn io_add_mouse_wheel_event(self &IO, wheel_x f32, wheel_y f32) {
 }
 
 @[keep_args_alive]
-fn C.ImGuiIO_AddMouseSourceEvent(self &IO, source MouseSource)
+fn C.ImGuiIO_AddMouseSourceEvent(self &IO, source i32)
 
 @[inline]
-pub fn io_add_mouse_source_event(self &IO, source MouseSource) {
+pub fn io_add_mouse_source_event(self &IO, source i32) {
 	C.ImGuiIO_AddMouseSourceEvent(self, source)
 }
 
@@ -8458,10 +8679,10 @@ pub fn io_add_input_characters_utf_8(self &IO, const_str &char) {
 }
 
 @[keep_args_alive]
-fn C.ImGuiIO_SetKeyEventNativeData(self &IO, key Key, native_keycode i32, native_scancode i32, native_legacy_index i32)
+fn C.ImGuiIO_SetKeyEventNativeData(self &IO, key i32, native_keycode i32, native_scancode i32, native_legacy_index i32)
 
 @[inline]
-pub fn io_set_key_event_native_data(self &IO, key Key, native_keycode i32, native_scancode i32, native_legacy_index i32) {
+pub fn io_set_key_event_native_data(self &IO, key i32, native_keycode i32, native_scancode i32, native_legacy_index i32) {
 	C.ImGuiIO_SetKeyEventNativeData(self, key, native_keycode, native_scancode, native_legacy_index)
 }
 
@@ -8842,10 +9063,10 @@ pub fn text_buffer_append(self &TextBuffer, const_str &char, str_end &char) {
 }
 
 @[keep_args_alive]
-fn C.ImGuiTextBuffer_appendfv(self &TextBuffer, const_fmt &char, args Va_list)
+fn C.ImGuiTextBuffer_appendfv(self &TextBuffer, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn text_buffer_appendfv(self &TextBuffer, const_fmt &char, args Va_list) {
+pub fn text_buffer_appendfv(self &TextBuffer, const_fmt &char, args C.va_list) {
 	C.ImGuiTextBuffer_appendfv(self, const_fmt, args)
 }
 
@@ -9386,11 +9607,27 @@ pub fn im_draw_list_add_line(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col ImU
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddRect(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, rounding f32, flags ImDrawFlags, thickness f32)
+fn C.ImDrawList_AddLineH(self &ImDrawList, min_x f32, max_x f32, y f32, col ImU32, thickness f32)
 
 @[inline]
-pub fn im_draw_list_add_rect(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, rounding f32, flags ImDrawFlags, thickness f32) {
-	C.ImDrawList_AddRect(self, p_min, p_max, col, rounding, flags, thickness)
+pub fn im_draw_list_add_line_h(self &ImDrawList, min_x f32, max_x f32, y f32, col ImU32, thickness f32) {
+	C.ImDrawList_AddLineH(self, min_x, max_x, y, col, thickness)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList_AddLineV(self &ImDrawList, x f32, min_y f32, max_y f32, col ImU32, thickness f32)
+
+@[inline]
+pub fn im_draw_list_add_line_v(self &ImDrawList, x f32, min_y f32, max_y f32, col ImU32, thickness f32) {
+	C.ImDrawList_AddLineV(self, x, min_y, max_y, col, thickness)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList_AddRect(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, rounding f32, thickness f32, flags ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list_add_rect(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, rounding f32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddRect(self, p_min, p_max, col, rounding, thickness, flags)
 }
 
 @[keep_args_alive]
@@ -9406,8 +9643,7 @@ fn C.ImDrawList_AddRectFilledMultiColor(self &ImDrawList, p_min ImVec2_c, p_max 
 
 @[inline]
 pub fn im_draw_list_add_rect_filled_multi_color(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col_upr_left ImU32, col_upr_right ImU32, col_bot_right ImU32, col_bot_left ImU32) {
-	C.ImDrawList_AddRectFilledMultiColor(self, p_min, p_max, col_upr_left, col_upr_right,
-		col_bot_right, col_bot_left)
+	C.ImDrawList_AddRectFilledMultiColor(self, p_min, p_max, col_upr_left, col_upr_right, col_bot_right, col_bot_left)
 }
 
 @[keep_args_alive]
@@ -9503,8 +9739,7 @@ fn C.ImDrawList_AddText_FontPtr(self &ImDrawList, font &ImFont, font_size f32, p
 
 @[inline]
 pub fn im_draw_list_add_text_font_ptr(self &ImDrawList, font &ImFont, font_size f32, pos ImVec2_c, col ImU32, text_begin &char, const_text_end &char, wrap_width f32, cpu_fine_clip_rect &ImVec4) {
-	C.ImDrawList_AddText_FontPtr(self, font, font_size, pos, col, text_begin, const_text_end,
-		wrap_width, cpu_fine_clip_rect)
+	C.ImDrawList_AddText_FontPtr(self, font, font_size, pos, col, text_begin, const_text_end, wrap_width, cpu_fine_clip_rect)
 }
 
 @[keep_args_alive]
@@ -9524,11 +9759,11 @@ pub fn im_draw_list_add_bezier_quadratic(self &ImDrawList, p1 ImVec2_c, p2 ImVec
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddPolyline(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32, flags ImDrawFlags, thickness f32)
+fn C.ImDrawList_AddPolyline(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_polyline(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32, flags ImDrawFlags, thickness f32) {
-	C.ImDrawList_AddPolyline(self, points, num_points, col, flags, thickness)
+pub fn im_draw_list_add_polyline(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddPolyline(self, points, num_points, col, thickness, flags)
 }
 
 @[keep_args_alive]
@@ -9612,11 +9847,11 @@ pub fn im_draw_list_path_fill_concave(self &ImDrawList, col ImU32) {
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_PathStroke(self &ImDrawList, col ImU32, flags ImDrawFlags, thickness f32)
+fn C.ImDrawList_PathStroke(self &ImDrawList, col ImU32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_path_stroke(self &ImDrawList, col ImU32, flags ImDrawFlags, thickness f32) {
-	C.ImDrawList_PathStroke(self, col, flags, thickness)
+pub fn im_draw_list_path_stroke(self &ImDrawList, col ImU32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_PathStroke(self, col, thickness, flags)
 }
 
 @[keep_args_alive]
@@ -9940,10 +10175,10 @@ pub fn im_texture_data_destroy(self &ImTextureData) {
 }
 
 @[keep_args_alive]
-fn C.ImTextureData_Create(self &ImTextureData, format ImTextureFormat, w i32, h i32)
+fn C.ImTextureData_Create(self &ImTextureData, format i32, w i32, h i32)
 
 @[inline]
-pub fn im_texture_data_create(self &ImTextureData, format ImTextureFormat, w i32, h i32) {
+pub fn im_texture_data_create(self &ImTextureData, format i32, w i32, h i32) {
 	C.ImTextureData_Create(self, format, w, h)
 }
 
@@ -10012,10 +10247,10 @@ pub fn im_texture_data_set_tex_id(self &ImTextureData, tex_id ImTextureID) {
 }
 
 @[keep_args_alive]
-fn C.ImTextureData_SetStatus(self &ImTextureData, status ImTextureStatus)
+fn C.ImTextureData_SetStatus(self &ImTextureData, status i32)
 
 @[inline]
-pub fn im_texture_data_set_status(self &ImTextureData, status ImTextureStatus) {
+pub fn im_texture_data_set_status(self &ImTextureData, status i32) {
 	C.ImTextureData_SetStatus(self, status)
 }
 
@@ -10200,8 +10435,7 @@ fn C.ImFontAtlas_AddFontFromMemoryTTF(self &ImFontAtlas, font_data voidptr, font
 
 @[inline]
 pub fn im_font_atlas_add_font_from_memory_ttf(self &ImFontAtlas, font_data voidptr, font_data_size i32, size_pixels f32, font_cfg &ImFontConfig, glyph_ranges &ImWchar) &ImFont {
-	return C.ImFontAtlas_AddFontFromMemoryTTF(self, font_data, font_data_size, size_pixels,
-		font_cfg, glyph_ranges)
+	return C.ImFontAtlas_AddFontFromMemoryTTF(self, font_data, font_data_size, size_pixels, font_cfg, glyph_ranges)
 }
 
 @[keep_args_alive]
@@ -10209,8 +10443,7 @@ fn C.ImFontAtlas_AddFontFromMemoryCompressedTTF(self &ImFontAtlas, compressed_fo
 
 @[inline]
 pub fn im_font_atlas_add_font_from_memory_compressed_ttf(self &ImFontAtlas, compressed_font_data voidptr, compressed_font_data_size i32, size_pixels f32, font_cfg &ImFontConfig, glyph_ranges &ImWchar) &ImFont {
-	return C.ImFontAtlas_AddFontFromMemoryCompressedTTF(self, compressed_font_data,
-		compressed_font_data_size, size_pixels, font_cfg, glyph_ranges)
+	return C.ImFontAtlas_AddFontFromMemoryCompressedTTF(self, compressed_font_data, compressed_font_data_size, size_pixels, font_cfg, glyph_ranges)
 }
 
 @[keep_args_alive]
@@ -10218,8 +10451,7 @@ fn C.ImFontAtlas_AddFontFromMemoryCompressedBase85TTF(self &ImFontAtlas, compres
 
 @[inline]
 pub fn im_font_atlas_add_font_from_memory_compressed_base85_ttf(self &ImFontAtlas, compressed_font_data_base85 &char, size_pixels f32, font_cfg &ImFontConfig, glyph_ranges &ImWchar) &ImFont {
-	return C.ImFontAtlas_AddFontFromMemoryCompressedBase85TTF(self, compressed_font_data_base85,
-		size_pixels, font_cfg, glyph_ranges)
+	return C.ImFontAtlas_AddFontFromMemoryCompressedBase85TTF(self, compressed_font_data_base85, size_pixels, font_cfg, glyph_ranges)
 }
 
 @[keep_args_alive]
@@ -10228,14 +10460,6 @@ fn C.ImFontAtlas_RemoveFont(self &ImFontAtlas, font &ImFont)
 @[inline]
 pub fn im_font_atlas_remove_font(self &ImFontAtlas, font &ImFont) {
 	C.ImFontAtlas_RemoveFont(self, font)
-}
-
-@[keep_args_alive]
-fn C.ImFontAtlas_Clear(self &ImFontAtlas)
-
-@[inline]
-pub fn im_font_atlas_clear(self &ImFontAtlas) {
-	C.ImFontAtlas_Clear(self)
 }
 
 @[keep_args_alive]
@@ -10255,11 +10479,11 @@ pub fn im_font_atlas_set_font_loader(self &ImFontAtlas, font_loader &ImFontLoade
 }
 
 @[keep_args_alive]
-fn C.ImFontAtlas_ClearInputData(self &ImFontAtlas)
+fn C.ImFontAtlas_Clear(self &ImFontAtlas)
 
 @[inline]
-pub fn im_font_atlas_clear_input_data(self &ImFontAtlas) {
-	C.ImFontAtlas_ClearInputData(self)
+pub fn im_font_atlas_clear(self &ImFontAtlas) {
+	C.ImFontAtlas_Clear(self)
 }
 
 @[keep_args_alive]
@@ -10268,6 +10492,14 @@ fn C.ImFontAtlas_ClearFonts(self &ImFontAtlas)
 @[inline]
 pub fn im_font_atlas_clear_fonts(self &ImFontAtlas) {
 	C.ImFontAtlas_ClearFonts(self)
+}
+
+@[keep_args_alive]
+fn C.ImFontAtlas_ClearInputData(self &ImFontAtlas)
+
+@[inline]
+pub fn im_font_atlas_clear_input_data(self &ImFontAtlas) {
+	C.ImFontAtlas_ClearInputData(self)
 }
 
 @[keep_args_alive]
@@ -10419,8 +10651,7 @@ fn C.ImFont_CalcTextSizeA(self &ImFont, size f32, max_width f32, wrap_width f32,
 
 @[inline]
 pub fn im_font_calc_text_size_a(self &ImFont, size f32, max_width f32, wrap_width f32, text_begin &char, const_text_end &char, out_remaining &&u8) ImVec2_c {
-	return C.ImFont_CalcTextSizeA(self, size, max_width, wrap_width, text_begin, const_text_end,
-		out_remaining)
+	return C.ImFont_CalcTextSizeA(self, size, max_width, wrap_width, text_begin, const_text_end, out_remaining)
 }
 
 @[keep_args_alive]
@@ -10444,8 +10675,7 @@ fn C.ImFont_RenderText(self &ImFont, draw_list &ImDrawList, size f32, pos ImVec2
 
 @[inline]
 pub fn im_font_render_text(self &ImFont, draw_list &ImDrawList, size f32, pos ImVec2_c, col ImU32, clip_rect ImVec4_c, text_begin &char, const_text_end &char, wrap_width f32, flags ImDrawTextFlags) {
-	C.ImFont_RenderText(self, draw_list, size, pos, col, clip_rect, text_begin, const_text_end,
-		wrap_width, flags)
+	C.ImFont_RenderText(self, draw_list, size, pos, col, clip_rect, text_begin, const_text_end, wrap_width, flags)
 }
 
 @[keep_args_alive]
@@ -10793,10 +11023,10 @@ pub fn im_format_string(buf &char, buf_size usize, const_fmt &char) i32 {
 }
 
 @[keep_args_alive]
-fn C.igImFormatStringV(buf &char, buf_size usize, const_fmt &char, args Va_list) i32
+fn C.igImFormatStringV(buf &char, buf_size usize, const_fmt &char, args C.va_list) i32
 
 @[inline]
-pub fn im_format_string_v(buf &char, buf_size usize, const_fmt &char, args Va_list) i32 {
+pub fn im_format_string_v(buf &char, buf_size usize, const_fmt &char, args C.va_list) i32 {
 	return C.igImFormatStringV(buf, buf_size, const_fmt, args)
 }
 
@@ -10809,10 +11039,10 @@ pub fn im_format_string_to_temp_buffer(out_buf &&u8, out_buf_end &&u8, const_fmt
 }
 
 @[keep_args_alive]
-fn C.igImFormatStringToTempBufferV(out_buf &&u8, out_buf_end &&u8, const_fmt &char, args Va_list)
+fn C.igImFormatStringToTempBufferV(out_buf &&u8, out_buf_end &&u8, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn im_format_string_to_temp_buffer_v(out_buf &&u8, out_buf_end &&u8, const_fmt &char, args Va_list) {
+pub fn im_format_string_to_temp_buffer_v(out_buf &&u8, out_buf_end &&u8, const_fmt &char, args C.va_list) {
 	C.igImFormatStringToTempBufferV(out_buf, out_buf_end, const_fmt, args)
 }
 
@@ -10949,8 +11179,7 @@ fn C.igImFontCalcTextSizeEx(font &ImFont, size f32, max_width f32, wrap_width f3
 
 @[inline]
 pub fn im_font_calc_text_size_ex(font &ImFont, size f32, max_width f32, wrap_width f32, text_begin &char, text_end_display &char, const_text_end &char, out_remaining &&u8, out_offset &ImVec2_c, flags ImDrawTextFlags) ImVec2_c {
-	return C.igImFontCalcTextSizeEx(font, size, max_width, wrap_width, text_begin,
-		text_end_display, const_text_end, out_remaining, out_offset, flags)
+	return C.igImFontCalcTextSizeEx(font, size, max_width, wrap_width, text_begin, text_end_display, const_text_end, out_remaining, out_offset, flags)
 }
 
 @[keep_args_alive]
@@ -10958,8 +11187,7 @@ fn C.igImFontCalcWordWrapPositionEx(font &ImFont, size f32, const_text &char, co
 
 @[inline]
 pub fn im_font_calc_word_wrap_position_ex(font &ImFont, size f32, const_text &char, const_text_end &char, wrap_width f32, flags ImDrawTextFlags) &char {
-	return C.igImFontCalcWordWrapPositionEx(font, size, const_text, const_text_end, wrap_width,
-		flags)
+	return C.igImFontCalcWordWrapPositionEx(font, size, const_text, const_text_end, wrap_width, flags)
 }
 
 @[keep_args_alive]
@@ -10979,26 +11207,26 @@ pub fn im_text_init_classifiers() {
 }
 
 @[keep_args_alive]
-fn C.igImTextClassifierClear(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class ImWcharClass)
+fn C.igImTextClassifierClear(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class i32)
 
 @[inline]
-pub fn im_text_classifier_clear(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class ImWcharClass) {
+pub fn im_text_classifier_clear(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class i32) {
 	C.igImTextClassifierClear(bits, codepoint_min, codepoint_end, char_class)
 }
 
 @[keep_args_alive]
-fn C.igImTextClassifierSetCharClass(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class ImWcharClass, c u32)
+fn C.igImTextClassifierSetCharClass(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class i32, c u32)
 
 @[inline]
-pub fn im_text_classifier_set_char_class(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class ImWcharClass, c u32) {
+pub fn im_text_classifier_set_char_class(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class i32, c u32) {
 	C.igImTextClassifierSetCharClass(bits, codepoint_min, codepoint_end, char_class, c)
 }
 
 @[keep_args_alive]
-fn C.igImTextClassifierSetCharClassFromStr(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class ImWcharClass, s &char)
+fn C.igImTextClassifierSetCharClassFromStr(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class i32, s &char)
 
 @[inline]
-pub fn im_text_classifier_set_char_class_from_str(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class ImWcharClass, s &char) {
+pub fn im_text_classifier_set_char_class_from_str(bits &ImU32, codepoint_min u32, codepoint_end u32, char_class i32, s &char) {
 	C.igImTextClassifierSetCharClassFromStr(bits, codepoint_min, codepoint_end, char_class, s)
 }
 
@@ -11264,6 +11492,14 @@ fn C.igImRound64(f f32) f32
 @[inline]
 pub fn im_round64(f f32) f32 {
 	return C.igImRound64(f)
+}
+
+@[keep_args_alive]
+fn C.igImCeilFast(f f32) f32
+
+@[inline]
+pub fn im_ceil_fast(f f32) f32 {
+	return C.igImCeilFast(f)
 }
 
 @[keep_args_alive]
@@ -11651,6 +11887,22 @@ pub fn im_rect_add_rect(self &ImRect, r ImRect_c) {
 }
 
 @[keep_args_alive]
+fn C.ImRect_AddX(self &ImRect, x f32)
+
+@[inline]
+pub fn im_rect_add_x(self &ImRect, x f32) {
+	C.ImRect_AddX(self, x)
+}
+
+@[keep_args_alive]
+fn C.ImRect_AddY(self &ImRect, y f32)
+
+@[inline]
+pub fn im_rect_add_y(self &ImRect, y f32) {
+	C.ImRect_AddY(self, y)
+}
+
+@[keep_args_alive]
 fn C.ImRect_Expand_Float(self &ImRect, amount f32)
 
 @[inline]
@@ -11856,6 +12108,54 @@ fn C.ImGuiTextIndex_append(self &TextIndex, base &char, old_size i32, new_size i
 @[inline]
 pub fn text_index_append(self &TextIndex, base &char, old_size i32, new_size i32) {
 	C.ImGuiTextIndex_append(self, base, old_size, new_size)
+}
+
+@[keep_args_alive]
+fn C.ImGuiPackedDate_ImGuiPackedDate_Nil() &PackedDate
+
+@[inline]
+pub fn packed_date_packed_date_nil() &PackedDate {
+	return C.ImGuiPackedDate_ImGuiPackedDate_Nil()
+}
+
+@[keep_args_alive]
+fn C.ImGuiPackedDate_destroy(self &PackedDate)
+
+@[inline]
+pub fn packed_date_destroy(self &PackedDate) {
+	C.ImGuiPackedDate_destroy(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiPackedDate_ImGuiPackedDate_Int(yyyymmdd i32) &PackedDate
+
+@[inline]
+pub fn packed_date_packed_date_int(yyyymmdd i32) &PackedDate {
+	return C.ImGuiPackedDate_ImGuiPackedDate_Int(yyyymmdd)
+}
+
+@[keep_args_alive]
+fn C.ImGuiPackedDate_IsValid(self &PackedDate) bool
+
+@[inline]
+pub fn packed_date_is_valid(self &PackedDate) bool {
+	return C.ImGuiPackedDate_IsValid(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiPackedDate_Unpack(self &PackedDate) i32
+
+@[inline]
+pub fn packed_date_unpack(self &PackedDate) i32 {
+	return C.ImGuiPackedDate_Unpack(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiPackedDate_SubtractMonths(self &PackedDate, m i32)
+
+@[inline]
+pub fn packed_date_subtract_months(self &PackedDate, m i32) {
+	C.ImGuiPackedDate_SubtractMonths(self, m)
 }
 
 @[keep_args_alive]
@@ -12854,7 +13154,7 @@ pub fn debug_item_path_query_destroy(self &DebugItemPathQuery) {
 fn C.ImGuiIDStackTool_ImGuiIDStackTool() &IDStackTool
 
 @[inline]
-pub fn ids_tack_tool_ids_tack_tool() &IDStackTool {
+pub fn id_stack_tool_id_stack_tool() &IDStackTool {
 	return C.ImGuiIDStackTool_ImGuiIDStackTool()
 }
 
@@ -12862,7 +13162,7 @@ pub fn ids_tack_tool_ids_tack_tool() &IDStackTool {
 fn C.ImGuiIDStackTool_destroy(self &IDStackTool)
 
 @[inline]
-pub fn ids_tack_tool_destroy(self &IDStackTool) {
+pub fn id_stack_tool_destroy(self &IDStackTool) {
 	C.ImGuiIDStackTool_destroy(self)
 }
 
@@ -12942,7 +13242,7 @@ pub fn window_get_id_int(self &Window, n i32) ID {
 fn C.ImGuiWindow_GetIDFromPos(self &Window, p_abs ImVec2_c) ID
 
 @[inline]
-pub fn window_get_idf_rom_pos(self &Window, p_abs ImVec2_c) ID {
+pub fn window_get_id_from_pos(self &Window, p_abs ImVec2_c) ID {
 	return C.ImGuiWindow_GetIDFromPos(self, p_abs)
 }
 
@@ -12950,7 +13250,7 @@ pub fn window_get_idf_rom_pos(self &Window, p_abs ImVec2_c) ID {
 fn C.ImGuiWindow_GetIDFromRectangle(self &Window, r_abs ImRect_c) ID
 
 @[inline]
-pub fn window_get_idf_rom_rectangle(self &Window, r_abs ImRect_c) ID {
+pub fn window_get_id_from_rectangle(self &Window, r_abs ImRect_c) ID {
 	return C.ImGuiWindow_GetIDFromRectangle(self, r_abs)
 }
 
@@ -13112,6 +13412,566 @@ fn C.ImGuiTableSettings_GetColumnSettings(self &TableSettings) &TableColumnSetti
 @[inline]
 pub fn table_settings_get_column_settings(self &TableSettings) &TableColumnSettings {
 	return C.ImGuiTableSettings_GetColumnSettings(self)
+}
+
+@[keep_args_alive]
+fn C.igTableOpenContextMenu(column_n i32)
+
+@[inline]
+pub fn table_open_context_menu(column_n i32) {
+	C.igTableOpenContextMenu(column_n)
+}
+
+@[keep_args_alive]
+fn C.igTableSetColumnWidth(column_n i32, width f32)
+
+@[inline]
+pub fn table_set_column_width(column_n i32, width f32) {
+	C.igTableSetColumnWidth(column_n, width)
+}
+
+@[keep_args_alive]
+fn C.igTableSetColumnSortDirection(column_n i32, sort_direction i32, append_to_sort_specs bool)
+
+@[inline]
+pub fn table_set_column_sort_direction(column_n i32, sort_direction i32, append_to_sort_specs bool) {
+	C.igTableSetColumnSortDirection(column_n, sort_direction, append_to_sort_specs)
+}
+
+@[keep_args_alive]
+fn C.igTableGetHoveredRow() i32
+
+@[inline]
+pub fn table_get_hovered_row() i32 {
+	return C.igTableGetHoveredRow()
+}
+
+@[keep_args_alive]
+fn C.igTableGetHeaderRowHeight() f32
+
+@[inline]
+pub fn table_get_header_row_height() f32 {
+	return C.igTableGetHeaderRowHeight()
+}
+
+@[keep_args_alive]
+fn C.igTableGetHeaderAngledMaxLabelWidth() f32
+
+@[inline]
+pub fn table_get_header_angled_max_label_width() f32 {
+	return C.igTableGetHeaderAngledMaxLabelWidth()
+}
+
+@[keep_args_alive]
+fn C.igTablePushBackgroundChannel()
+
+@[inline]
+pub fn table_push_background_channel() {
+	C.igTablePushBackgroundChannel()
+}
+
+@[keep_args_alive]
+fn C.igTablePopBackgroundChannel()
+
+@[inline]
+pub fn table_pop_background_channel() {
+	C.igTablePopBackgroundChannel()
+}
+
+@[keep_args_alive]
+fn C.igTablePushColumnChannel(column_n i32)
+
+@[inline]
+pub fn table_push_column_channel(column_n i32) {
+	C.igTablePushColumnChannel(column_n)
+}
+
+@[keep_args_alive]
+fn C.igTablePopColumnChannel()
+
+@[inline]
+pub fn table_pop_column_channel() {
+	C.igTablePopColumnChannel()
+}
+
+@[keep_args_alive]
+fn C.igTableAngledHeadersRowEx(row_id ID, angle f32, max_label_width f32, data &TableHeaderData, data_count i32)
+
+@[inline]
+pub fn table_angled_headers_row_ex(row_id ID, angle f32, max_label_width f32, data &TableHeaderData, data_count i32) {
+	C.igTableAngledHeadersRowEx(row_id, angle, max_label_width, data, data_count)
+}
+
+@[keep_args_alive]
+fn C.igGetCurrentTable() &Table
+
+@[inline]
+pub fn get_current_table() &Table {
+	return C.igGetCurrentTable()
+}
+
+@[keep_args_alive]
+fn C.igTableFindByID(id ID) &Table
+
+@[inline]
+pub fn table_find_by_id(id ID) &Table {
+	return C.igTableFindByID(id)
+}
+
+@[keep_args_alive]
+fn C.igBeginTableEx(const_name &char, id ID, columns_count i32, flags TableFlags, outer_size ImVec2_c, inner_width f32) bool
+
+@[inline]
+pub fn begin_table_ex(const_name &char, id ID, columns_count i32, flags TableFlags, outer_size ImVec2_c, inner_width f32) bool {
+	return C.igBeginTableEx(const_name, id, columns_count, flags, outer_size, inner_width)
+}
+
+@[keep_args_alive]
+fn C.igTableBeginInitMemory(table &Table, columns_count i32)
+
+@[inline]
+pub fn table_begin_init_memory(table &Table, columns_count i32) {
+	C.igTableBeginInitMemory(table, columns_count)
+}
+
+@[keep_args_alive]
+fn C.igTableApplyQueuedRequests(table &Table)
+
+@[inline]
+pub fn table_apply_queued_requests(table &Table) {
+	C.igTableApplyQueuedRequests(table)
+}
+
+@[keep_args_alive]
+fn C.igTableSetupDrawChannels(table &Table)
+
+@[inline]
+pub fn table_setup_draw_channels(table &Table) {
+	C.igTableSetupDrawChannels(table)
+}
+
+@[keep_args_alive]
+fn C.igTableReconcileColumns(table &Table)
+
+@[inline]
+pub fn table_reconcile_columns(table &Table) {
+	C.igTableReconcileColumns(table)
+}
+
+@[keep_args_alive]
+fn C.igTableUpdateLayout(table &Table)
+
+@[inline]
+pub fn table_update_layout(table &Table) {
+	C.igTableUpdateLayout(table)
+}
+
+@[keep_args_alive]
+fn C.igTableUpdateBorders(table &Table)
+
+@[inline]
+pub fn table_update_borders(table &Table) {
+	C.igTableUpdateBorders(table)
+}
+
+@[keep_args_alive]
+fn C.igTableUpdateColumnsWeightFromWidth(table &Table)
+
+@[inline]
+pub fn table_update_columns_weight_from_width(table &Table) {
+	C.igTableUpdateColumnsWeightFromWidth(table)
+}
+
+@[keep_args_alive]
+fn C.igTableApplyExternalUnclipRect(table &Table, rect &ImRect)
+
+@[inline]
+pub fn table_apply_external_unclip_rect(table &Table, rect &ImRect) {
+	C.igTableApplyExternalUnclipRect(table, rect)
+}
+
+@[keep_args_alive]
+fn C.igTableDrawBorders(table &Table)
+
+@[inline]
+pub fn table_draw_borders(table &Table) {
+	C.igTableDrawBorders(table)
+}
+
+@[keep_args_alive]
+fn C.igTableDrawDefaultContextMenu(table &Table, flags_for_section_to_display TableFlags)
+
+@[inline]
+pub fn table_draw_default_context_menu(table &Table, flags_for_section_to_display TableFlags) {
+	C.igTableDrawDefaultContextMenu(table, flags_for_section_to_display)
+}
+
+@[keep_args_alive]
+fn C.igTableBeginContextMenuPopup(table &Table) bool
+
+@[inline]
+pub fn table_begin_context_menu_popup(table &Table) bool {
+	return C.igTableBeginContextMenuPopup(table)
+}
+
+@[keep_args_alive]
+fn C.igTableMergeDrawChannels(table &Table)
+
+@[inline]
+pub fn table_merge_draw_channels(table &Table) {
+	C.igTableMergeDrawChannels(table)
+}
+
+@[keep_args_alive]
+fn C.igTableGetInstanceData(table &Table, instance_no i32) &TableInstanceData
+
+@[inline]
+pub fn table_get_instance_data(table &Table, instance_no i32) &TableInstanceData {
+	return C.igTableGetInstanceData(table, instance_no)
+}
+
+@[keep_args_alive]
+fn C.igTableGetInstanceID(table &Table, instance_no i32) ID
+
+@[inline]
+pub fn table_get_instance_id(table &Table, instance_no i32) ID {
+	return C.igTableGetInstanceID(table, instance_no)
+}
+
+@[keep_args_alive]
+fn C.igTableFixDisplayOrder(table &Table)
+
+@[inline]
+pub fn table_fix_display_order(table &Table) {
+	C.igTableFixDisplayOrder(table)
+}
+
+@[keep_args_alive]
+fn C.igTableSortSpecsSanitize(table &Table)
+
+@[inline]
+pub fn table_sort_specs_sanitize(table &Table) {
+	C.igTableSortSpecsSanitize(table)
+}
+
+@[keep_args_alive]
+fn C.igTableSortSpecsBuild(table &Table)
+
+@[inline]
+pub fn table_sort_specs_build(table &Table) {
+	C.igTableSortSpecsBuild(table)
+}
+
+@[keep_args_alive]
+fn C.igTableInitColumnDefaults(table &Table, column &TableColumn, init_mask TableColumnFlags)
+
+@[inline]
+pub fn table_init_column_defaults(table &Table, column &TableColumn, init_mask TableColumnFlags) {
+	C.igTableInitColumnDefaults(table, column, init_mask)
+}
+
+@[keep_args_alive]
+fn C.igTableGetColumnNextSortDirection(column &TableColumn) i32
+
+@[inline]
+pub fn table_get_column_next_sort_direction(column &TableColumn) i32 {
+	return C.igTableGetColumnNextSortDirection(column)
+}
+
+@[keep_args_alive]
+fn C.igTableFixColumnSortDirection(table &Table, column &TableColumn)
+
+@[inline]
+pub fn table_fix_column_sort_direction(table &Table, column &TableColumn) {
+	C.igTableFixColumnSortDirection(table, column)
+}
+
+@[keep_args_alive]
+fn C.igTableGetColumnWidthAuto(table &Table, column &TableColumn) f32
+
+@[inline]
+pub fn table_get_column_width_auto(table &Table, column &TableColumn) f32 {
+	return C.igTableGetColumnWidthAuto(table, column)
+}
+
+@[keep_args_alive]
+fn C.igTableBeginRow(table &Table)
+
+@[inline]
+pub fn table_begin_row(table &Table) {
+	C.igTableBeginRow(table)
+}
+
+@[keep_args_alive]
+fn C.igTableEndRow(table &Table)
+
+@[inline]
+pub fn table_end_row(table &Table) {
+	C.igTableEndRow(table)
+}
+
+@[keep_args_alive]
+fn C.igTableBeginCell(table &Table, column_n i32)
+
+@[inline]
+pub fn table_begin_cell(table &Table, column_n i32) {
+	C.igTableBeginCell(table, column_n)
+}
+
+@[keep_args_alive]
+fn C.igTableEndCell(table &Table)
+
+@[inline]
+pub fn table_end_cell(table &Table) {
+	C.igTableEndCell(table)
+}
+
+@[keep_args_alive]
+fn C.igTableGetCellBgRect(table &Table, column_n i32) ImRect_c
+
+@[inline]
+pub fn table_get_cell_bg_rect(table &Table, column_n i32) ImRect_c {
+	return C.igTableGetCellBgRect(table, column_n)
+}
+
+@[keep_args_alive]
+fn C.igTableGetColumnName_TablePtr(table &Table, column_n i32) &char
+
+@[inline]
+pub fn table_get_column_name_table_ptr(table &Table, column_n i32) &char {
+	return C.igTableGetColumnName_TablePtr(table, column_n)
+}
+
+@[keep_args_alive]
+fn C.igTableGetColumnResizeID(table &Table, column_n i32, instance_no i32) ID
+
+@[inline]
+pub fn table_get_column_resize_id(table &Table, column_n i32, instance_no i32) ID {
+	return C.igTableGetColumnResizeID(table, column_n, instance_no)
+}
+
+@[keep_args_alive]
+fn C.igTableCalcMaxColumnWidth(table &Table, column_n i32) f32
+
+@[inline]
+pub fn table_calc_max_column_width(table &Table, column_n i32) f32 {
+	return C.igTableCalcMaxColumnWidth(table, column_n)
+}
+
+@[keep_args_alive]
+fn C.igTableSetColumnWidthAutoSingle(table &Table, column_n i32)
+
+@[inline]
+pub fn table_set_column_width_auto_single(table &Table, column_n i32) {
+	C.igTableSetColumnWidthAutoSingle(table, column_n)
+}
+
+@[keep_args_alive]
+fn C.igTableSetColumnWidthAutoAll(table &Table)
+
+@[inline]
+pub fn table_set_column_width_auto_all(table &Table) {
+	C.igTableSetColumnWidthAutoAll(table)
+}
+
+@[keep_args_alive]
+fn C.igTableSetColumnDisplayOrder(table &Table, column_n i32, dst_order i32)
+
+@[inline]
+pub fn table_set_column_display_order(table &Table, column_n i32, dst_order i32) {
+	C.igTableSetColumnDisplayOrder(table, column_n, dst_order)
+}
+
+@[keep_args_alive]
+fn C.igTableQueueSetColumnDisplayOrder(table &Table, column_n i32, dst_order i32)
+
+@[inline]
+pub fn table_queue_set_column_display_order(table &Table, column_n i32, dst_order i32) {
+	C.igTableQueueSetColumnDisplayOrder(table, column_n, dst_order)
+}
+
+@[keep_args_alive]
+fn C.igTableRemove(table &Table)
+
+@[inline]
+pub fn table_remove(table &Table) {
+	C.igTableRemove(table)
+}
+
+@[keep_args_alive]
+fn C.igTableGcCompactTransientBuffers_TablePtr(table &Table)
+
+@[inline]
+pub fn table_gc_compact_transient_buffers_table_ptr(table &Table) {
+	C.igTableGcCompactTransientBuffers_TablePtr(table)
+}
+
+@[keep_args_alive]
+fn C.igTableGcCompactTransientBuffers_TableTempDataPtr(table &TableTempData)
+
+@[inline]
+pub fn table_gc_compact_transient_buffers_table_temp_data_ptr(table &TableTempData) {
+	C.igTableGcCompactTransientBuffers_TableTempDataPtr(table)
+}
+
+@[keep_args_alive]
+fn C.igTableGcCompactSettings()
+
+@[inline]
+pub fn table_gc_compact_settings() {
+	C.igTableGcCompactSettings()
+}
+
+@[keep_args_alive]
+fn C.igTableLoadSettings(table &Table)
+
+@[inline]
+pub fn table_load_settings(table &Table) {
+	C.igTableLoadSettings(table)
+}
+
+@[keep_args_alive]
+fn C.igTableLoadSettingsForColumns(table &Table)
+
+@[inline]
+pub fn table_load_settings_for_columns(table &Table) {
+	C.igTableLoadSettingsForColumns(table)
+}
+
+@[keep_args_alive]
+fn C.igTableLoadSettingsForColumn(column &TableColumn, column_settings &TableColumnSettings, load_flags TableFlags)
+
+@[inline]
+pub fn table_load_settings_for_column(column &TableColumn, column_settings &TableColumnSettings, load_flags TableFlags) {
+	C.igTableLoadSettingsForColumn(column, column_settings, load_flags)
+}
+
+@[keep_args_alive]
+fn C.igTableSaveSettings(table &Table)
+
+@[inline]
+pub fn table_save_settings(table &Table) {
+	C.igTableSaveSettings(table)
+}
+
+@[keep_args_alive]
+fn C.igTableResetSettings(table &Table)
+
+@[inline]
+pub fn table_reset_settings(table &Table) {
+	C.igTableResetSettings(table)
+}
+
+@[keep_args_alive]
+fn C.igTableGetBoundSettings(table &Table) &TableSettings
+
+@[inline]
+pub fn table_get_bound_settings(table &Table) &TableSettings {
+	return C.igTableGetBoundSettings(table)
+}
+
+@[keep_args_alive]
+fn C.igTableSettingsAddSettingsHandler()
+
+@[inline]
+pub fn table_settings_add_settings_handler() {
+	C.igTableSettingsAddSettingsHandler()
+}
+
+@[keep_args_alive]
+fn C.igTableSettingsCreate(id ID, columns_count i32) &TableSettings
+
+@[inline]
+pub fn table_settings_create(id ID, columns_count i32) &TableSettings {
+	return C.igTableSettingsCreate(id, columns_count)
+}
+
+@[keep_args_alive]
+fn C.igTableSettingsFindByID(id ID) &TableSettings
+
+@[inline]
+pub fn table_settings_find_by_id(id ID) &TableSettings {
+	return C.igTableSettingsFindByID(id)
+}
+
+@[keep_args_alive]
+fn C.igSetWindowClipRectBeforeSetChannel(window &Window, clip_rect ImRect_c)
+
+@[inline]
+pub fn set_window_clip_rect_before_set_channel(window &Window, clip_rect ImRect_c) {
+	C.igSetWindowClipRectBeforeSetChannel(window, clip_rect)
+}
+
+@[keep_args_alive]
+fn C.igBeginColumns(const_str_id &char, count i32, flags OldColumnFlags)
+
+@[inline]
+pub fn begin_columns(const_str_id &char, count i32, flags OldColumnFlags) {
+	C.igBeginColumns(const_str_id, count, flags)
+}
+
+@[keep_args_alive]
+fn C.igEndColumns()
+
+@[inline]
+pub fn end_columns() {
+	C.igEndColumns()
+}
+
+@[keep_args_alive]
+fn C.igPushColumnClipRect(column_index i32)
+
+@[inline]
+pub fn push_column_clip_rect(column_index i32) {
+	C.igPushColumnClipRect(column_index)
+}
+
+@[keep_args_alive]
+fn C.igPushColumnsBackground()
+
+@[inline]
+pub fn push_columns_background() {
+	C.igPushColumnsBackground()
+}
+
+@[keep_args_alive]
+fn C.igPopColumnsBackground()
+
+@[inline]
+pub fn pop_columns_background() {
+	C.igPopColumnsBackground()
+}
+
+@[keep_args_alive]
+fn C.igGetColumnsID(const_str_id &char, count i32) ID
+
+@[inline]
+pub fn get_columns_id(const_str_id &char, count i32) ID {
+	return C.igGetColumnsID(const_str_id, count)
+}
+
+@[keep_args_alive]
+fn C.igFindOrCreateColumns(window &Window, id ID) &OldColumns
+
+@[inline]
+pub fn find_or_create_columns(window &Window, id ID) &OldColumns {
+	return C.igFindOrCreateColumns(window, id)
+}
+
+@[keep_args_alive]
+fn C.igGetColumnOffsetFromNorm(columns &OldColumns, offset_norm f32) f32
+
+@[inline]
+pub fn get_column_offset_from_norm(columns &OldColumns, offset_norm f32) f32 {
+	return C.igGetColumnOffsetFromNorm(columns, offset_norm)
+}
+
+@[keep_args_alive]
+fn C.igGetColumnNormFromOffset(columns &OldColumns, offset f32) f32
+
+@[inline]
+pub fn get_column_norm_from_offset(columns &OldColumns, offset f32) f32 {
+	return C.igGetColumnNormFromOffset(columns, offset)
 }
 
 @[keep_args_alive]
@@ -13539,10 +14399,10 @@ pub fn remove_context_hook(ctx &Context, hook_to_remove ID) {
 }
 
 @[keep_args_alive]
-fn C.igCallContextHooks(ctx &Context, type_ ContextHookType)
+fn C.igCallContextHooks(ctx &Context, type_ i32)
 
 @[inline]
-pub fn call_context_hooks(ctx &Context, type_ ContextHookType) {
+pub fn call_context_hooks(ctx &Context, type_ i32) {
 	C.igCallContextHooks(ctx, type_)
 }
 
@@ -13567,8 +14427,7 @@ fn C.igFindHoveredWindowEx(pos ImVec2_c, find_first_and_in_any_viewport bool, ou
 
 @[inline]
 pub fn find_hovered_window_ex(pos ImVec2_c, find_first_and_in_any_viewport bool, out_hovered_window &&Window, out_hovered_window_under_moving_window &&Window) {
-	C.igFindHoveredWindowEx(pos, find_first_and_in_any_viewport, out_hovered_window,
-		out_hovered_window_under_moving_window)
+	C.igFindHoveredWindowEx(pos, find_first_and_in_any_viewport, out_hovered_window, out_hovered_window_under_moving_window)
 }
 
 @[keep_args_alive]
@@ -13692,6 +14551,14 @@ pub fn clear_ini_settings() {
 }
 
 @[keep_args_alive]
+fn C.igCleanupIniSettings(args &SettingsCleanupArgs)
+
+@[inline]
+pub fn cleanup_ini_settings(args &SettingsCleanupArgs) {
+	C.igCleanupIniSettings(args)
+}
+
+@[keep_args_alive]
 fn C.igAddSettingsHandler(handler &SettingsHandler)
 
 @[inline]
@@ -13756,10 +14623,10 @@ pub fn localize_register_entries(entries &LocEntry, count i32) {
 }
 
 @[keep_args_alive]
-fn C.igLocalizeGetMsg(key LocKey) &char
+fn C.igLocalizeGetMsg(key i32) &char
 
 @[inline]
-pub fn localize_get_msg(key LocKey) &char {
+pub fn localize_get_msg(key i32) &char {
 	return C.igLocalizeGetMsg(key)
 }
 
@@ -13919,7 +14786,7 @@ pub fn push_override_id(id ID) {
 fn C.igGetIDWithSeed_Str(str_id_begin &char, str_id_end &char, seed ID) ID
 
 @[inline]
-pub fn get_idw_ith_seed_str(str_id_begin &char, str_id_end &char, seed ID) ID {
+pub fn get_id_with_seed_str(str_id_begin &char, str_id_end &char, seed ID) ID {
 	return C.igGetIDWithSeed_Str(str_id_begin, str_id_end, seed)
 }
 
@@ -13927,7 +14794,7 @@ pub fn get_idw_ith_seed_str(str_id_begin &char, str_id_end &char, seed ID) ID {
 fn C.igGetIDWithSeed_Int(n i32, seed ID) ID
 
 @[inline]
-pub fn get_idw_ith_seed_int(n i32, seed ID) ID {
+pub fn get_id_with_seed_int(n i32, seed ID) ID {
 	return C.igGetIDWithSeed_Int(n, seed)
 }
 
@@ -14092,6 +14959,14 @@ pub fn begin_child_ex(const_name &char, id ID, size_arg ImVec2_c, child_flags Ch
 }
 
 @[keep_args_alive]
+fn C.igFindFrontMostVisibleChildWindow(window &Window) &Window
+
+@[inline]
+pub fn find_front_most_visible_child_window(window &Window) &Window {
+	return C.igFindFrontMostVisibleChildWindow(window)
+}
+
+@[keep_args_alive]
 fn C.igBeginPopupEx(id ID, extra_window_flags WindowFlags) bool
 
 @[inline]
@@ -14108,11 +14983,11 @@ pub fn begin_popup_menu_ex(id ID, const_label &char, extra_window_flags WindowFl
 }
 
 @[keep_args_alive]
-fn C.igOpenPopupEx(id ID, popup_flags PopupFlags)
+fn C.igOpenPopupEx(id ID, popup_flags PopupFlags) bool
 
 @[inline]
-pub fn open_popup_ex(id ID, popup_flags PopupFlags) {
-	C.igOpenPopupEx(id, popup_flags)
+pub fn open_popup_ex(id ID, popup_flags PopupFlags) bool {
+	return C.igOpenPopupEx(id, popup_flags)
 }
 
 @[keep_args_alive]
@@ -14188,10 +15063,10 @@ pub fn find_best_window_pos_for_popup(window &Window) ImVec2_c {
 }
 
 @[keep_args_alive]
-fn C.igFindBestWindowPosForPopupEx(ref_pos ImVec2_c, size ImVec2_c, last_dir &Dir, r_outer ImRect_c, r_avoid ImRect_c, policy PopupPositionPolicy) ImVec2_c
+fn C.igFindBestWindowPosForPopupEx(ref_pos ImVec2_c, size ImVec2_c, last_dir &i32, r_outer ImRect_c, r_avoid ImRect_c, policy i32) ImVec2_c
 
 @[inline]
-pub fn find_best_window_pos_for_popup_ex(ref_pos ImVec2_c, size ImVec2_c, last_dir &Dir, r_outer ImRect_c, r_avoid ImRect_c, policy PopupPositionPolicy) ImVec2_c {
+pub fn find_best_window_pos_for_popup_ex(ref_pos ImVec2_c, size ImVec2_c, last_dir &i32, r_outer ImRect_c, r_avoid ImRect_c, policy i32) ImVec2_c {
 	return C.igFindBestWindowPosForPopupEx(ref_pos, size, last_dir, r_outer, r_avoid, policy)
 }
 
@@ -14236,10 +15111,10 @@ pub fn begin_tooltip_hidden() bool {
 }
 
 @[keep_args_alive]
-fn C.igBeginViewportSideBar(const_name &char, viewport &Viewport, dir Dir, size f32, window_flags WindowFlags) bool
+fn C.igBeginViewportSideBar(const_name &char, viewport &Viewport, dir i32, size f32, window_flags WindowFlags) bool
 
 @[inline]
-pub fn begin_viewport_side_bar(const_name &char, viewport &Viewport, dir Dir, size f32, window_flags WindowFlags) bool {
+pub fn begin_viewport_side_bar(const_name &char, viewport &Viewport, dir i32, size f32, window_flags WindowFlags) bool {
 	return C.igBeginViewportSideBar(const_name, viewport, dir, size, window_flags)
 }
 
@@ -14308,18 +15183,18 @@ pub fn nav_move_request_but_no_result_yet() bool {
 }
 
 @[keep_args_alive]
-fn C.igNavMoveRequestSubmit(move_dir Dir, clip_dir Dir, move_flags NavMoveFlags, scroll_flags ScrollFlags)
+fn C.igNavMoveRequestSubmit(move_dir i32, clip_dir i32, move_flags NavMoveFlags, scroll_flags ScrollFlags)
 
 @[inline]
-pub fn nav_move_request_submit(move_dir Dir, clip_dir Dir, move_flags NavMoveFlags, scroll_flags ScrollFlags) {
+pub fn nav_move_request_submit(move_dir i32, clip_dir i32, move_flags NavMoveFlags, scroll_flags ScrollFlags) {
 	C.igNavMoveRequestSubmit(move_dir, clip_dir, move_flags, scroll_flags)
 }
 
 @[keep_args_alive]
-fn C.igNavMoveRequestForward(move_dir Dir, clip_dir Dir, move_flags NavMoveFlags, scroll_flags ScrollFlags)
+fn C.igNavMoveRequestForward(move_dir i32, clip_dir i32, move_flags NavMoveFlags, scroll_flags ScrollFlags)
 
 @[inline]
-pub fn nav_move_request_forward(move_dir Dir, clip_dir Dir, move_flags NavMoveFlags, scroll_flags ScrollFlags) {
+pub fn nav_move_request_forward(move_dir i32, clip_dir i32, move_flags NavMoveFlags, scroll_flags ScrollFlags) {
 	C.igNavMoveRequestForward(move_dir, clip_dir, move_flags, scroll_flags)
 }
 
@@ -14372,10 +15247,10 @@ pub fn nav_highlight_activated(id ID) {
 }
 
 @[keep_args_alive]
-fn C.igNavClearPreferredPosForAxis(axis Axis)
+fn C.igNavClearPreferredPosForAxis(axis i32)
 
 @[inline]
-pub fn nav_clear_preferred_pos_for_axis(axis Axis) {
+pub fn nav_clear_preferred_pos_for_axis(axis i32) {
 	C.igNavClearPreferredPosForAxis(axis)
 }
 
@@ -14404,10 +15279,10 @@ pub fn set_nav_window(window &Window) {
 }
 
 @[keep_args_alive]
-fn C.igSetNavID(id ID, nav_layer NavLayer, focus_scope_id ID, rect_rel ImRect_c)
+fn C.igSetNavID(id ID, nav_layer i32, focus_scope_id ID, rect_rel ImRect_c)
 
 @[inline]
-pub fn set_nav_id(id ID, nav_layer NavLayer, focus_scope_id ID, rect_rel ImRect_c) {
+pub fn set_nav_id(id ID, nav_layer i32, focus_scope_id ID, rect_rel ImRect_c) {
 	C.igSetNavID(id, nav_layer, focus_scope_id, rect_rel)
 }
 
@@ -14436,66 +15311,66 @@ pub fn activate_item_by_id(id ID) {
 }
 
 @[keep_args_alive]
-fn C.igIsNamedKey(key Key) bool
+fn C.igIsNamedKey(key i32) bool
 
 @[inline]
-pub fn is_named_key(key Key) bool {
+pub fn is_named_key(key i32) bool {
 	return C.igIsNamedKey(key)
 }
 
 @[keep_args_alive]
-fn C.igIsNamedKeyOrMod(key Key) bool
+fn C.igIsNamedKeyOrMod(key i32) bool
 
 @[inline]
-pub fn is_named_key_or_mod(key Key) bool {
+pub fn is_named_key_or_mod(key i32) bool {
 	return C.igIsNamedKeyOrMod(key)
 }
 
 @[keep_args_alive]
-fn C.igIsLegacyKey(key Key) bool
+fn C.igIsLegacyKey(key i32) bool
 
 @[inline]
-pub fn is_legacy_key(key Key) bool {
+pub fn is_legacy_key(key i32) bool {
 	return C.igIsLegacyKey(key)
 }
 
 @[keep_args_alive]
-fn C.igIsKeyboardKey(key Key) bool
+fn C.igIsKeyboardKey(key i32) bool
 
 @[inline]
-pub fn is_keyboard_key(key Key) bool {
+pub fn is_keyboard_key(key i32) bool {
 	return C.igIsKeyboardKey(key)
 }
 
 @[keep_args_alive]
-fn C.igIsGamepadKey(key Key) bool
+fn C.igIsGamepadKey(key i32) bool
 
 @[inline]
-pub fn is_gamepad_key(key Key) bool {
+pub fn is_gamepad_key(key i32) bool {
 	return C.igIsGamepadKey(key)
 }
 
 @[keep_args_alive]
-fn C.igIsMouseKey(key Key) bool
+fn C.igIsMouseKey(key i32) bool
 
 @[inline]
-pub fn is_mouse_key(key Key) bool {
+pub fn is_mouse_key(key i32) bool {
 	return C.igIsMouseKey(key)
 }
 
 @[keep_args_alive]
-fn C.igIsAliasKey(key Key) bool
+fn C.igIsAliasKey(key i32) bool
 
 @[inline]
-pub fn is_alias_key(key Key) bool {
+pub fn is_alias_key(key i32) bool {
 	return C.igIsAliasKey(key)
 }
 
 @[keep_args_alive]
-fn C.igIsLRModKey(key Key) bool
+fn C.igIsLRModKey(key i32) bool
 
 @[inline]
-pub fn is_lrm_od_key(key Key) bool {
+pub fn is_lr_mod_key(key i32) bool {
 	return C.igIsLRModKey(key)
 }
 
@@ -14508,26 +15383,26 @@ pub fn fixup_key_chord(key_chord KeyChord) KeyChord {
 }
 
 @[keep_args_alive]
-fn C.igConvertSingleModFlagToKey(key Key) Key
+fn C.igConvertSingleModFlagToKey(key i32) i32
 
 @[inline]
-pub fn convert_single_mod_flag_to_key(key Key) Key {
+pub fn convert_single_mod_flag_to_key(key i32) i32 {
 	return C.igConvertSingleModFlagToKey(key)
 }
 
 @[keep_args_alive]
-fn C.igGetKeyData_ContextPtr(ctx &Context, key Key) &KeyData
+fn C.igGetKeyData_ContextPtr(ctx &Context, key i32) &KeyData
 
 @[inline]
-pub fn get_key_data_context_ptr(ctx &Context, key Key) &KeyData {
+pub fn get_key_data_context_ptr(ctx &Context, key i32) &KeyData {
 	return C.igGetKeyData_ContextPtr(ctx, key)
 }
 
 @[keep_args_alive]
-fn C.igGetKeyData_Key(key Key) &KeyData
+fn C.igGetKeyData_Key(key i32) &KeyData
 
 @[inline]
-pub fn get_key_data_key(key Key) &KeyData {
+pub fn get_key_data_key(key i32) &KeyData {
 	return C.igGetKeyData_Key(key)
 }
 
@@ -14540,10 +15415,10 @@ pub fn get_key_chord_name(key_chord KeyChord) &char {
 }
 
 @[keep_args_alive]
-fn C.igMouseButtonToKey(button MouseButton) Key
+fn C.igMouseButtonToKey(button MouseButton) i32
 
 @[inline]
-pub fn mouse_button_to_key(button MouseButton) Key {
+pub fn mouse_button_to_key(button MouseButton) i32 {
 	return C.igMouseButtonToKey(button)
 }
 
@@ -14556,18 +15431,18 @@ pub fn is_mouse_drag_past_threshold(button MouseButton, lock_threshold f32) bool
 }
 
 @[keep_args_alive]
-fn C.igGetKeyMagnitude2d(key_left Key, key_right Key, key_up Key, key_down Key) ImVec2_c
+fn C.igGetKeyMagnitude2d(key_left i32, key_right i32, key_up i32, key_down i32) ImVec2_c
 
 @[inline]
-pub fn get_key_magnitude2d(key_left Key, key_right Key, key_up Key, key_down Key) ImVec2_c {
+pub fn get_key_magnitude2d(key_left i32, key_right i32, key_up i32, key_down i32) ImVec2_c {
 	return C.igGetKeyMagnitude2d(key_left, key_right, key_up, key_down)
 }
 
 @[keep_args_alive]
-fn C.igGetNavTweakPressedAmount(axis Axis) f32
+fn C.igGetNavTweakPressedAmount(axis i32) f32
 
 @[inline]
-pub fn get_nav_tweak_pressed_amount(axis Axis) f32 {
+pub fn get_nav_tweak_pressed_amount(axis i32) f32 {
 	return C.igGetNavTweakPressedAmount(axis)
 }
 
@@ -14604,26 +15479,26 @@ pub fn set_active_id_using_all_keyboard_keys() {
 }
 
 @[keep_args_alive]
-fn C.igIsActiveIdUsingNavDir(dir Dir) bool
+fn C.igIsActiveIdUsingNavDir(dir i32) bool
 
 @[inline]
-pub fn is_active_id_using_nav_dir(dir Dir) bool {
+pub fn is_active_id_using_nav_dir(dir i32) bool {
 	return C.igIsActiveIdUsingNavDir(dir)
 }
 
 @[keep_args_alive]
-fn C.igGetKeyOwner(key Key) ID
+fn C.igGetKeyOwner(key i32) ID
 
 @[inline]
-pub fn get_key_owner(key Key) ID {
+pub fn get_key_owner(key i32) ID {
 	return C.igGetKeyOwner(key)
 }
 
 @[keep_args_alive]
-fn C.igSetKeyOwner(key Key, owner_id ID, flags InputFlags)
+fn C.igSetKeyOwner(key i32, owner_id ID, flags InputFlags)
 
 @[inline]
-pub fn set_key_owner(key Key, owner_id ID, flags InputFlags) {
+pub fn set_key_owner(key i32, owner_id ID, flags InputFlags) {
 	C.igSetKeyOwner(key, owner_id, flags)
 }
 
@@ -14636,50 +15511,50 @@ pub fn set_key_owners_for_key_chord(key KeyChord, owner_id ID, flags InputFlags)
 }
 
 @[keep_args_alive]
-fn C.igSetItemKeyOwner_InputFlags(key Key, flags InputFlags)
+fn C.igSetItemKeyOwner_InputFlags(key i32, flags InputFlags) bool
 
 @[inline]
-pub fn set_item_key_owner_input_flags(key Key, flags InputFlags) {
-	C.igSetItemKeyOwner_InputFlags(key, flags)
+pub fn set_item_key_owner_input_flags(key i32, flags InputFlags) bool {
+	return C.igSetItemKeyOwner_InputFlags(key, flags)
 }
 
 @[keep_args_alive]
-fn C.igTestKeyOwner(key Key, owner_id ID) bool
+fn C.igTestKeyOwner(key i32, owner_id ID) bool
 
 @[inline]
-pub fn test_key_owner(key Key, owner_id ID) bool {
+pub fn test_key_owner(key i32, owner_id ID) bool {
 	return C.igTestKeyOwner(key, owner_id)
 }
 
 @[keep_args_alive]
-fn C.igGetKeyOwnerData(ctx &Context, key Key) &KeyOwnerData
+fn C.igGetKeyOwnerData(ctx &Context, key i32) &KeyOwnerData
 
 @[inline]
-pub fn get_key_owner_data(ctx &Context, key Key) &KeyOwnerData {
+pub fn get_key_owner_data(ctx &Context, key i32) &KeyOwnerData {
 	return C.igGetKeyOwnerData(ctx, key)
 }
 
 @[keep_args_alive]
-fn C.igIsKeyDown_ID(key Key, owner_id ID) bool
+fn C.igIsKeyDown_ID(key i32, owner_id ID) bool
 
 @[inline]
-pub fn is_key_down_id(key Key, owner_id ID) bool {
+pub fn is_key_down_id(key i32, owner_id ID) bool {
 	return C.igIsKeyDown_ID(key, owner_id)
 }
 
 @[keep_args_alive]
-fn C.igIsKeyPressed_InputFlags(key Key, flags InputFlags, owner_id ID) bool
+fn C.igIsKeyPressed_InputFlags(key i32, flags InputFlags, owner_id ID) bool
 
 @[inline]
-pub fn is_key_pressed_input_flags(key Key, flags InputFlags, owner_id ID) bool {
+pub fn is_key_pressed_input_flags(key i32, flags InputFlags, owner_id ID) bool {
 	return C.igIsKeyPressed_InputFlags(key, flags, owner_id)
 }
 
 @[keep_args_alive]
-fn C.igIsKeyReleased_ID(key Key, owner_id ID) bool
+fn C.igIsKeyReleased_ID(key i32, owner_id ID) bool
 
 @[inline]
-pub fn is_key_released_id(key Key, owner_id ID) bool {
+pub fn is_key_released_id(key i32, owner_id ID) bool {
 	return C.igIsKeyReleased_ID(key, owner_id)
 }
 
@@ -14820,10 +15695,10 @@ pub fn dock_context_gen_node_id(ctx &Context) ID {
 }
 
 @[keep_args_alive]
-fn C.igDockContextQueueDock(ctx &Context, target &Window, target_node &DockNode, payload &Window, split_dir Dir, split_ratio f32, split_outer bool)
+fn C.igDockContextQueueDock(ctx &Context, target &Window, target_node &DockNode, payload &Window, split_dir i32, split_ratio f32, split_outer bool)
 
 @[inline]
-pub fn dock_context_queue_dock(ctx &Context, target &Window, target_node &DockNode, payload &Window, split_dir Dir, split_ratio f32, split_outer bool) {
+pub fn dock_context_queue_dock(ctx &Context, target &Window, target_node &DockNode, payload &Window, split_dir i32, split_ratio f32, split_outer bool) {
 	C.igDockContextQueueDock(ctx, target, target_node, payload, split_dir, split_ratio, split_outer)
 }
 
@@ -14860,12 +15735,11 @@ pub fn dock_context_process_undock_node(ctx &Context, node &DockNode) {
 }
 
 @[keep_args_alive]
-fn C.igDockContextCalcDropPosForDocking(target &Window, target_node &DockNode, payload_window &Window, payload_node &DockNode, split_dir Dir, split_outer bool, out_pos &ImVec2_c) bool
+fn C.igDockContextCalcDropPosForDocking(target &Window, target_node &DockNode, payload_window &Window, payload_node &DockNode, split_dir i32, split_outer bool, out_pos &ImVec2_c) bool
 
 @[inline]
-pub fn dock_context_calc_drop_pos_for_docking(target &Window, target_node &DockNode, payload_window &Window, payload_node &DockNode, split_dir Dir, split_outer bool, out_pos &ImVec2_c) bool {
-	return C.igDockContextCalcDropPosForDocking(target, target_node, payload_window, payload_node,
-		split_dir, split_outer, out_pos)
+pub fn dock_context_calc_drop_pos_for_docking(target &Window, target_node &DockNode, payload_window &Window, payload_node &DockNode, split_dir i32, split_outer bool, out_pos &ImVec2_c) bool {
+	return C.igDockContextCalcDropPosForDocking(target, target_node, payload_window, payload_node, split_dir, split_outer, out_pos)
 }
 
 @[keep_args_alive]
@@ -15053,12 +15927,11 @@ pub fn dock_builder_set_node_size(node_id ID, size ImVec2_c) {
 }
 
 @[keep_args_alive]
-fn C.igDockBuilderSplitNode(node_id ID, split_dir Dir, size_ratio_for_node_at_dir f32, out_id_at_dir &ID, out_id_at_opposite_dir &ID) ID
+fn C.igDockBuilderSplitNode(node_id ID, split_dir i32, size_ratio_for_node_at_dir f32, out_id_at_dir &ID, out_id_at_opposite_dir &ID) ID
 
 @[inline]
-pub fn dock_builder_split_node(node_id ID, split_dir Dir, size_ratio_for_node_at_dir f32, out_id_at_dir &ID, out_id_at_opposite_dir &ID) ID {
-	return C.igDockBuilderSplitNode(node_id, split_dir, size_ratio_for_node_at_dir, out_id_at_dir,
-		out_id_at_opposite_dir)
+pub fn dock_builder_split_node(node_id ID, split_dir i32, size_ratio_for_node_at_dir f32, out_id_at_dir &ID, out_id_at_opposite_dir &ID) ID {
+	return C.igDockBuilderSplitNode(node_id, split_dir, size_ratio_for_node_at_dir, out_id_at_dir, out_id_at_opposite_dir)
 }
 
 @[keep_args_alive]
@@ -15107,6 +15980,14 @@ fn C.igPopFocusScope()
 @[inline]
 pub fn pop_focus_scope() {
 	C.igPopFocusScope()
+}
+
+@[keep_args_alive]
+fn C.igIsInNavFocusRoute(focus_scope_id ID) bool
+
+@[inline]
+pub fn is_in_nav_focus_route(focus_scope_id ID) bool {
+	return C.igIsInNavFocusRoute(focus_scope_id)
 }
 
 @[keep_args_alive]
@@ -15166,11 +16047,11 @@ pub fn render_drag_drop_target_rect_for_item(bb ImRect_c) {
 }
 
 @[keep_args_alive]
-fn C.igRenderDragDropTargetRectEx(draw_list &ImDrawList, bb ImRect_c)
+fn C.igRenderDragDropTargetRectEx(draw_list &ImDrawList, bb ImRect_c, rounding f32)
 
 @[inline]
-pub fn render_drag_drop_target_rect_ex(draw_list &ImDrawList, bb ImRect_c) {
-	C.igRenderDragDropTargetRectEx(draw_list, bb)
+pub fn render_drag_drop_target_rect_ex(draw_list &ImDrawList, bb ImRect_c, rounding f32) {
+	C.igRenderDragDropTargetRectEx(draw_list, bb, rounding)
 }
 
 @[keep_args_alive]
@@ -15194,8 +16075,7 @@ fn C.igTypingSelectFindNextSingleCharMatch(req &TypingSelectRequest, items_count
 
 @[inline]
 pub fn typing_select_find_next_single_char_match(req &TypingSelectRequest, items_count i32, get_item_name_func fn (voidptr, i32) &char, user_data voidptr, nav_item_idx i32) i32 {
-	return C.igTypingSelectFindNextSingleCharMatch(req, items_count, get_item_name_func, user_data,
-		nav_item_idx)
+	return C.igTypingSelectFindNextSingleCharMatch(req, items_count, get_item_name_func, user_data, nav_item_idx)
 }
 
 @[keep_args_alive]
@@ -15231,11 +16111,11 @@ pub fn multi_select_item_header(id ID, p_selected &bool, p_button_flags &ButtonF
 }
 
 @[keep_args_alive]
-fn C.igMultiSelectItemFooter(id ID, p_selected &bool, p_pressed &bool)
+fn C.igMultiSelectItemFooter(id ID, p_selected &bool, p_pressed &bool, extra_flags MultiSelectFlags)
 
 @[inline]
-pub fn multi_select_item_footer(id ID, p_selected &bool, p_pressed &bool) {
-	C.igMultiSelectItemFooter(id, p_selected, p_pressed)
+pub fn multi_select_item_footer(id ID, p_selected &bool, p_pressed &bool, extra_flags MultiSelectFlags) {
+	C.igMultiSelectItemFooter(id, p_selected, p_pressed, extra_flags)
 }
 
 @[keep_args_alive]
@@ -15268,526 +16148,6 @@ fn C.igGetMultiSelectState(id ID) &MultiSelectState
 @[inline]
 pub fn get_multi_select_state(id ID) &MultiSelectState {
 	return C.igGetMultiSelectState(id)
-}
-
-@[keep_args_alive]
-fn C.igSetWindowClipRectBeforeSetChannel(window &Window, clip_rect ImRect_c)
-
-@[inline]
-pub fn set_window_clip_rect_before_set_channel(window &Window, clip_rect ImRect_c) {
-	C.igSetWindowClipRectBeforeSetChannel(window, clip_rect)
-}
-
-@[keep_args_alive]
-fn C.igBeginColumns(const_str_id &char, count i32, flags OldColumnFlags)
-
-@[inline]
-pub fn begin_columns(const_str_id &char, count i32, flags OldColumnFlags) {
-	C.igBeginColumns(const_str_id, count, flags)
-}
-
-@[keep_args_alive]
-fn C.igEndColumns()
-
-@[inline]
-pub fn end_columns() {
-	C.igEndColumns()
-}
-
-@[keep_args_alive]
-fn C.igPushColumnClipRect(column_index i32)
-
-@[inline]
-pub fn push_column_clip_rect(column_index i32) {
-	C.igPushColumnClipRect(column_index)
-}
-
-@[keep_args_alive]
-fn C.igPushColumnsBackground()
-
-@[inline]
-pub fn push_columns_background() {
-	C.igPushColumnsBackground()
-}
-
-@[keep_args_alive]
-fn C.igPopColumnsBackground()
-
-@[inline]
-pub fn pop_columns_background() {
-	C.igPopColumnsBackground()
-}
-
-@[keep_args_alive]
-fn C.igGetColumnsID(const_str_id &char, count i32) ID
-
-@[inline]
-pub fn get_columns_id(const_str_id &char, count i32) ID {
-	return C.igGetColumnsID(const_str_id, count)
-}
-
-@[keep_args_alive]
-fn C.igFindOrCreateColumns(window &Window, id ID) &OldColumns
-
-@[inline]
-pub fn find_or_create_columns(window &Window, id ID) &OldColumns {
-	return C.igFindOrCreateColumns(window, id)
-}
-
-@[keep_args_alive]
-fn C.igGetColumnOffsetFromNorm(columns &OldColumns, offset_norm f32) f32
-
-@[inline]
-pub fn get_column_offset_from_norm(columns &OldColumns, offset_norm f32) f32 {
-	return C.igGetColumnOffsetFromNorm(columns, offset_norm)
-}
-
-@[keep_args_alive]
-fn C.igGetColumnNormFromOffset(columns &OldColumns, offset f32) f32
-
-@[inline]
-pub fn get_column_norm_from_offset(columns &OldColumns, offset f32) f32 {
-	return C.igGetColumnNormFromOffset(columns, offset)
-}
-
-@[keep_args_alive]
-fn C.igTableOpenContextMenu(column_n i32)
-
-@[inline]
-pub fn table_open_context_menu(column_n i32) {
-	C.igTableOpenContextMenu(column_n)
-}
-
-@[keep_args_alive]
-fn C.igTableSetColumnWidth(column_n i32, width f32)
-
-@[inline]
-pub fn table_set_column_width(column_n i32, width f32) {
-	C.igTableSetColumnWidth(column_n, width)
-}
-
-@[keep_args_alive]
-fn C.igTableSetColumnSortDirection(column_n i32, sort_direction SortDirection, append_to_sort_specs bool)
-
-@[inline]
-pub fn table_set_column_sort_direction(column_n i32, sort_direction SortDirection, append_to_sort_specs bool) {
-	C.igTableSetColumnSortDirection(column_n, sort_direction, append_to_sort_specs)
-}
-
-@[keep_args_alive]
-fn C.igTableGetHoveredRow() i32
-
-@[inline]
-pub fn table_get_hovered_row() i32 {
-	return C.igTableGetHoveredRow()
-}
-
-@[keep_args_alive]
-fn C.igTableGetHeaderRowHeight() f32
-
-@[inline]
-pub fn table_get_header_row_height() f32 {
-	return C.igTableGetHeaderRowHeight()
-}
-
-@[keep_args_alive]
-fn C.igTableGetHeaderAngledMaxLabelWidth() f32
-
-@[inline]
-pub fn table_get_header_angled_max_label_width() f32 {
-	return C.igTableGetHeaderAngledMaxLabelWidth()
-}
-
-@[keep_args_alive]
-fn C.igTablePushBackgroundChannel()
-
-@[inline]
-pub fn table_push_background_channel() {
-	C.igTablePushBackgroundChannel()
-}
-
-@[keep_args_alive]
-fn C.igTablePopBackgroundChannel()
-
-@[inline]
-pub fn table_pop_background_channel() {
-	C.igTablePopBackgroundChannel()
-}
-
-@[keep_args_alive]
-fn C.igTablePushColumnChannel(column_n i32)
-
-@[inline]
-pub fn table_push_column_channel(column_n i32) {
-	C.igTablePushColumnChannel(column_n)
-}
-
-@[keep_args_alive]
-fn C.igTablePopColumnChannel()
-
-@[inline]
-pub fn table_pop_column_channel() {
-	C.igTablePopColumnChannel()
-}
-
-@[keep_args_alive]
-fn C.igTableAngledHeadersRowEx(row_id ID, angle f32, max_label_width f32, data &TableHeaderData, data_count i32)
-
-@[inline]
-pub fn table_angled_headers_row_ex(row_id ID, angle f32, max_label_width f32, data &TableHeaderData, data_count i32) {
-	C.igTableAngledHeadersRowEx(row_id, angle, max_label_width, data, data_count)
-}
-
-@[keep_args_alive]
-fn C.igGetCurrentTable() &Table
-
-@[inline]
-pub fn get_current_table() &Table {
-	return C.igGetCurrentTable()
-}
-
-@[keep_args_alive]
-fn C.igTableFindByID(id ID) &Table
-
-@[inline]
-pub fn table_find_by_id(id ID) &Table {
-	return C.igTableFindByID(id)
-}
-
-@[keep_args_alive]
-fn C.igBeginTableEx(const_name &char, id ID, columns_count i32, flags TableFlags, outer_size ImVec2_c, inner_width f32) bool
-
-@[inline]
-pub fn begin_table_ex(const_name &char, id ID, columns_count i32, flags TableFlags, outer_size ImVec2_c, inner_width f32) bool {
-	return C.igBeginTableEx(const_name, id, columns_count, flags, outer_size, inner_width)
-}
-
-@[keep_args_alive]
-fn C.igTableBeginInitMemory(table &Table, columns_count i32)
-
-@[inline]
-pub fn table_begin_init_memory(table &Table, columns_count i32) {
-	C.igTableBeginInitMemory(table, columns_count)
-}
-
-@[keep_args_alive]
-fn C.igTableBeginApplyRequests(table &Table)
-
-@[inline]
-pub fn table_begin_apply_requests(table &Table) {
-	C.igTableBeginApplyRequests(table)
-}
-
-@[keep_args_alive]
-fn C.igTableSetupDrawChannels(table &Table)
-
-@[inline]
-pub fn table_setup_draw_channels(table &Table) {
-	C.igTableSetupDrawChannels(table)
-}
-
-@[keep_args_alive]
-fn C.igTableUpdateLayout(table &Table)
-
-@[inline]
-pub fn table_update_layout(table &Table) {
-	C.igTableUpdateLayout(table)
-}
-
-@[keep_args_alive]
-fn C.igTableUpdateBorders(table &Table)
-
-@[inline]
-pub fn table_update_borders(table &Table) {
-	C.igTableUpdateBorders(table)
-}
-
-@[keep_args_alive]
-fn C.igTableUpdateColumnsWeightFromWidth(table &Table)
-
-@[inline]
-pub fn table_update_columns_weight_from_width(table &Table) {
-	C.igTableUpdateColumnsWeightFromWidth(table)
-}
-
-@[keep_args_alive]
-fn C.igTableDrawBorders(table &Table)
-
-@[inline]
-pub fn table_draw_borders(table &Table) {
-	C.igTableDrawBorders(table)
-}
-
-@[keep_args_alive]
-fn C.igTableDrawDefaultContextMenu(table &Table, flags_for_section_to_display TableFlags)
-
-@[inline]
-pub fn table_draw_default_context_menu(table &Table, flags_for_section_to_display TableFlags) {
-	C.igTableDrawDefaultContextMenu(table, flags_for_section_to_display)
-}
-
-@[keep_args_alive]
-fn C.igTableBeginContextMenuPopup(table &Table) bool
-
-@[inline]
-pub fn table_begin_context_menu_popup(table &Table) bool {
-	return C.igTableBeginContextMenuPopup(table)
-}
-
-@[keep_args_alive]
-fn C.igTableMergeDrawChannels(table &Table)
-
-@[inline]
-pub fn table_merge_draw_channels(table &Table) {
-	C.igTableMergeDrawChannels(table)
-}
-
-@[keep_args_alive]
-fn C.igTableGetInstanceData(table &Table, instance_no i32) &TableInstanceData
-
-@[inline]
-pub fn table_get_instance_data(table &Table, instance_no i32) &TableInstanceData {
-	return C.igTableGetInstanceData(table, instance_no)
-}
-
-@[keep_args_alive]
-fn C.igTableGetInstanceID(table &Table, instance_no i32) ID
-
-@[inline]
-pub fn table_get_instance_id(table &Table, instance_no i32) ID {
-	return C.igTableGetInstanceID(table, instance_no)
-}
-
-@[keep_args_alive]
-fn C.igTableFixDisplayOrder(table &Table)
-
-@[inline]
-pub fn table_fix_display_order(table &Table) {
-	C.igTableFixDisplayOrder(table)
-}
-
-@[keep_args_alive]
-fn C.igTableSortSpecsSanitize(table &Table)
-
-@[inline]
-pub fn table_sort_specs_sanitize(table &Table) {
-	C.igTableSortSpecsSanitize(table)
-}
-
-@[keep_args_alive]
-fn C.igTableSortSpecsBuild(table &Table)
-
-@[inline]
-pub fn table_sort_specs_build(table &Table) {
-	C.igTableSortSpecsBuild(table)
-}
-
-@[keep_args_alive]
-fn C.igTableGetColumnNextSortDirection(column &TableColumn) SortDirection
-
-@[inline]
-pub fn table_get_column_next_sort_direction(column &TableColumn) SortDirection {
-	return C.igTableGetColumnNextSortDirection(column)
-}
-
-@[keep_args_alive]
-fn C.igTableFixColumnSortDirection(table &Table, column &TableColumn)
-
-@[inline]
-pub fn table_fix_column_sort_direction(table &Table, column &TableColumn) {
-	C.igTableFixColumnSortDirection(table, column)
-}
-
-@[keep_args_alive]
-fn C.igTableGetColumnWidthAuto(table &Table, column &TableColumn) f32
-
-@[inline]
-pub fn table_get_column_width_auto(table &Table, column &TableColumn) f32 {
-	return C.igTableGetColumnWidthAuto(table, column)
-}
-
-@[keep_args_alive]
-fn C.igTableBeginRow(table &Table)
-
-@[inline]
-pub fn table_begin_row(table &Table) {
-	C.igTableBeginRow(table)
-}
-
-@[keep_args_alive]
-fn C.igTableEndRow(table &Table)
-
-@[inline]
-pub fn table_end_row(table &Table) {
-	C.igTableEndRow(table)
-}
-
-@[keep_args_alive]
-fn C.igTableBeginCell(table &Table, column_n i32)
-
-@[inline]
-pub fn table_begin_cell(table &Table, column_n i32) {
-	C.igTableBeginCell(table, column_n)
-}
-
-@[keep_args_alive]
-fn C.igTableEndCell(table &Table)
-
-@[inline]
-pub fn table_end_cell(table &Table) {
-	C.igTableEndCell(table)
-}
-
-@[keep_args_alive]
-fn C.igTableGetCellBgRect(table &Table, column_n i32) ImRect_c
-
-@[inline]
-pub fn table_get_cell_bg_rect(table &Table, column_n i32) ImRect_c {
-	return C.igTableGetCellBgRect(table, column_n)
-}
-
-@[keep_args_alive]
-fn C.igTableGetColumnName_TablePtr(table &Table, column_n i32) &char
-
-@[inline]
-pub fn table_get_column_name_table_ptr(table &Table, column_n i32) &char {
-	return C.igTableGetColumnName_TablePtr(table, column_n)
-}
-
-@[keep_args_alive]
-fn C.igTableGetColumnResizeID(table &Table, column_n i32, instance_no i32) ID
-
-@[inline]
-pub fn table_get_column_resize_id(table &Table, column_n i32, instance_no i32) ID {
-	return C.igTableGetColumnResizeID(table, column_n, instance_no)
-}
-
-@[keep_args_alive]
-fn C.igTableCalcMaxColumnWidth(table &Table, column_n i32) f32
-
-@[inline]
-pub fn table_calc_max_column_width(table &Table, column_n i32) f32 {
-	return C.igTableCalcMaxColumnWidth(table, column_n)
-}
-
-@[keep_args_alive]
-fn C.igTableSetColumnWidthAutoSingle(table &Table, column_n i32)
-
-@[inline]
-pub fn table_set_column_width_auto_single(table &Table, column_n i32) {
-	C.igTableSetColumnWidthAutoSingle(table, column_n)
-}
-
-@[keep_args_alive]
-fn C.igTableSetColumnWidthAutoAll(table &Table)
-
-@[inline]
-pub fn table_set_column_width_auto_all(table &Table) {
-	C.igTableSetColumnWidthAutoAll(table)
-}
-
-@[keep_args_alive]
-fn C.igTableSetColumnDisplayOrder(table &Table, column_n i32, dst_order i32)
-
-@[inline]
-pub fn table_set_column_display_order(table &Table, column_n i32, dst_order i32) {
-	C.igTableSetColumnDisplayOrder(table, column_n, dst_order)
-}
-
-@[keep_args_alive]
-fn C.igTableQueueSetColumnDisplayOrder(table &Table, column_n i32, dst_order i32)
-
-@[inline]
-pub fn table_queue_set_column_display_order(table &Table, column_n i32, dst_order i32) {
-	C.igTableQueueSetColumnDisplayOrder(table, column_n, dst_order)
-}
-
-@[keep_args_alive]
-fn C.igTableRemove(table &Table)
-
-@[inline]
-pub fn table_remove(table &Table) {
-	C.igTableRemove(table)
-}
-
-@[keep_args_alive]
-fn C.igTableGcCompactTransientBuffers_TablePtr(table &Table)
-
-@[inline]
-pub fn table_gc_compact_transient_buffers_table_ptr(table &Table) {
-	C.igTableGcCompactTransientBuffers_TablePtr(table)
-}
-
-@[keep_args_alive]
-fn C.igTableGcCompactTransientBuffers_TableTempDataPtr(table &TableTempData)
-
-@[inline]
-pub fn table_gc_compact_transient_buffers_table_temp_data_ptr(table &TableTempData) {
-	C.igTableGcCompactTransientBuffers_TableTempDataPtr(table)
-}
-
-@[keep_args_alive]
-fn C.igTableGcCompactSettings()
-
-@[inline]
-pub fn table_gc_compact_settings() {
-	C.igTableGcCompactSettings()
-}
-
-@[keep_args_alive]
-fn C.igTableLoadSettings(table &Table)
-
-@[inline]
-pub fn table_load_settings(table &Table) {
-	C.igTableLoadSettings(table)
-}
-
-@[keep_args_alive]
-fn C.igTableSaveSettings(table &Table)
-
-@[inline]
-pub fn table_save_settings(table &Table) {
-	C.igTableSaveSettings(table)
-}
-
-@[keep_args_alive]
-fn C.igTableResetSettings(table &Table)
-
-@[inline]
-pub fn table_reset_settings(table &Table) {
-	C.igTableResetSettings(table)
-}
-
-@[keep_args_alive]
-fn C.igTableGetBoundSettings(table &Table) &TableSettings
-
-@[inline]
-pub fn table_get_bound_settings(table &Table) &TableSettings {
-	return C.igTableGetBoundSettings(table)
-}
-
-@[keep_args_alive]
-fn C.igTableSettingsAddSettingsHandler()
-
-@[inline]
-pub fn table_settings_add_settings_handler() {
-	C.igTableSettingsAddSettingsHandler()
-}
-
-@[keep_args_alive]
-fn C.igTableSettingsCreate(id ID, columns_count i32) &TableSettings
-
-@[inline]
-pub fn table_settings_create(id ID, columns_count i32) &TableSettings {
-	return C.igTableSettingsCreate(id, columns_count)
-}
-
-@[keep_args_alive]
-fn C.igTableSettingsFindByID(id ID) &TableSettings
-
-@[inline]
-pub fn table_settings_find_by_id(id ID) &TableSettings {
-	return C.igTableSettingsFindByID(id)
 }
 
 @[keep_args_alive]
@@ -15979,8 +16339,7 @@ fn C.igTabItemLabelAndCloseButton(draw_list &ImDrawList, bb ImRect_c, flags TabI
 
 @[inline]
 pub fn tab_item_label_and_close_button(draw_list &ImDrawList, bb ImRect_c, flags TabItemFlags, frame_padding ImVec2_c, const_label &char, tab_id ID, close_button_id ID, is_contents_visible bool, out_just_closed &bool, out_text_clipped &bool) {
-	C.igTabItemLabelAndCloseButton(draw_list, bb, flags, frame_padding, const_label, tab_id,
-		close_button_id, is_contents_visible, out_just_closed, out_text_clipped)
+	C.igTabItemLabelAndCloseButton(draw_list, bb, flags, frame_padding, const_label, tab_id, close_button_id, is_contents_visible, out_just_closed, out_text_clipped)
 }
 
 @[keep_args_alive]
@@ -16004,8 +16363,7 @@ fn C.igRenderTextClipped(pos_min ImVec2_c, pos_max ImVec2_c, const_text &char, c
 
 @[inline]
 pub fn render_text_clipped(pos_min ImVec2_c, pos_max ImVec2_c, const_text &char, const_text_end &char, text_size_if_known &ImVec2_c, align ImVec2_c, clip_rect &ImRect) {
-	C.igRenderTextClipped(pos_min, pos_max, const_text, const_text_end, text_size_if_known, align,
-		clip_rect)
+	C.igRenderTextClipped(pos_min, pos_max, const_text, const_text_end, text_size_if_known, align, clip_rect)
 }
 
 @[keep_args_alive]
@@ -16013,8 +16371,7 @@ fn C.igRenderTextClippedEx(draw_list &ImDrawList, pos_min ImVec2_c, pos_max ImVe
 
 @[inline]
 pub fn render_text_clipped_ex(draw_list &ImDrawList, pos_min ImVec2_c, pos_max ImVec2_c, const_text &char, const_text_end &char, text_size_if_known &ImVec2_c, align ImVec2_c, clip_rect &ImRect) {
-	C.igRenderTextClippedEx(draw_list, pos_min, pos_max, const_text, const_text_end,
-		text_size_if_known, align, clip_rect)
+	C.igRenderTextClippedEx(draw_list, pos_min, pos_max, const_text, const_text_end, text_size_if_known, align, clip_rect)
 }
 
 @[keep_args_alive]
@@ -16022,8 +16379,7 @@ fn C.igRenderTextEllipsis(draw_list &ImDrawList, pos_min ImVec2_c, pos_max ImVec
 
 @[inline]
 pub fn render_text_ellipsis(draw_list &ImDrawList, pos_min ImVec2_c, pos_max ImVec2_c, ellipsis_max_x f32, const_text &char, const_text_end &char, text_size_if_known &ImVec2_c) {
-	C.igRenderTextEllipsis(draw_list, pos_min, pos_max, ellipsis_max_x, const_text, const_text_end,
-		text_size_if_known)
+	C.igRenderTextEllipsis(draw_list, pos_min, pos_max, ellipsis_max_x, const_text, const_text_end, text_size_if_known)
 }
 
 @[keep_args_alive]
@@ -16055,16 +16411,15 @@ fn C.igRenderColorRectWithAlphaCheckerboard(draw_list &ImDrawList, p_min ImVec2_
 
 @[inline]
 pub fn render_color_rect_with_alpha_checkerboard(draw_list &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, fill_col ImU32, grid_step f32, grid_off ImVec2_c, rounding f32, flags ImDrawFlags) {
-	C.igRenderColorRectWithAlphaCheckerboard(draw_list, p_min, p_max, fill_col, grid_step,
-		grid_off, rounding, flags)
+	C.igRenderColorRectWithAlphaCheckerboard(draw_list, p_min, p_max, fill_col, grid_step, grid_off, rounding, flags)
 }
 
 @[keep_args_alive]
-fn C.igRenderNavCursor(bb ImRect_c, id ID, flags NavRenderCursorFlags)
+fn C.igRenderNavCursor(bb ImRect_c, id ID, flags NavRenderCursorFlags, rounding f32)
 
 @[inline]
-pub fn render_nav_cursor(bb ImRect_c, id ID, flags NavRenderCursorFlags) {
-	C.igRenderNavCursor(bb, id, flags)
+pub fn render_nav_cursor(bb ImRect_c, id ID, flags NavRenderCursorFlags, rounding f32) {
+	C.igRenderNavCursor(bb, id, flags, rounding)
 }
 
 @[keep_args_alive]
@@ -16084,10 +16439,10 @@ pub fn render_mouse_cursor(pos ImVec2_c, scale f32, mouse_cursor MouseCursor, co
 }
 
 @[keep_args_alive]
-fn C.igRenderArrow(draw_list &ImDrawList, pos ImVec2_c, col ImU32, dir Dir, scale f32)
+fn C.igRenderArrow(draw_list &ImDrawList, pos ImVec2_c, col ImU32, dir i32, scale f32)
 
 @[inline]
-pub fn render_arrow(draw_list &ImDrawList, pos ImVec2_c, col ImU32, dir Dir, scale f32) {
+pub fn render_arrow(draw_list &ImDrawList, pos ImVec2_c, col ImU32, dir i32, scale f32) {
 	C.igRenderArrow(draw_list, pos, col, dir, scale)
 }
 
@@ -16108,10 +16463,10 @@ pub fn render_check_mark(draw_list &ImDrawList, pos ImVec2_c, col ImU32, sz f32)
 }
 
 @[keep_args_alive]
-fn C.igRenderArrowPointingAt(draw_list &ImDrawList, pos ImVec2_c, half_sz ImVec2_c, direction Dir, col ImU32)
+fn C.igRenderArrowPointingAt(draw_list &ImDrawList, pos ImVec2_c, half_sz ImVec2_c, direction i32, col ImU32)
 
 @[inline]
-pub fn render_arrow_pointing_at(draw_list &ImDrawList, pos ImVec2_c, half_sz ImVec2_c, direction Dir, col ImU32) {
+pub fn render_arrow_pointing_at(draw_list &ImDrawList, pos ImVec2_c, half_sz ImVec2_c, direction i32, col ImU32) {
 	C.igRenderArrowPointingAt(draw_list, pos, half_sz, direction, col)
 }
 
@@ -16164,10 +16519,10 @@ pub fn text_aligned(align_x f32, size_x f32, const_fmt &char) {
 }
 
 @[keep_args_alive]
-fn C.igTextAlignedV(align_x f32, size_x f32, const_fmt &char, args Va_list)
+fn C.igTextAlignedV(align_x f32, size_x f32, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn text_aligned_v(align_x f32, size_x f32, const_fmt &char, args Va_list) {
+pub fn text_aligned_v(align_x f32, size_x f32, const_fmt &char, args C.va_list) {
 	C.igTextAlignedV(align_x, size_x, const_fmt, args)
 }
 
@@ -16180,10 +16535,10 @@ pub fn button_ex(const_label &char, size_arg ImVec2_c, flags ButtonFlags) bool {
 }
 
 @[keep_args_alive]
-fn C.igArrowButtonEx(const_str_id &char, dir Dir, size_arg ImVec2_c, flags ButtonFlags) bool
+fn C.igArrowButtonEx(const_str_id &char, dir i32, size_arg ImVec2_c, flags ButtonFlags) bool
 
 @[inline]
-pub fn arrow_button_ex(const_str_id &char, dir Dir, size_arg ImVec2_c, flags ButtonFlags) bool {
+pub fn arrow_button_ex(const_str_id &char, dir i32, size_arg ImVec2_c, flags ButtonFlags) bool {
 	return C.igArrowButtonEx(const_str_id, dir, size_arg, flags)
 }
 
@@ -16244,34 +16599,34 @@ pub fn collapse_button(id ID, pos ImVec2_c, dock_node &DockNode) bool {
 }
 
 @[keep_args_alive]
-fn C.igScrollbar(axis Axis)
+fn C.igScrollbar(axis i32)
 
 @[inline]
-pub fn scrollbar(axis Axis) {
+pub fn scrollbar(axis i32) {
 	C.igScrollbar(axis)
 }
 
 @[keep_args_alive]
-fn C.igScrollbarEx(bb ImRect_c, id ID, axis Axis, p_scroll_v &ImS64, avail_v ImS64, contents_v ImS64, draw_rounding_flags ImDrawFlags) bool
+fn C.igScrollbarEx(bb ImRect_c, id ID, axis i32, p_scroll_v &ImS64, avail_v ImS64, contents_v ImS64, draw_rounding_flags ImDrawFlags) bool
 
 @[inline]
-pub fn scrollbar_ex(bb ImRect_c, id ID, axis Axis, p_scroll_v &ImS64, avail_v ImS64, contents_v ImS64, draw_rounding_flags ImDrawFlags) bool {
+pub fn scrollbar_ex(bb ImRect_c, id ID, axis i32, p_scroll_v &ImS64, avail_v ImS64, contents_v ImS64, draw_rounding_flags ImDrawFlags) bool {
 	return C.igScrollbarEx(bb, id, axis, p_scroll_v, avail_v, contents_v, draw_rounding_flags)
 }
 
 @[keep_args_alive]
-fn C.igGetWindowScrollbarRect(window &Window, axis Axis) ImRect_c
+fn C.igGetWindowScrollbarRect(window &Window, axis i32) ImRect_c
 
 @[inline]
-pub fn get_window_scrollbar_rect(window &Window, axis Axis) ImRect_c {
+pub fn get_window_scrollbar_rect(window &Window, axis i32) ImRect_c {
 	return C.igGetWindowScrollbarRect(window, axis)
 }
 
 @[keep_args_alive]
-fn C.igGetWindowScrollbarID(window &Window, axis Axis) ID
+fn C.igGetWindowScrollbarID(window &Window, axis i32) ID
 
 @[inline]
-pub fn get_window_scrollbar_id(window &Window, axis Axis) ID {
+pub fn get_window_scrollbar_id(window &Window, axis i32) ID {
 	return C.igGetWindowScrollbarID(window, axis)
 }
 
@@ -16284,18 +16639,18 @@ pub fn get_window_resize_corner_id(window &Window, n i32) ID {
 }
 
 @[keep_args_alive]
-fn C.igGetWindowResizeBorderID(window &Window, dir Dir) ID
+fn C.igGetWindowResizeBorderID(window &Window, dir i32) ID
 
 @[inline]
-pub fn get_window_resize_border_id(window &Window, dir Dir) ID {
+pub fn get_window_resize_border_id(window &Window, dir i32) ID {
 	return C.igGetWindowResizeBorderID(window, dir)
 }
 
 @[keep_args_alive]
-fn C.igExtendHitBoxWhenNearViewportEdge(window &Window, bb &ImRect, threshold f32, axis Axis)
+fn C.igExtendHitBoxWhenNearViewportEdge(window &Window, bb &ImRect, threshold f32, axis i32)
 
 @[inline]
-pub fn extend_hit_box_when_near_viewport_edge(window &Window, bb &ImRect, threshold f32, axis Axis) {
+pub fn extend_hit_box_when_near_viewport_edge(window &Window, bb &ImRect, threshold f32, axis i32) {
 	C.igExtendHitBoxWhenNearViewportEdge(window, bb, threshold, axis)
 }
 
@@ -16324,12 +16679,11 @@ pub fn slider_behavior(bb ImRect_c, id ID, data_type DataType, p_v voidptr, p_mi
 }
 
 @[keep_args_alive]
-fn C.igSplitterBehavior(bb ImRect_c, id ID, axis Axis, size1 &f32, size2 &f32, min_size1 f32, min_size2 f32, hover_extend f32, hover_visibility_delay f32, bg_col ImU32) bool
+fn C.igSplitterBehavior(bb ImRect_c, id ID, axis i32, size1 &f32, size2 &f32, min_size1 f32, min_size2 f32, hover_extend f32, hover_visibility_delay f32, bg_col ImU32) bool
 
 @[inline]
-pub fn splitter_behavior(bb ImRect_c, id ID, axis Axis, size1 &f32, size2 &f32, min_size1 f32, min_size2 f32, hover_extend f32, hover_visibility_delay f32, bg_col ImU32) bool {
-	return C.igSplitterBehavior(bb, id, axis, size1, size2, min_size1, min_size2, hover_extend,
-		hover_visibility_delay, bg_col)
+pub fn splitter_behavior(bb ImRect_c, id ID, axis i32, size1 &f32, size2 &f32, min_size1 f32, min_size2 f32, hover_extend f32, hover_visibility_delay f32, bg_col ImU32) bool {
+	return C.igSplitterBehavior(bb, id, axis, size1, size2, min_size1, min_size2, hover_extend, hover_visibility_delay, bg_col)
 }
 
 @[keep_args_alive]
@@ -16465,8 +16819,7 @@ fn C.igTempInputScalar(bb ImRect_c, id ID, const_label &char, data_type DataType
 
 @[inline]
 pub fn temp_input_scalar(bb ImRect_c, id ID, const_label &char, data_type DataType, p_data voidptr, format &char, p_clamp_min voidptr, p_clamp_max voidptr) bool {
-	return C.igTempInputScalar(bb, id, const_label, data_type, p_data, format, p_clamp_min,
-		p_clamp_max)
+	return C.igTempInputScalar(bb, id, const_label, data_type, p_data, format, p_clamp_min, p_clamp_max)
 }
 
 @[keep_args_alive]
@@ -16534,12 +16887,11 @@ pub fn set_next_item_color_marker(col ImU32) {
 }
 
 @[keep_args_alive]
-fn C.igPlotEx(plot_type PlotType, const_label &char, values_getter fn (voidptr, i32) f32, data voidptr, values_count i32, values_offset i32, overlay_text &char, scale_min f32, scale_max f32, size_arg ImVec2_c) i32
+fn C.igPlotEx(plot_type i32, const_label &char, values_getter fn (voidptr, i32) f32, data voidptr, values_count i32, values_offset i32, overlay_text &char, scale_min f32, scale_max f32, size_arg ImVec2_c) i32
 
 @[inline]
-pub fn plot_ex(plot_type PlotType, const_label &char, values_getter fn (voidptr, i32) f32, data voidptr, values_count i32, values_offset i32, overlay_text &char, scale_min f32, scale_max f32, size_arg ImVec2_c) i32 {
-	return C.igPlotEx(plot_type, const_label, values_getter, data, values_count, values_offset,
-		overlay_text, scale_min, scale_max, size_arg)
+pub fn plot_ex(plot_type i32, const_label &char, values_getter fn (voidptr, i32) f32, data voidptr, values_count i32, values_offset i32, overlay_text &char, scale_min f32, scale_max f32, size_arg ImVec2_c) i32 {
+	return C.igPlotEx(plot_type, const_label, values_getter, data, values_count, values_offset, overlay_text, scale_min, scale_max, size_arg)
 }
 
 @[keep_args_alive]
@@ -16547,8 +16899,7 @@ fn C.igShadeVertsLinearColorGradientKeepAlpha(draw_list &ImDrawList, vert_start_
 
 @[inline]
 pub fn shade_verts_linear_color_gradient_keep_alpha(draw_list &ImDrawList, vert_start_idx i32, vert_end_idx i32, gradient_p0 ImVec2_c, gradient_p1 ImVec2_c, col0 ImU32, col1 ImU32) {
-	C.igShadeVertsLinearColorGradientKeepAlpha(draw_list, vert_start_idx, vert_end_idx,
-		gradient_p0, gradient_p1, col0, col1)
+	C.igShadeVertsLinearColorGradientKeepAlpha(draw_list, vert_start_idx, vert_end_idx, gradient_p0, gradient_p1, col0, col1)
 }
 
 @[keep_args_alive]
@@ -16564,8 +16915,7 @@ fn C.igShadeVertsTransformPos(draw_list &ImDrawList, vert_start_idx i32, vert_en
 
 @[inline]
 pub fn shade_verts_transform_pos(draw_list &ImDrawList, vert_start_idx i32, vert_end_idx i32, pivot_in ImVec2_c, cos_a f32, sin_a f32, pivot_out ImVec2_c) {
-	C.igShadeVertsTransformPos(draw_list, vert_start_idx, vert_end_idx, pivot_in, cos_a, sin_a,
-		pivot_out)
+	C.igShadeVertsTransformPos(draw_list, vert_start_idx, vert_end_idx, pivot_in, cos_a, sin_a, pivot_out)
 }
 
 @[keep_args_alive]
@@ -16764,7 +17114,7 @@ pub fn show_font_atlas(atlas &ImFontAtlas) {
 fn C.igDebugTextureIDToU64(tex_id ImTextureID) ImU64
 
 @[inline]
-pub fn debug_texture_idt_o_u64(tex_id ImTextureID) ImU64 {
+pub fn debug_texture_id_to_u64(tex_id ImTextureID) ImU64 {
 	return C.igDebugTextureIDToU64(tex_id)
 }
 
@@ -16805,8 +17155,7 @@ fn C.igDebugNodeDrawCmdShowMeshAndBoundingBox(out_draw_list &ImDrawList, draw_li
 
 @[inline]
 pub fn debug_node_draw_cmd_show_mesh_and_bounding_box(out_draw_list &ImDrawList, draw_list &ImDrawList, draw_cmd &ImDrawCmd, show_mesh bool, show_aabb bool) {
-	C.igDebugNodeDrawCmdShowMeshAndBoundingBox(out_draw_list, draw_list, draw_cmd, show_mesh,
-		show_aabb)
+	C.igDebugNodeDrawCmdShowMeshAndBoundingBox(out_draw_list, draw_list, draw_cmd, show_mesh, show_aabb)
 }
 
 @[keep_args_alive]
@@ -16866,11 +17215,11 @@ pub fn debug_node_table(table &Table) {
 }
 
 @[keep_args_alive]
-fn C.igDebugNodeTableSettings(settings &TableSettings)
+fn C.igDebugNodeTableSettings(settings &TableSettings, table &Table)
 
 @[inline]
-pub fn debug_node_table_settings(settings &TableSettings) {
-	C.igDebugNodeTableSettings(settings)
+pub fn debug_node_table_settings(settings &TableSettings, table &Table) {
+	C.igDebugNodeTableSettings(settings, table)
 }
 
 @[keep_args_alive]
@@ -17290,12 +17639,11 @@ pub fn im_font_atlas_baked_discard_font_glyph(atlas &ImFontAtlas, font &ImFont, 
 }
 
 @[keep_args_alive]
-fn C.igImFontAtlasBakedSetFontGlyphBitmap(atlas &ImFontAtlas, baked &ImFontBaked, src &ImFontConfig, glyph &ImFontGlyph, r &ImTextureRect, src_pixels &u8, src_fmt ImTextureFormat, src_pitch i32)
+fn C.igImFontAtlasBakedSetFontGlyphBitmap(atlas &ImFontAtlas, baked &ImFontBaked, src &ImFontConfig, glyph &ImFontGlyph, r &ImTextureRect, src_pixels &u8, src_fmt i32, src_pitch i32)
 
 @[inline]
-pub fn im_font_atlas_baked_set_font_glyph_bitmap(atlas &ImFontAtlas, baked &ImFontBaked, src &ImFontConfig, glyph &ImFontGlyph, r &ImTextureRect, src_pixels &u8, src_fmt ImTextureFormat, src_pitch i32) {
-	C.igImFontAtlasBakedSetFontGlyphBitmap(atlas, baked, src, glyph, r, src_pixels, src_fmt,
-		src_pitch)
+pub fn im_font_atlas_baked_set_font_glyph_bitmap(atlas &ImFontAtlas, baked &ImFontBaked, src &ImFontConfig, glyph &ImFontGlyph, r &ImTextureRect, src_pixels &u8, src_fmt i32, src_pitch i32) {
+	C.igImFontAtlasBakedSetFontGlyphBitmap(atlas, baked, src, glyph, r, src_pixels, src_fmt, src_pitch)
 }
 
 @[keep_args_alive]
@@ -17379,12 +17727,11 @@ pub fn im_font_atlas_update_draw_lists_shared_data(atlas &ImFontAtlas) {
 }
 
 @[keep_args_alive]
-fn C.igImFontAtlasTextureBlockConvert(src_pixels &u8, src_fmt ImTextureFormat, src_pitch i32, dst_pixels &u8, dst_fmt ImTextureFormat, dst_pitch i32, w i32, h i32)
+fn C.igImFontAtlasTextureBlockConvert(src_pixels &u8, src_fmt i32, src_pitch i32, dst_pixels &u8, dst_fmt i32, dst_pitch i32, w i32, h i32)
 
 @[inline]
-pub fn im_font_atlas_texture_block_convert(src_pixels &u8, src_fmt ImTextureFormat, src_pitch i32, dst_pixels &u8, dst_fmt ImTextureFormat, dst_pitch i32, w i32, h i32) {
-	C.igImFontAtlasTextureBlockConvert(src_pixels, src_fmt, src_pitch, dst_pixels, dst_fmt,
-		dst_pitch, w, h)
+pub fn im_font_atlas_texture_block_convert(src_pixels &u8, src_fmt i32, src_pitch i32, dst_pixels &u8, dst_fmt i32, dst_pitch i32, w i32, h i32) {
+	C.igImFontAtlasTextureBlockConvert(src_pixels, src_fmt, src_pitch, dst_pixels, dst_fmt, dst_pitch, w, h)
 }
 
 @[keep_args_alive]
@@ -17428,26 +17775,42 @@ pub fn im_font_atlas_texture_block_queue_upload(atlas &ImFontAtlas, tex &ImTextu
 }
 
 @[keep_args_alive]
-fn C.igImTextureDataGetFormatBytesPerPixel(format ImTextureFormat) i32
+fn C.igImTextureDataUpdateNewFrame(tex &ImTextureData) bool
 
 @[inline]
-pub fn im_texture_data_get_format_bytes_per_pixel(format ImTextureFormat) i32 {
+pub fn im_texture_data_update_new_frame(tex &ImTextureData) bool {
+	return C.igImTextureDataUpdateNewFrame(tex)
+}
+
+@[keep_args_alive]
+fn C.igImTextureDataQueueUpload(tex &ImTextureData, x i32, y i32, w i32, h i32)
+
+@[inline]
+pub fn im_texture_data_queue_upload(tex &ImTextureData, x i32, y i32, w i32, h i32) {
+	C.igImTextureDataQueueUpload(tex, x, y, w, h)
+}
+
+@[keep_args_alive]
+fn C.igImTextureDataGetFormatBytesPerPixel(format i32) i32
+
+@[inline]
+pub fn im_texture_data_get_format_bytes_per_pixel(format i32) i32 {
 	return C.igImTextureDataGetFormatBytesPerPixel(format)
 }
 
 @[keep_args_alive]
-fn C.igImTextureDataGetStatusName(status ImTextureStatus) &char
+fn C.igImTextureDataGetStatusName(status i32) &char
 
 @[inline]
-pub fn im_texture_data_get_status_name(status ImTextureStatus) &char {
+pub fn im_texture_data_get_status_name(status i32) &char {
 	return C.igImTextureDataGetStatusName(status)
 }
 
 @[keep_args_alive]
-fn C.igImTextureDataGetFormatName(format ImTextureFormat) &char
+fn C.igImTextureDataGetFormatName(format i32) &char
 
 @[inline]
-pub fn im_texture_data_get_format_name(format ImTextureFormat) &char {
+pub fn im_texture_data_get_format_name(format i32) &char {
 	return C.igImTextureDataGetFormatName(format)
 }
 
@@ -17464,8 +17827,7 @@ fn C.igImFontAtlasGetMouseCursorTexData(atlas &ImFontAtlas, cursor_type MouseCur
 
 @[inline]
 pub fn im_font_atlas_get_mouse_cursor_tex_data(atlas &ImFontAtlas, cursor_type MouseCursor, out_offset &ImVec2_c, out_size &ImVec2_c, out_uv_border &ImVec2, out_uv_fill &ImVec2) bool {
-	return C.igImFontAtlasGetMouseCursorTexData(atlas, cursor_type, out_offset, out_size,
-		out_uv_border, out_uv_fill)
+	return C.igImFontAtlasGetMouseCursorTexData(atlas, cursor_type, out_offset, out_size, out_uv_border, out_uv_fill)
 }
 
 /////////////////////////hand written functions

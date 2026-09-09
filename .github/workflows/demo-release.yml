@@ -2,7 +2,7 @@ name: Prebuilt demo
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master, standard]
     paths:
       - .github/workflows/demo-release.yml
       - packaging/demo/**
@@ -12,13 +12,18 @@ on:
       - .github/scripts/setup-vulkan-ci.sh
       - build_vimgui.sh
       - build_vimgui.vsh
+      - generate_v.sh
+      - cleanup_imgui_implot.perl
+      - scripts/update_upstream.sh
+      - scripts/check_upstream_variant.sh
+      - UPSTREAM_VARIANT
       - CMakeLists.txt
       - imgui.v
       - implot/**
       - impl_glfw/**
       - impl_vulkan/**
   push:
-    branches: [master]
+    branches: [master, standard]
   workflow_dispatch:
 
 permissions:
@@ -67,6 +72,9 @@ jobs:
           echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
+      - name: Verify generated upstream variant
+        working-directory: source/modules/antono2/imgui
+        run: ./scripts/check_upstream_variant.sh
       - name: Build native ImGui library
         working-directory: source/modules/antono2/imgui
         run: |

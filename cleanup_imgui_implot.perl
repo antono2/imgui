@@ -85,6 +85,10 @@ sub clean_one {
       while ($i < $#lines && $lines[$i+1] =~ /^\s*\@\[[^\]]+\]\s*$/) { $i++; push @attrs, $lines[$i]; }
       if ($i < $#lines && $lines[$i+1] =~ /^\s*(?:pub\s+)?fn\s+/) {
         my $decl = $lines[++$i];
+        # cimplot.h includes the complete cimgui API. Its ig*/ImGui* symbols
+        # are already declared by the imported imgui module and must not be
+        # emitted a second time with independently translated signatures.
+        next if $kind eq 'implot' && $csym =~ /^(?:ig|ImGui)/;
         if (my @fn = parse_fn($decl)) { push @out, emit_function($kind, $csym, @fn, \%const_params); }
       }
       next;
@@ -94,6 +98,7 @@ sub clean_one {
     if ($line =~ /^\s*(?:pub\s+)?fn\s+/) {
       if (my @fn = parse_fn($line)) {
         my ($vname) = @fn;
+        next if $kind eq 'implot' && $vname =~ /^im_gui_/;
         my $csym = infer_c_symbol($kind, $vname);
         push @out, emit_function($kind, $csym, @fn, \%const_params);
       }
@@ -112,13 +117,21 @@ sub clean_one {
     }
 
     # Struct block.
-    if ($line =~ /^\s*(?:pub\s+)?struct\s+((?:C\.)?[A-Za-z_]\w*)\s*\{\s*$/) {
-      my $orig = $1;
+    if ($line =~ /^\s*(?:pub\s+)?struct\s+((?:(?:C|imgui)\.)?[A-Za-z_]\w*)\s*\{\s*(\})?\s*$/) {
+      my ($orig, $inline_closed) = ($1, $2);
       my @body;
-      while (++$i <= $#lines) { last if $lines[$i] =~ /^\s*}\s*$/; push @body, $lines[$i]; }
+      if (!defined $inline_closed) {
+        while (++$i <= $#lines) { last if $lines[$i] =~ /^\s*}\s*$/; push @body, $lines[$i]; }
+      }
+      # cimplot includes cimgui.h, and current c2v emits empty declarations
+      # such as `struct ImGuiTextFilter {}` for types owned by the imported
+      # ImGui module. They are references, not structs that ImPlot may declare.
+      next if $kind eq 'implot' && $orig =~ /^(?:imgui\.|ImGui)/;
       my $clean = clean_type_name($kind, $orig);
       my $c_name = $orig;
       $c_name =~ s/^C\.//;
+      $c_name = 'stbrp_node' if $c_name eq 'Stbrp_node';
+      $c_name = 'stbrp_context_opaque' if $c_name eq 'Stbrp_context_opaque';
       if ($kind eq 'implot' && $imported_c_struct{$c_name}) {
         my $alias = $imported_c_alias{$c_name};
         if (defined $alias && !$seen_type{$clean}++) {
@@ -213,6 +226,15 @@ sub skip_line {
 sub parse_version {
   my ($src,$hdr,$kind)=@_;
   my ($v,$n)=('', '');
+  if ($kind eq 'implot') {
+    for my $file (qw(cimplot/implot/implot.h include/implot/implot.h)) {
+      next unless -e $file;
+      my $version_header = slurp($file);
+      if ($version_header =~ /#define\s+IMPLOT_VERSION\s+"([^"]+)"/) { $v=$1; }
+      if ($version_header =~ /#define\s+IMPLOT_VERSION_NUM\s+(\d+)/) { $n=$1; }
+      return ($v,$n) if $v ne '';
+    }
+  }
   if ($src =~ /file version\s+"([^"]+)"\s+(\d+)/) { ($v,$n)=($1,$2); }
   my $m = $CFG{$kind}{version_macro};
   if (!$v && $hdr =~ /#define\s+${m}_VERSION\s+"([^"]+)"/) { $v=$1; }
@@ -261,11 +283,11 @@ Covered cases and examples:
    Vector fields remain lowercase x/y/z/w for V literals.
 5. Remove self-module prefixes: imgui.v must not refer to imgui.Type; implot.v
    must not refer to implot.Type, because each file is already inside that module.
-6. STB rectpack names are intentionally preserved from C when c2v produces
-   aliases like:
+6. STB rectpack names are intentionally preserved from C when c2v title-cases
+   lower-case C identifiers in aliases like:
      example: `pub type Stbrp_node_im = Stbrp_node`
-   Normalize the RHS to C.stbrp_node and emit an opaque C.stbrp_node typedef
-   generically through C-backed alias handling.
+   Normalize those references to C.stbrp_node/C.stbrp_context_opaque and emit
+   their C-backed declarations with the identifiers used by the headers.
 7. Enum aliases are handled dynamically, never by member-name lists. V enums
    reject duplicate integer values, while C/C++ enums often define aliases:
      any_popup = 1 << 10 | 1 << 11
@@ -541,6 +563,8 @@ sub special_vec_csym {
 sub emit_struct {
   my ($kind, $orig_name, $clean_name, $body_lines)=@_;
   $orig_name =~ s/^C\.//;
+  $orig_name = 'stbrp_node' if $orig_name eq 'Stbrp_node';
+  $orig_name = 'stbrp_context_opaque' if $orig_name eq 'Stbrp_context_opaque';
   return '' if $clean_name eq '' || $clean_name =~ /\./;
   my @fields;
   for my $l (@$body_lines) {
@@ -707,6 +731,8 @@ sub clean_type_expr {
   $s =~ s/\bmain\.//g;
   $s =~ s/\bMain\.//g;
   $s =~ s/\bC\.int\(([^)]+)\)/$1/g;
+  $s =~ s/\bC\.Stbrp_node\b/C.stbrp_node/g;
+  $s =~ s/\bC\.Stbrp_context_opaque\b/C.stbrp_context_opaque/g;
   $s =~ s/\bi8\b/char/g if $s =~ /\&\s*i8\b/;
   if ($kind eq 'imgui') {
     $s =~ s/\bimgui\.//g;
@@ -753,6 +779,7 @@ sub normalize_alias_rhs {
     # lower-case stb_rect_pack.h: typedef struct stbrp_node stbrp_node;
     # Example broken V: pub type Stbrp_node_im = Stbrp_node
     $rhs = 'C.stbrp_node' if $rhs eq 'Stbrp_node';
+    $rhs = 'C.stbrp_context_opaque' if $rhs eq 'Stbrp_context_opaque';
   }
   return $rhs;
 }
@@ -860,6 +887,16 @@ sub final_sanitize {
   $s =~ s/\bunsigned\s+__int64\s+ImU64\b/u64/g;
   $s =~ s/\bunsigned\s+long\s+long\s+ImU64\b/u64/g;
   $s =~ s/\bunsigned\s+long\s+ImU64\b/u64/g;
+
+  # Prefer the generated public typedef declaration when c2v also leaves an
+  # empty non-public declaration of the same C struct in the translated file.
+  my %public_c_struct;
+  while ($s =~ /^\s*pub\s+struct\s+C\.([A-Za-z_]\w*)\b/gm) {
+    $public_c_struct{$1}=1;
+  }
+  for my $name (keys %public_c_struct) {
+    $s =~ s/^\s*struct\s+C\.\Q$name\E\s*\{\s*\}\s*\n//mg;
+  }
 
   for my $base (qw(ImVec2 ImVec2i ImVec4 ImColor ImRect)) {
     if ($s =~ /\b(?:pub\s+type\s+${base}_c\s*=\s*C\.${base}_c|pub\s+struct\s+C\.${base}_c\b)/) {

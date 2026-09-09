@@ -30,8 +30,20 @@ CIMGUI_API void ImGui_ImplGlfw_WindowFocusCallback(GLFWwindow* window,int focuse
 
 #endif
 #ifdef CIMGUI_USE_OPENGL3
+#ifdef CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+
+typedef struct ImGui_ImplOpenGL3_RenderState ImGui_ImplOpenGL3_RenderState;
+struct ImGui_ImplOpenGL3_RenderState
+{
+    bool UseBindSampler;
+    bool UseTexParameterFilter;
+    unsigned int CurrentSampler;
+    unsigned int CurrentTexParameterFilter;
+};
+#endif //CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 CIMGUI_API bool ImGui_ImplOpenGL3_CreateDeviceObjects(void);
 CIMGUI_API void ImGui_ImplOpenGL3_DestroyDeviceObjects(void);
+CIMGUI_API ImGui_ImplOpenGL3_RenderState* ImGui_ImplOpenGL3_GetRenderState(void);
 CIMGUI_API bool ImGui_ImplOpenGL3_Init(const char* glsl_version);
 CIMGUI_API void ImGui_ImplOpenGL3_NewFrame(void);
 CIMGUI_API void ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data);
@@ -197,6 +209,8 @@ typedef ImVector<ImGui_ImplVulkanH_Frame> ImVector_ImGui_ImplVulkanH_Frame;
 typedef ImVector<ImGui_ImplVulkanH_FrameSemaphores> ImVector_ImGui_ImplVulkanH_FrameSemaphores;
 typedef ImVector<VkDynamicState> ImVector_VkDynamicState;
 #endif //CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#define IMGUI_IMPL_VULKAN_MINIMUM_SAMPLED_IMAGE_POOL_SIZE (8)
+#define IMGUI_IMPL_VULKAN_MINIMUM_SAMPLER_POOL_SIZE (2)
 CIMGUI_API void ImGui_ImplVulkanH_CreateOrResizeWindow(VkInstance instance,VkPhysicalDevice physical_device,VkDevice device,ImGui_ImplVulkanH_Window* wd,uint32_t queue_family,const VkAllocationCallbacks* allocator,int w,int h,uint32_t min_image_count,VkImageUsageFlags image_usage);
 CIMGUI_API void ImGui_ImplVulkanH_DestroyWindow(VkInstance instance,VkDevice device,ImGui_ImplVulkanH_Window* wd,const VkAllocationCallbacks* allocator);
 CIMGUI_API int ImGui_ImplVulkanH_GetMinImageCountFromPresentMode(VkPresentModeKHR present_mode);
@@ -206,7 +220,7 @@ CIMGUI_API VkPresentModeKHR ImGui_ImplVulkanH_SelectPresentMode(VkPhysicalDevice
 CIMGUI_API uint32_t ImGui_ImplVulkanH_SelectQueueFamilyIndex(VkPhysicalDevice physical_device);
 CIMGUI_API VkSurfaceFormatKHR ImGui_ImplVulkanH_SelectSurfaceFormat(VkPhysicalDevice physical_device,VkSurfaceKHR surface,const VkFormat* request_formats,int request_formats_count,VkColorSpaceKHR request_color_space);
 CIMGUI_API ImGui_ImplVulkanH_Window* ImGui_ImplVulkanH_Window_ImGui_ImplVulkanH_Window(void);
-CIMGUI_API VkDescriptorSet ImGui_ImplVulkan_AddTexture(VkSampler sampler,VkImageView image_view,VkImageLayout image_layout);
+CIMGUI_API VkDescriptorSet ImGui_ImplVulkan_AddTexture(VkImageView image_view,VkImageLayout image_layout);
 CIMGUI_API void ImGui_ImplVulkan_CreateMainPipeline(const ImGui_ImplVulkan_PipelineInfo* info);
 CIMGUI_API bool ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info);
 CIMGUI_API bool ImGui_ImplVulkan_LoadFunctions(uint32_t api_version,PFN_vkVoidFunction(*loader_func)(const char* function_name,void* user_data),void* user_data);
