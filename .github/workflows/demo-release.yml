@@ -9,6 +9,7 @@ on:
       - scripts/run_demo.sh
       - scripts/run_demo_windows.ps1
       - scripts/check_windows.ps1
+      - .github/scripts/setup-vulkan-ci.sh
       - build_vimgui.sh
       - build_vimgui.vsh
       - CMakeLists.txt
@@ -115,13 +116,18 @@ jobs:
       - uses: prantlf/setup-v-action@v4
         with:
           version: latest
-      - uses: ilammy/msvc-dev-cmd@v1
-      - uses: NcStudios/VulkanCI@v1.2
-        with:
-          sdkVersion: 1.4.309.0
+      - name: Install Vulkan SDK and SwiftShader test artifacts
+        shell: bash
+        run: bash .github/scripts/setup-vulkan-ci.sh 1.4.309.0 v1.2
       - name: Exercise Windows demo setup and native build
         shell: pwsh
-        run: ./scripts/run_demo_windows.ps1 -NativeOnly
+        run: |
+          $VsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $InstallPath = & $VsWhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $InstallPath) { throw 'Visual Studio C++ tools were not found' }
+          Import-Module (Join-Path $InstallPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $InstallPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          ./scripts/run_demo_windows.ps1 -NativeOnly
       - name: Verify native outputs
         shell: pwsh
         run: |
