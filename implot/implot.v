@@ -70,15 +70,6 @@ SOFTWARE.
 pub const version = '1.1 WIP'
 pub const version_num = 10100
 
-@[typedef]
-pub struct C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN {}
-
-@[typedef]
-pub struct C.STB_TexteditState {}
-
-@[typedef]
-pub struct C.stbrp_node {}
-
 pub type Va_list = imgui.Va_list
 
 @[typedef]
@@ -99,32 +90,21 @@ pub type Spec_c = C.ImPlotSpec_c
 @[typedef]
 pub struct C.ImPlotSpec_c {}
 
-pub type ImVec2_c = imgui.ImVec2_c
+pub type ImVec2_c = imgui.ImVec2
 
-// docking branch
 pub type ImColor = ImColor_c
 
 pub type ImRect = ImRect_c
 
 pub type ImTextureRef = ImTextureRef_c
 
-pub type ImVec2 = imgui.ImVec2_c
+pub type ImVec2 = imgui.ImVec2
 
 pub type ImVec2i = ImVec2i_c
 
 pub type ImVec4 = ImVec4_c
 
 pub type Stbrp_node = imgui.Stbrp_node_im
-
-
-pub type ImVector_const_charPtr = C.ImVector_const_charPtr
-@[typedef]
-pub struct C.ImVector_const_charPtr {
-pub mut:
-	Size i32
-	Capacity i32
-	Data &&u8
-}
 
 pub type ImGuiID = u32
 
@@ -179,8 +159,6 @@ pub type ImGuiColorEditFlags = i32
 pub type ImGuiConfigFlags = i32
 
 pub type ImGuiComboFlags = i32
-
-pub type ImGuiDockNodeFlags = i32
 
 pub type ImGuiDragDropFlags = i32
 
@@ -260,11 +238,9 @@ pub enum ImGuiWindowFlags_ {
  no_nav_inputs                      = 1 << 16
  no_nav_focus                       = 1 << 17
  unsaved_document                   = 1 << 18
- no_docking                         = 1 << 19
  no_nav                             = 1 << 16 | 1 << 17
  no_decoration                      = 1 << 0 | 1 << 1 | 1 << 3 | 1 << 5
  no_inputs                          = 1 << 9 | 1 << 16 | 1 << 17
- dock_node_host                     = 1 << 23
  child_window                       = 1 << 24
  tooltip                            = 1 << 25
  popup                              = 1 << 26
@@ -438,7 +414,6 @@ pub enum ImGuiFocusedFlags_ {
  root_window                        = 1 << 1
  any_window                         = 1 << 2
  no_popup_hierarchy                 = 1 << 3
- dock_hierarchy                     = 1 << 4
  root_and_child_windows             = 1 << 0 | 1 << 1
 }
 
@@ -449,7 +424,6 @@ pub enum ImGuiHoveredFlags_ {
  root_window                        = 1 << 1
  any_window                         = 1 << 2
  no_popup_hierarchy                 = 1 << 3
- dock_hierarchy                     = 1 << 4
  allow_when_blocked_by_popup        = 1 << 5
  allow_when_blocked_by_active_item  = 1 << 7
  allow_when_overlapped_by_item      = 1 << 8
@@ -465,18 +439,6 @@ pub enum ImGuiHoveredFlags_ {
  delay_short                        = 1 << 15
  delay_normal                       = 1 << 16
  no_shared_delay                    = 1 << 17
-}
-
-
-pub enum ImGuiDockNodeFlags_ {
- none                               = 0
- keep_alive_only                    = 1 << 0
- no_docking_over_central_node       = 1 << 2
- passthru_central_node              = 1 << 3
- no_docking_split                   = 1 << 4
- no_resize                          = 1 << 5
- auto_hide_tab_bar                  = 1 << 6
- no_undocking                       = 1 << 7
 }
 
 
@@ -723,8 +685,6 @@ pub enum ImGuiConfigFlags_ {
  no_mouse                           = 1 << 4
  no_mouse_cursor_change             = 1 << 5
  no_keyboard                        = 1 << 6
- docking_enable                     = 1 << 7
- viewports_enable                   = 1 << 10
  is_srgb                            = 1 << 20
  is_touch_screen                    = 1 << 21
 }
@@ -737,10 +697,6 @@ pub enum ImGuiBackendFlags_ {
  has_set_mouse_pos                  = 1 << 2
  renderer_has_vtx_offset            = 1 << 3
  renderer_has_textures              = 1 << 4
- renderer_has_viewports             = 1 << 10
- platform_has_viewports             = 1 << 11
- has_mouse_hovered_viewport         = 1 << 12
- has_parent_viewport                = 1 << 13
 }
 
 
@@ -787,8 +743,6 @@ pub enum ImGuiCol_ {
  tab_dimmed
  tab_dimmed_selected
  tab_dimmed_selected_overline
- docking_preview
- docking_empty_bg
  plot_lines
  plot_lines_hovered
  plot_histogram
@@ -857,7 +811,6 @@ pub enum ImGuiStyleVar_ {
  separator_text_border_size
  separator_text_align
  separator_text_padding
- docking_separator_size
  count
 }
 
@@ -1246,24 +1199,7 @@ pub enum ImGuiViewportFlags_ {
  is_platform_window                 = 1 << 0
  is_platform_monitor                = 1 << 1
  owned_by_app                       = 1 << 2
- no_decoration                      = 1 << 3
- no_task_bar_icon                   = 1 << 4
- no_focus_on_appearing              = 1 << 5
- no_focus_on_click                  = 1 << 6
- no_inputs                          = 1 << 7
- no_renderer_clear                  = 1 << 8
- no_auto_merge                      = 1 << 9
- top_most                           = 1 << 10
- can_host_other_windows             = 1 << 11
- is_minimized                       = 1 << 12
- is_focused                         = 1 << 13
 }
-
-pub type ImVector_ImGuiPlatformMonitor = imgui.ImVector_PlatformMonitor
-
-pub type ImVector_ImGuiViewportPtr = imgui.ImVector_ViewportPtr
-
-pub type ImGuiDataAuthority = u32
 
 pub type ImGuiLayoutType = i32
 
@@ -1385,7 +1321,7 @@ pub enum ImGuiItemStatusFlags_ {
 
 pub enum ImGuiHoveredFlagsPrivate_ {
  delay_mask_                        = 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
- allowed_mask_for_is_window_hovered = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 7 | 1 << 12 | 1 << 13
+ allowed_mask_for_is_window_hovered = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 7 | 1 << 12 | 1 << 13
  allowed_mask_for_is_item_hovered   = 1 << 5 | 1 << 7 | 1 << 8 | 1 << 9 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
 }
 
@@ -1534,9 +1470,6 @@ pub enum ImGuiNextWindowDataFlags_ {
  has_window_flags                   = 1 << 8
  has_child_flags                    = 1 << 9
  has_refresh_policy                 = 1 << 10
- has_viewport                       = 1 << 11
- has_dock                           = 1 << 12
- has_window_class                   = 1 << 13
 }
 
 
@@ -1567,7 +1500,6 @@ pub enum ImGuiInputEventType {
  mouse_pos
  mouse_wheel
  mouse_button
- mouse_viewport
  key
  text
  focus
@@ -1698,63 +1630,6 @@ pub enum ImGuiOldColumnFlags_ {
 pub type ImVector_ImGuiOldColumnData = imgui.ImVector_OldColumnData
 
 
-pub enum ImGuiDockNodeFlagsPrivate_ {
- dock_space                         = 1 << 10
- central_node                       = 1 << 11
- no_tab_bar                         = 1 << 12
- hidden_tab_bar                     = 1 << 13
- no_window_menu_button              = 1 << 14
- no_close_button                    = 1 << 15
- no_resize_x                        = 1 << 16
- no_resize_y                        = 1 << 17
- docked_windows_in_focus_route      = 1 << 18
- no_docking_split_other             = 1 << 19
- no_docking_over_me                 = 1 << 20
- no_docking_over_other              = 1 << 21
- no_docking_over_empty              = 1 << 22
- no_docking                         = 1 << 4 | 1 << 19 | 1 << 20 | 1 << 21 | 1 << 22
- shared_flags_inherit_mask_         = -1
- no_resize_flags_mask_              = 1 << 5 | 1 << 16 | 1 << 17
- local_flags_transfer_mask_         = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
- saved_flags_mask_                  = 1 << 5 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
-}
-
-
-pub enum ImGuiDataAuthority_ {
- auto
- dock_node
- window
-}
-
-
-pub enum ImGuiDockNodeState {
- unknown
- host_window_hidden_because_single_window
- host_window_hidden_because_windows_are_resizing
- host_window_visible
-}
-
-pub type ImVector_ImGuiWindowPtr = imgui.ImVector_WindowPtr
-
-
-pub enum ImGuiWindowDockStyleCol {
- text
- tab_hovered
- tab_focused
- tab_selected
- tab_selected_overline
- tab_dimmed
- tab_dimmed_selected
- tab_dimmed_selected_overline
- unsaved_marker
- count
-}
-
-pub type ImVector_ImGuiDockRequest = imgui.ImVector_DockRequest
-
-pub type ImVector_ImGuiDockNodeSettings = imgui.ImVector_DockNodeSettings
-
-
 pub enum ImGuiLocKey {
  version_str                        = 0
  table_size_one                     = 1
@@ -1768,10 +1643,7 @@ pub enum ImGuiLocKey {
  windowing_untitled                 = 9
  open_link_s                        = 10
  copy_link                          = 11
- docking_hide_tab_bar               = 12
- docking_hold_shift_to_dock         = 13
- docking_drag_to_undock_or_move_node = 14
- count                              = 15
+ count                              = 12
 }
 
 pub type ImGuiErrorCallback = fn (&imgui.Context, voidptr, &char)
@@ -1819,6 +1691,8 @@ pub type ImGuiDemoMarkerCallback = fn (&char, i32, &char)
 pub type ImVector_ImFontAtlasPtr = imgui.ImVector_ImFontAtlasPtr
 
 pub type ImVector_ImGuiInputEvent = imgui.ImVector_InputEvent
+
+pub type ImVector_ImGuiWindowPtr = imgui.ImVector_WindowPtr
 
 pub type ImVector_ImGuiWindowStackData = imgui.ImVector_WindowStackData
 
@@ -1889,7 +1763,6 @@ pub enum ImGuiTabItemFlagsPrivate_ {
  no_close_button                    = 1 << 20
  button                             = 1 << 21
  invisible                          = 1 << 22
- unsorted                           = 1 << 23
 }
 
 pub type ImVector_ImGuiTabItem = imgui.ImVector_TabItem
