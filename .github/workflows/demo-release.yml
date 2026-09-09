@@ -79,6 +79,16 @@ jobs:
       - name: Verify generated upstream variant
         working-directory: source/modules/antono2/imgui
         run: ./scripts/check_upstream_variant.sh
+      - name: Select package variant
+        id: variant
+        working-directory: source/modules/antono2/imgui
+        run: |
+          variant=$(tr -d '[:space:]' < UPSTREAM_VARIANT)
+          case "$variant" in
+            docking|standard) ;;
+            *) echo "Unsupported ImGui variant: $variant" >&2; exit 1 ;;
+          esac
+          echo "name=$variant" >> "$GITHUB_OUTPUT"
       - name: Build native ImGui library
         working-directory: source/modules/antono2/imgui
         run: |
@@ -89,7 +99,8 @@ jobs:
       - name: Package and verify
         run: |
           set -euo pipefail
-          package="$RUNNER_TEMP/v-imgui-demo-ubuntu24-amd64"
+          variant='${{ steps.variant.outputs.name }}'
+          package="$RUNNER_TEMP/v-imgui-demo-${variant}-ubuntu24-amd64"
           install -d "$package/lib"
           install -m 0755 "$RUNNER_TEMP/v_imgui_demo" "$package/v_imgui_demo"
           install -m 0755 source/modules/antono2/imgui/lib/libvimgui.so "$package/lib/libvimgui.so"
@@ -98,6 +109,7 @@ jobs:
           install -m 0755 /lib/x86_64-linux-gnu/libgcc_s.so.1 "$package/lib/libgcc_s.so.1"
           install -m 0755 source/modules/antono2/imgui/packaging/demo/ubuntu24/run.sh "$package/run.sh"
           install -m 0644 source/modules/antono2/imgui/packaging/demo/ubuntu24/README.txt "$package/README.txt"
+          install -m 0644 source/modules/antono2/imgui/UPSTREAM_VARIANT "$package/VARIANT.txt"
           strip --strip-unneeded "$package/v_imgui_demo" "$package/lib/libvimgui.so"
           patchelf --set-rpath '$ORIGIN/lib' "$package/v_imgui_demo"
           patchelf --set-rpath '$ORIGIN' "$package/lib/libvimgui.so"
@@ -108,13 +120,14 @@ jobs:
           for library in libvimgui.so libglfw.so.3 libstdc++.so.6 libgcc_s.so.1; do
             grep -F "$package/lib/$library" "$RUNNER_TEMP/ldd.txt"
           done
-          (cd "$RUNNER_TEMP" && zip -qr v-imgui-demo-ubuntu24-amd64.zip v-imgui-demo-ubuntu24-amd64)
-          unzip -t "$RUNNER_TEMP/v-imgui-demo-ubuntu24-amd64.zip" >/dev/null
-          sha256sum "$RUNNER_TEMP/v-imgui-demo-ubuntu24-amd64.zip"
+          archive="$(basename "$package").zip"
+          (cd "$RUNNER_TEMP" && zip -qr "$archive" "$(basename "$package")")
+          unzip -t "$RUNNER_TEMP/$archive" >/dev/null
+          sha256sum "$RUNNER_TEMP/$archive"
       - uses: actions/upload-artifact@v7
         with:
-          name: v-imgui-demo-ubuntu24-amd64
-          path: ${{ runner.temp }}/v-imgui-demo-ubuntu24-amd64.zip
+          name: v-imgui-demo-${{ steps.variant.outputs.name }}-ubuntu24-amd64
+          path: ${{ runner.temp }}/v-imgui-demo-${{ steps.variant.outputs.name }}-ubuntu24-amd64.zip
           retention-days: 7
           if-no-files-found: error
 
