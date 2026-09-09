@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 5673324866e9825e217dfd1927145250d60f9e84
+          ref: c2b5083d42f052cfe73952542e86e4163c64ce79
           path: source/demo
       - uses: actions/checkout@v7
         with:
