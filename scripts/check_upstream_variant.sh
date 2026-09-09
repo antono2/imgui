@@ -14,6 +14,14 @@ case "$variant" in
 		grep -q 'VIMGUI_DOCKING_INIT_BEGIN' "$repo_dir/impl_vulkan/imgui_impl_vulkan.c.v" || {
 			echo 'The docking Vulkan backend layout is not configured.' >&2
 			exit 1
+		}
+		grep -Fq "pub const upstream_variant = 'docking'" "$repo_dir/variant.v" || {
+			echo 'The public runtime variant marker does not say docking.' >&2
+			exit 1
+		}
+		grep -Fq 'ImGuiConfigFlags_DockingEnable' "$repo_dir/vimgui_variant.h" || {
+			echo 'The docking runtime helpers are not configured.' >&2
+			exit 1
 		} ;;
 	standard)
 		if grep -q '^//docking branch$' "$header"; then
@@ -22,6 +30,14 @@ case "$variant" in
 		fi
 		if grep -q 'VIMGUI_DOCKING_INIT_BEGIN' "$repo_dir/impl_vulkan/imgui_impl_vulkan.c.v"; then
 			echo 'The standard Vulkan backend still has docking-only ABI fields.' >&2
+			exit 1
+		fi
+		grep -Fq "pub const upstream_variant = 'standard'" "$repo_dir/variant.v" || {
+			echo 'The public runtime variant marker does not say standard.' >&2
+			exit 1
+		}
+		if grep -Fq 'ImGuiConfigFlags_DockingEnable' "$repo_dir/vimgui_variant.h"; then
+			echo 'The standard runtime helpers still reference docking symbols.' >&2
 			exit 1
 		fi ;;
 	*)

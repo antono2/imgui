@@ -20,6 +20,9 @@ on:
       - UPSTREAM_VARIANT
       - CMakeLists.txt
       - imgui.v
+      - variant.c.v
+      - variant.v
+      - vimgui_variant.h
       - implot/**
       - impl_glfw/**
       - impl_vulkan/**
