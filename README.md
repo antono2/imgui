@@ -104,12 +104,16 @@ prototype path with Volk's global dispatch table in the same application.
 ## Examples
 Using GLFW and Dear ImGui [antono2/v_imgui_examples](https://github.com/antono2/v_imgui_examples)
 
-For the first release, an archive containing the already compiled demo and its
-runtime libraries provides a low-friction validation path. Compiling the
-generated ImGui and ImPlot V bindings can currently require about 11 GiB of
-memory and therefore uses V's `-no-memory-limit` option. `scripts/run_demo.sh`
-remains the normal source/developer path; prebuilding the demo is not a
-requirement for every later release.
+Release archives containing the already compiled demo and its runtime libraries
+provide a low-friction validation path. The archive name identifies the
+upstream line: `v-imgui-demo-docking-ubuntu24-amd64.zip` supports docking and
+platform viewports, while `v-imgui-demo-standard-ubuntu24-amd64.zip` retains
+normal independent floating windows. Each archive also contains `VARIANT.txt`.
+
+Compiling the generated ImGui and ImPlot V bindings can currently require about
+11 GiB of memory and therefore uses V's `-no-memory-limit` option.
+`scripts/run_demo.sh` remains the normal source/developer path; prebuilding the
+demo is not a requirement for every later release.
 
 Release binaries should be published for the useful platform combinations
 (Ubuntu 24.04 x86_64 and Windows x64 initially). Native-library linkage and the
