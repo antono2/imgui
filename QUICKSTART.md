@@ -85,5 +85,9 @@ v run build_vimgui.vsh --linkage shared --glfw bundled --glfw-version 3.4
 
 ## Regenerating bindings
 
-Binding regeneration is maintainer-oriented and additionally requires LuaJIT.
-Run `./generate_v.sh` only when updating the generated ImGui or ImPlot API.
+Binding regeneration is maintainer-oriented. Run `./generate_v.sh` only when
+updating the generated ImGui or ImPlot API. It translates the generated API
+committed by the pinned upstream submodules; LuaJIT is required only with the
+advanced `--regenerate-c` option. Use `./scripts/update_upstream.sh docking` on
+the default branch or `./scripts/update_upstream.sh standard` on the standard
+variant branch to advance the corresponding upstream line.

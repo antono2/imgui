@@ -13,6 +13,22 @@ This is an automated process to generate `imgui.v` and `implot.v`
  - `v translate` C to V
  - `cleanup_imgui.perl` and `cleanup_implot.perl` to fix some errors
 
+## Upstream variants
+
+This repository supports both official Dear ImGui lines:
+
+- `master` is the default **docking** build, generated from cimgui's
+  `docking_inter` branch. It includes docking and multi-viewport support while
+  retaining the normal Dear ImGui API.
+- The `standard` branch is generated from cimgui's `master` branch for users
+  who want to track Dear ImGui's smaller standard line exactly.
+
+Both currently track Dear ImGui `1.92.9b`. The `b` is an upstream patch-level
+suffix shared by the release; it does not identify the docking variant. Check
+`UPSTREAM_VARIANT` in a checkout to see which line its generated bindings and
+native sources use. Do not mix a generated binding from one line with a native
+library built from the other.
+
 ## Dependencies
 `v install antono2.vulkan`<br>
 `v install antono2.glfw`
@@ -85,24 +101,31 @@ GLFW provider remain build-time choices for developers; they do not need to
 multiply the end-user demo downloads.
 
 ## Generate
-On `Ubuntu`
-```bash
-sudo apt install -y luajit
-~/.vmodules/antono2/imgui/generate_v.sh
-```
 
-Or
 ```bash
-# Install luajit for your OS
 # Go to the installed antono2/imgui module
-v generate.vsh
+./generate_v.sh
 ```
 
-`generate_v.sh` and `generate.vsh` regenerate both bindings and then build
-`libvimgui`. To only rebuild the native library after a system upgrade or on
-an older Linux distribution, run `v run build_vimgui.vsh`. The Bash
-`build_vimgui.sh` helper remains available as a bootstrap fallback on Unix-like
-machines where V is not yet in `PATH`.
+`generate_v.sh` regenerates both V bindings from the generated C API committed
+by the pinned cimgui/cimplot revisions, then builds `libvimgui`. It therefore
+does not require LuaJIT for a normal upstream refresh. Pass `--regenerate-c`
+only when intentionally rerunning the upstream Lua generators; that advanced
+mode requires LuaJIT. `v generate.vsh` is retained as a compatibility entry
+point and delegates to the same canonical script.
+
+Maintainers can update either line reproducibly with:
+
+```bash
+./scripts/update_upstream.sh docking
+# On the standard branch:
+./scripts/update_upstream.sh standard
+```
+
+To only rebuild the native library after a system upgrade or on an older Linux
+distribution, run `v run build_vimgui.vsh`. The Bash `build_vimgui.sh` helper
+remains available as a bootstrap fallback on Unix-like machines where V is not
+yet in `PATH`.
 
 ## Thanks
 Thank you [@ryoskzypu](https://github.com/ryoskzypu) - from  #regex on [libera.chat](https://libera.chat/) - for loving perl and helping people out.

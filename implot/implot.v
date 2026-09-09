@@ -25,11 +25,11 @@ Covered cases and examples:
    Vector fields remain lowercase x/y/z/w for V literals.
 5. Remove self-module prefixes: imgui.v must not refer to imgui.Type; implot.v
    must not refer to Type, because each file is already inside that module.
-6. STB rectpack names are intentionally preserved from C when c2v produces
-   aliases like:
+6. STB rectpack names are intentionally preserved from C when c2v title-cases
+   lower-case C identifiers in aliases like:
      example: `pub type Stbrp_node_im = Stbrp_node`
-   Normalize the RHS to C.stbrp_node and emit an opaque C.stbrp_node typedef
-   generically through C-backed alias handling.
+   Normalize those references to C.stbrp_node/C.stbrp_context_opaque and emit
+   their C-backed declarations with the identifiers used by the headers.
 7. Enum aliases are handled dynamically, never by member-name lists. V enums
    reject duplicate integer values, while C/C++ enums often define aliases:
      any_popup = 1 << 10 | 1 << 11
@@ -67,29 +67,64 @@ SOFTWARE.
 */
 
 
-pub const version = '1.92.7'
-pub const version_num = 19270
+pub const version = '1.1 WIP'
+pub const version_num = 10100
 
-pub type Axis = imgui.Axis
+@[typedef]
+pub struct C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN {}
 
-pub type ImRect = imgui.ImRect
+@[typedef]
+pub struct C.STB_TexteditState {}
 
-pub type Point = C.ImPlotPoint_c
-
-pub type Range = C.ImPlotRange_c
-
-pub type Rect = C.ImPlotRect_c
-
-pub type Spec = C.ImPlotSpec_c
-
-pub type Tick = C.ImPlotTick_c
-
-pub type Time = C.ImPlotTime_c
+@[typedef]
+pub struct C.stbrp_node {}
 
 pub type Va_list = imgui.Va_list
 
+@[typedef]
+pub struct C.DateTimeSpec_c {}
+
+@[typedef]
+pub struct C.Spec_c {}
+
+// External C type declarations (from headers)
+
+
+pub type DateTimeSpec_c = C.ImPlotDateTimeSpec_c
+@[typedef]
+pub struct C.ImPlotDateTimeSpec_c {}
+
+
+pub type Spec_c = C.ImPlotSpec_c
+@[typedef]
+pub struct C.ImPlotSpec_c {}
+
+pub type ImVec2_c = imgui.ImVec2_c
+
 // docking branch
-pub type ImVector_const_charPtr = imgui.ImVector_const_charPtr
+pub type ImColor = ImColor_c
+
+pub type ImRect = ImRect_c
+
+pub type ImTextureRef = ImTextureRef_c
+
+pub type ImVec2 = imgui.ImVec2_c
+
+pub type ImVec2i = ImVec2i_c
+
+pub type ImVec4 = ImVec4_c
+
+pub type Stbrp_node = imgui.Stbrp_node_im
+
+
+pub type ImVector_const_charPtr = C.ImVector_const_charPtr
+@[typedef]
+pub struct C.ImVector_const_charPtr {
+pub mut:
+	Size i32
+	Capacity i32
+	Data &&u8
+}
 
 pub type ImGuiID = u32
 
@@ -193,11 +228,9 @@ pub type ImWchar16 = u16
 
 pub type ImGuiSelectionUserData = i64
 
-pub type ImGuiMemAllocFunc = fn(usize, voidptr) voidptr
+pub type ImGuiMemAllocFunc = fn (usize, voidptr) voidptr
 
-pub type ImGuiMemFreeFunc = fn(voidptr, voidptr)
-
-pub type ImVec2_c = imgui.ImVec2_c
+pub type ImGuiMemFreeFunc = fn (voidptr, voidptr)
 
 pub type ImVec4_c = imgui.ImVec4_c
 
@@ -263,6 +296,9 @@ pub enum ImGuiItemFlags_ {
  auto_close_popups                  = 1 << 4
  allow_duplicate_id                 = 1 << 5
  disabled                           = 1 << 6
+ live_edit_on_input_text            = 1 << 7
+ live_edit_on_input_scalar          = 1 << 8
+ live_edit_on_input                 = 1 << 7 | 1 << 8
 }
 
 
@@ -728,6 +764,7 @@ pub enum ImGuiCol_ {
  scrollbar_grab_hovered
  scrollbar_grab_active
  check_mark
+ checkbox_selected_bg
  slider_grab
  slider_grab_active
  button
@@ -811,6 +848,9 @@ pub enum ImGuiStyleVar_ {
  table_angled_headers_text_align
  tree_lines_size
  tree_lines_rounding
+ menu_item_rounding
+ selectable_rounding
+ drag_drop_target_rounding
  button_text_align
  selectable_text_align
  separator_size
@@ -858,14 +898,15 @@ pub enum ImGuiColorEditFlags_ {
  float                              = 1 << 24
  picker_hue_bar                     = 1 << 25
  picker_hue_wheel                   = 1 << 26
- input_rgb                          = 1 << 27
- input_hsv                          = 1 << 28
- default_options_                   = 1 << 20 | 1 << 23 | 1 << 25 | 1 << 27
+ picker_no_rotate                   = 1 << 27
+ input_rgb                          = 1 << 28
+ input_hsv                          = 1 << 29
+ default_options_                   = 1 << 20 | 1 << 23 | 1 << 25 | 1 << 28
  alpha_mask_                        = 1 << 1 | 1 << 12 | 1 << 13 | 1 << 14
  display_mask_                      = 1 << 20 | 1 << 21 | 1 << 22
  data_type_mask_                    = 1 << 23 | 1 << 24
  picker_mask_                       = 1 << 25 | 1 << 26
- input_mask_                        = 1 << 27 | 1 << 28
+ input_mask_                        = 1 << 28 | 1 << 29
 }
 
 
@@ -1012,49 +1053,19 @@ pub enum ImGuiTableBgTarget_ {
  cell_bg                            = 3
 }
 
-pub type ImGuiTableSortSpecs = imgui.TableSortSpecs
-
-pub type ImGuiTableColumnSortSpecs = imgui.TableColumnSortSpecs
-
-pub type ImGuiStyle = imgui.Style
-
-pub type ImGuiKeyData = imgui.KeyData
-
 pub type ImVector_ImWchar = imgui.ImVector_ImWchar
-
-pub type ImGuiIO = imgui.IO
-
-pub type ImGuiInputTextCallbackData = imgui.InputTextCallbackData
-
-pub type ImGuiSizeCallbackData = imgui.SizeCallbackData
-
-pub type ImGuiWindowClass = imgui.WindowClass
-
-pub type ImGuiPayload = imgui.Payload
-
-pub type ImGuiOnceUponAFrame = imgui.OnceUponAFrame
-
-pub type ImGuiTextRange = imgui.TextRange
 
 pub type ImVector_ImGuiTextRange = imgui.ImVector_TextRange
 
 pub type ImVector_char = imgui.ImVector_char
 
-pub type ImGuiTextBuffer = imgui.TextBuffer
-
-pub type ImGuiStoragePair = imgui.StoragePair
-
 pub type ImVector_ImGuiStoragePair = imgui.ImVector_StoragePair
-
-pub type ImGuiStorage = imgui.Storage
 
 
 pub enum ImGuiListClipperFlags_ {
  none                               = 0
  no_set_table_row_counters          = 1 << 0
 }
-
-pub type ImGuiListClipper = imgui.ListClipper
 
 pub type ImColor_c = imgui.ImColor_c
 
@@ -1080,11 +1091,10 @@ pub enum ImGuiMultiSelectFlags_ {
  nav_wrap_x                         = 1 << 16
  no_select_on_right_click           = 1 << 17
  select_on_mask_                    = 1 << 13 | 1 << 14 | 1 << 15
+ checkbox_mode_                     = 1 << 20
 }
 
 pub type ImVector_ImGuiSelectionRequest = imgui.ImVector_SelectionRequest
-
-pub type ImGuiMultiSelectIO = imgui.MultiSelectIO
 
 
 pub enum ImGuiSelectionRequestType {
@@ -1093,15 +1103,9 @@ pub enum ImGuiSelectionRequestType {
  set_range
 }
 
-pub type ImGuiSelectionRequest = imgui.SelectionRequest
-
-pub type ImGuiSelectionBasicStorage = imgui.SelectionBasicStorage
-
-pub type ImGuiSelectionExternalStorage = imgui.SelectionExternalStorage
-
 pub type ImDrawIdx = u16
 
-pub type ImDrawCallback = fn(&imgui.ImDrawList, &imgui.ImDrawCmd)
+pub type ImDrawCallback = fn (&imgui.ImDrawList, &imgui.ImDrawCmd)
 
 pub type ImDrawCmd = imgui.ImDrawCmd
 
@@ -1122,19 +1126,20 @@ pub type ImDrawListSplitter = imgui.ImDrawListSplitter
 
 pub enum ImDrawFlags_ {
  none                               = 0
- closed                             = 1 << 0
  round_corners_top_left             = 1 << 4
  round_corners_top_right            = 1 << 5
  round_corners_bottom_left          = 1 << 6
  round_corners_bottom_right         = 1 << 7
  round_corners_none                 = 1 << 8
+ round_corners_all                  = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
+ //round_corners_default_ = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
  round_corners_top                  = 1 << 4 | 1 << 5
  round_corners_bottom               = 1 << 6 | 1 << 7
  round_corners_left                 = 1 << 4 | 1 << 6
  round_corners_right                = 1 << 5 | 1 << 7
- round_corners_all                  = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
- //round_corners_default_ = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
  round_corners_mask_                = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8
+ closed                             = 1 << 9
+ invalid_mask_                      = -2147483633
 }
 
 
@@ -1144,6 +1149,7 @@ pub enum ImDrawListFlags_ {
  anti_aliased_lines_use_tex         = 1 << 1
  anti_aliased_fill                  = 1 << 2
  allow_vtx_offset                   = 1 << 3
+ text_no_pixel_snap                 = 1 << 4
 }
 
 pub type ImVector_ImDrawVert = imgui.ImVector_ImDrawVert
@@ -1227,6 +1233,7 @@ pub enum ImFontFlags_ {
  no_load_error                      = 1 << 1
  no_load_glyphs                     = 1 << 2
  lock_baked_sizes                   = 1 << 3
+ implicit_ref_size                  = 1 << 4
 }
 
 pub type ImVector_ImFontConfigPtr = imgui.ImVector_ImFontConfigPtr
@@ -1252,19 +1259,11 @@ pub enum ImGuiViewportFlags_ {
  is_focused                         = 1 << 13
 }
 
-pub type ImGuiViewport = imgui.Viewport
-
 pub type ImVector_ImGuiPlatformMonitor = imgui.ImVector_PlatformMonitor
 
 pub type ImVector_ImGuiViewportPtr = imgui.ImVector_ViewportPtr
 
-pub type ImGuiPlatformIO = imgui.PlatformIO
-
-pub type ImGuiPlatformMonitor = imgui.PlatformMonitor
-
-pub type ImGuiPlatformImeData = imgui.PlatformImeData
-
-pub type ImGuiDataAuthority = i32
+pub type ImGuiDataAuthority = u32
 
 pub type ImGuiLayoutType = i32
 
@@ -1339,23 +1338,11 @@ pub type ImPoolIdx = i32
 
 pub type ImVector_int = imgui.ImVector_int
 
-pub type ImGuiTextIndex = imgui.TextIndex
-
 pub type ImDrawListSharedData = imgui.ImDrawListSharedData
 
 pub type ImDrawDataBuilder = imgui.ImDrawDataBuilder
 
 pub type ImFontStackData = imgui.ImFontStackData
-
-pub type ImGuiStyleVarInfo = imgui.StyleVarInfo
-
-pub type ImGuiColorMod = imgui.ColorMod
-
-pub type ImGuiStyleMod = imgui.StyleMod
-
-pub type ImGuiDataTypeStorage = imgui.DataTypeStorage
-
-pub type ImGuiDataTypeInfo = imgui.DataTypeInfo
 
 
 pub enum ImGuiDataTypePrivate_ {
@@ -1375,7 +1362,7 @@ pub enum ImGuiItemFlagsPrivate_ {
  inputable                          = 1 << 20
  has_selection_user_data            = 1 << 21
  is_multi_select                    = 1 << 22
- default_                           = 1 << 4
+ default_                           = 1 << 4 | 1 << 7
 }
 
 
@@ -1392,6 +1379,7 @@ pub enum ImGuiItemStatusFlags_ {
  visible                            = 1 << 8
  has_clip_rect                      = 1 << 9
  has_shortcut                       = 1 << 10
+ edited_internal                    = 1 << 11
 }
 
 
@@ -1516,17 +1504,7 @@ pub enum ImGuiPlotType {
  histogram
 }
 
-pub type ImGuiComboPreviewData = imgui.ComboPreviewData
-
-pub type ImGuiGroupData = imgui.GroupData
-
-pub type ImGuiMenuColumns = imgui.MenuColumns
-
-pub type ImGuiInputTextDeactivatedState = imgui.InputTextDeactivatedState
-
 pub type ImStbTexteditState = C.STB_TexteditState
-
-pub type ImGuiInputTextState = imgui.InputTextState
 
 
 pub enum ImGuiWindowRefreshFlags_ {
@@ -1561,8 +1539,6 @@ pub enum ImGuiNextWindowDataFlags_ {
  has_window_class                   = 1 << 13
 }
 
-pub type ImGuiNextWindowData = imgui.NextWindowData
-
 
 pub enum ImGuiNextItemDataFlags_ {
  none                               = 0
@@ -1574,30 +1550,12 @@ pub enum ImGuiNextItemDataFlags_ {
  has_color_marker                   = 1 << 5
 }
 
-pub type ImGuiNextItemData = imgui.NextItemData
-
-pub type ImGuiLastItemData = imgui.LastItemData
-
-pub type ImGuiTreeNodeStackData = imgui.TreeNodeStackData
-
-pub type ImGuiErrorRecoveryState = imgui.ErrorRecoveryState
-
-pub type ImGuiWindowStackData = imgui.WindowStackData
-
-pub type ImGuiShrinkWidthItem = imgui.ShrinkWidthItem
-
-pub type ImGuiPtrOrIndex = imgui.PtrOrIndex
-
-pub type ImGuiDeactivatedItemData = imgui.DeactivatedItemData
-
 
 pub enum ImGuiPopupPositionPolicy {
  default
  combo_box
  tooltip
 }
-
-pub type ImGuiPopupData = imgui.PopupData
 
 pub type ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN = imgui.ImBitArrayForNamedKeys
 
@@ -1625,31 +1583,9 @@ pub enum ImGuiInputSource {
  count                              = 4
 }
 
-pub type ImGuiInputEventMousePos = imgui.InputEventMousePos
-
-pub type ImGuiInputEventMouseWheel = imgui.InputEventMouseWheel
-
-pub type ImGuiInputEventMouseButton = imgui.InputEventMouseButton
-
-pub type ImGuiInputEventMouseViewport = imgui.InputEventMouseViewport
-
-pub type ImGuiInputEventKey = imgui.InputEventKey
-
-pub type ImGuiInputEventText = imgui.InputEventText
-
-pub type ImGuiInputEventAppFocused = imgui.InputEventAppFocused
-
-pub type ImGuiInputEvent = imgui.InputEvent
-
 pub type ImGuiKeyRoutingIndex = i16
 
-pub type ImGuiKeyRoutingData = imgui.KeyRoutingData
-
 pub type ImVector_ImGuiKeyRoutingData = imgui.ImVector_KeyRoutingData
-
-pub type ImGuiKeyRoutingTable = imgui.KeyRoutingTable
-
-pub type ImGuiKeyOwnerData = imgui.KeyOwnerData
 
 
 pub enum ImGuiInputFlagsPrivate_ {
@@ -1679,11 +1615,7 @@ pub enum ImGuiInputFlagsPrivate_ {
  supported_by_set_item_key_owner    = 1 << 20 | 1 << 21 | 1 << 22 | 1 << 23
 }
 
-pub type ImGuiListClipperRange = imgui.ListClipperRange
-
 pub type ImVector_ImGuiListClipperRange = imgui.ImVector_ListClipperRange
-
-pub type ImGuiListClipperData = imgui.ListClipperData
 
 
 pub enum ImGuiActivateFlags_ {
@@ -1715,7 +1647,6 @@ pub enum ImGuiNavRenderCursorFlags_ {
  none                               = 0
  compact                            = 1 << 1
  always_draw                        = 1 << 2
- no_rounding                        = 1 << 3
 }
 
 
@@ -1747,20 +1678,12 @@ pub enum ImGuiNavLayer {
  count
 }
 
-pub type ImGuiNavItemData = imgui.NavItemData
-
-pub type ImGuiFocusScopeData = imgui.FocusScopeData
-
 
 pub enum ImGuiTypingSelectFlags_ {
  none                               = 0
  allow_backspace                    = 1 << 0
  allow_single_char_mode             = 1 << 1
 }
-
-pub type ImGuiTypingSelectRequest = imgui.TypingSelectRequest
-
-pub type ImGuiTypingSelectState = imgui.TypingSelectState
 
 
 pub enum ImGuiOldColumnFlags_ {
@@ -1772,17 +1695,7 @@ pub enum ImGuiOldColumnFlags_ {
  grow_parent_contents_size          = 1 << 4
 }
 
-pub type ImGuiOldColumnData = imgui.OldColumnData
-
 pub type ImVector_ImGuiOldColumnData = imgui.ImVector_OldColumnData
-
-pub type ImGuiOldColumns = imgui.OldColumns
-
-pub type ImGuiBoxSelectState = imgui.BoxSelectState
-
-pub type ImGuiMultiSelectTempData = imgui.MultiSelectTempData
-
-pub type ImGuiMultiSelectState = imgui.MultiSelectState
 
 
 pub enum ImGuiDockNodeFlagsPrivate_ {
@@ -1823,8 +1736,6 @@ pub enum ImGuiDockNodeState {
 
 pub type ImVector_ImGuiWindowPtr = imgui.ImVector_WindowPtr
 
-pub type ImGuiDockNode = imgui.DockNode
-
 
 pub enum ImGuiWindowDockStyleCol {
  text
@@ -1839,19 +1750,9 @@ pub enum ImGuiWindowDockStyleCol {
  count
 }
 
-pub type ImGuiWindowDockStyle = imgui.WindowDockStyle
-
 pub type ImVector_ImGuiDockRequest = imgui.ImVector_DockRequest
 
 pub type ImVector_ImGuiDockNodeSettings = imgui.ImVector_DockNodeSettings
-
-pub type ImGuiDockContext = imgui.DockContext
-
-pub type ImGuiViewportP = imgui.ViewportP
-
-pub type ImGuiWindowSettings = imgui.WindowSettings
-
-pub type ImGuiSettingsHandler = imgui.SettingsHandler
 
 
 pub enum ImGuiLocKey {
@@ -1859,21 +1760,21 @@ pub enum ImGuiLocKey {
  table_size_one                     = 1
  table_size_all_fit                 = 2
  table_size_all_default             = 3
- table_reset_order                  = 4
- windowing_main_menu_bar            = 5
- windowing_popup                    = 6
- windowing_untitled                 = 7
- open_link_s                        = 8
- copy_link                          = 9
- docking_hide_tab_bar               = 10
- docking_hold_shift_to_dock         = 11
- docking_drag_to_undock_or_move_node = 12
- count                              = 13
+ table_reset                        = 4
+ table_reset_order                  = 5
+ table_reset_visibility             = 6
+ windowing_main_menu_bar            = 7
+ windowing_popup                    = 8
+ windowing_untitled                 = 9
+ open_link_s                        = 10
+ copy_link                          = 11
+ docking_hide_tab_bar               = 12
+ docking_hold_shift_to_dock         = 13
+ docking_drag_to_undock_or_move_node = 14
+ count                              = 15
 }
 
-pub type ImGuiLocEntry = imgui.LocEntry
-
-pub type ImGuiErrorCallback = fn(&imgui.Context, voidptr, &char)
+pub type ImGuiErrorCallback = fn (&imgui.Context, voidptr, &char)
 
 
 pub enum ImGuiDebugLogFlags_ {
@@ -1890,27 +1791,16 @@ pub enum ImGuiDebugLogFlags_ {
  event_input_routing                = 1 << 9
  event_docking                      = 1 << 10
  event_viewport                     = 1 << 11
- event_mask_                        = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9 | 1 << 10 | 1 << 11
+ event_table                        = 1 << 12
+ event_mask_                        = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9 | 1 << 10 | 1 << 11 | 1 << 12
  output_to_tty                      = 1 << 20
  output_to_debugger                 = 1 << 21
  output_to_test_engine              = 1 << 22
 }
 
-pub type ImGuiDebugAllocEntry = imgui.DebugAllocEntry
-
-pub type ImGuiDebugAllocInfo = imgui.DebugAllocInfo
-
-pub type ImGuiMetricsConfig = imgui.MetricsConfig
-
-pub type ImGuiStackLevelInfo = imgui.StackLevelInfo
-
 pub type ImVector_ImGuiStackLevelInfo = imgui.ImVector_StackLevelInfo
 
-pub type ImGuiDebugItemPathQuery = imgui.DebugItemPathQuery
-
-pub type ImGuiIDStackTool = imgui.IDStackTool
-
-pub type ImGuiContextHookCallback = fn(&imgui.Context, &imgui.ContextHook)
+pub type ImGuiContextHookCallback = fn (&imgui.Context, &imgui.ContextHook)
 
 
 pub enum ImGuiContextHookType {
@@ -1924,9 +1814,7 @@ pub enum ImGuiContextHookType {
  pending_removal_
 }
 
-pub type ImGuiContextHook = imgui.ContextHook
-
-pub type ImGuiDemoMarkerCallback = fn(&char, i32, &char)
+pub type ImGuiDemoMarkerCallback = fn (&char, i32, &char)
 
 pub type ImVector_ImFontAtlasPtr = imgui.ImVector_ImFontAtlasPtr
 
@@ -1986,13 +1874,7 @@ pub type ImChunkStream_ImGuiTableSettings = imgui.ImChunkStream_TableSettings
 
 pub type ImVector_ImGuiContextHook = imgui.ImVector_ContextHook
 
-pub type ImGuiContext = imgui.Context
-
-pub type ImGuiWindowTempData = imgui.WindowTempData
-
 pub type ImVector_ImGuiOldColumns = imgui.ImVector_OldColumns
-
-pub type ImGuiWindow = imgui.Window
 
 
 pub enum ImGuiTabBarFlagsPrivate_ {
@@ -2010,19 +1892,7 @@ pub enum ImGuiTabItemFlagsPrivate_ {
  unsorted                           = 1 << 23
 }
 
-pub type ImGuiTabItem = imgui.TabItem
-
 pub type ImVector_ImGuiTabItem = imgui.ImVector_TabItem
-
-pub type ImGuiTabBar = imgui.TabBar
-
-pub type ImGuiTableColumn = imgui.TableColumn
-
-pub type ImGuiTableCellData = imgui.TableCellData
-
-pub type ImGuiTableHeaderData = imgui.TableHeaderData
-
-pub type ImGuiTableInstanceData = imgui.TableInstanceData
 
 pub type ImSpan_ImGuiTableColumn = imgui.ImSpan_TableColumn
 
@@ -2034,15 +1904,9 @@ pub type ImVector_ImGuiTableInstanceData = imgui.ImVector_TableInstanceData
 
 pub type ImVector_ImGuiTableColumnSortSpecs = imgui.ImVector_TableColumnSortSpecs
 
-pub type ImGuiTable = imgui.Table
-
 pub type ImVector_ImGuiTableHeaderData = imgui.ImVector_TableHeaderData
 
-pub type ImGuiTableTempData = imgui.TableTempData
-
-pub type ImGuiTableColumnSettings = imgui.TableColumnSettings
-
-pub type ImGuiTableSettings = imgui.TableSettings
+pub type ImVector_ImGuiTableReconcileColumnData = imgui.ImVector_TableReconcileColumnData
 
 pub type ImFontLoader = imgui.ImFontLoader
 
@@ -2062,13 +1926,2165 @@ pub type ImVector_ImFontBakedPtr = imgui.ImVector_ImFontBakedPtr
 
 pub type ImStableVector_ImFontBaked__32 = imgui.ImStableVector_ImFontBaked__32
 
-pub type ImTextureRef = imgui.ImTextureRef
+pub type ImFontAtlasBuilder = imgui.ImFontAtlasBuilder
+
+pub type StbUndoRecord = imgui.StbUndoRecord
+
+pub type StbUndoState = imgui.StbUndoState
+
+pub type STB_TexteditState = imgui.STB_TexteditState
+
+pub type StbTexteditRow = imgui.StbTexteditRow
+
+
+@[keep_args_alive]
+fn C.ImVec2_ImVec2_Nil() &imgui.ImVec2
+
+@[inline]
+pub fn im_vec2_im_vec2_nil() &imgui.ImVec2 {
+	return C.ImVec2_ImVec2_Nil()
+}
+
+
+@[keep_args_alive]
+fn C.ImVec2_destroy(self &imgui.ImVec2)
+
+@[inline]
+pub fn im_vec2_destroy(self &imgui.ImVec2) {
+	C.ImVec2_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec2_ImVec2_Float(_x f32, _y f32) &imgui.ImVec2
+
+@[inline]
+pub fn im_vec2_im_vec2_float(_x f32, _y f32) &imgui.ImVec2 {
+	return C.ImVec2_ImVec2_Float(_x, _y)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec4_ImVec4_Nil() &imgui.ImVec4
+
+@[inline]
+pub fn im_vec4_im_vec4_nil() &imgui.ImVec4 {
+	return C.ImVec4_ImVec4_Nil()
+}
+
+
+@[keep_args_alive]
+fn C.ImVec4_destroy(self &imgui.ImVec4)
+
+@[inline]
+pub fn im_vec4_destroy(self &imgui.ImVec4) {
+	C.ImVec4_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec4_ImVec4_Float(_x f32, _y f32, _z f32, _w f32) &imgui.ImVec4
+
+@[inline]
+pub fn im_vec4_im_vec4_float(_x f32, _y f32, _z f32, _w f32) &imgui.ImVec4 {
+	return C.ImVec4_ImVec4_Float(_x, _y, _z, _w)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureRef_ImTextureRef_Nil() &ImTextureRef
+
+@[inline]
+pub fn im_texture_ref_im_texture_ref_nil() &ImTextureRef {
+	return C.ImTextureRef_ImTextureRef_Nil()
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureRef_destroy(self &ImTextureRef)
+
+@[inline]
+pub fn im_texture_ref_destroy(self &ImTextureRef) {
+	C.ImTextureRef_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureRef_ImTextureRef_TextureID(tex_id imgui.ImTextureID) &ImTextureRef
+
+@[inline]
+pub fn im_texture_ref_im_texture_ref_texture_id(tex_id imgui.ImTextureID) &ImTextureRef {
+	return C.ImTextureRef_ImTextureRef_TextureID(tex_id)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureRef_GetTexID(self &ImTextureRef) imgui.ImTextureID
+
+@[inline]
+pub fn im_texture_ref_get_tex_id(self &ImTextureRef) imgui.ImTextureID {
+	return C.ImTextureRef_GetTexID(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImColor_ImColor_Nil() &ImColor
+
+@[inline]
+pub fn im_color_im_color_nil() &ImColor {
+	return C.ImColor_ImColor_Nil()
+}
+
+
+@[keep_args_alive]
+fn C.ImColor_destroy(self &ImColor)
+
+@[inline]
+pub fn im_color_destroy(self &ImColor) {
+	C.ImColor_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImColor_ImColor_Float(r f32, g f32, b f32, a f32) &ImColor
+
+@[inline]
+pub fn im_color_im_color_float(r f32, g f32, b f32, a f32) &ImColor {
+	return C.ImColor_ImColor_Float(r, g, b, a)
+}
+
+
+@[keep_args_alive]
+fn C.ImColor_ImColor_Vec4(col ImVec4_c) &ImColor
+
+@[inline]
+pub fn im_color_im_color_vec4(col ImVec4_c) &ImColor {
+	return C.ImColor_ImColor_Vec4(col)
+}
+
+
+@[keep_args_alive]
+fn C.ImColor_ImColor_Int(r i32, g i32, b i32, a i32) &ImColor
+
+@[inline]
+pub fn im_color_im_color_int(r i32, g i32, b i32, a i32) &ImColor {
+	return C.ImColor_ImColor_Int(r, g, b, a)
+}
+
+
+@[keep_args_alive]
+fn C.ImColor_ImColor_U32(rgba u32) &ImColor
+
+@[inline]
+pub fn im_color_im_color_u32(rgba u32) &ImColor {
+	return C.ImColor_ImColor_U32(rgba)
+}
+
+
+@[keep_args_alive]
+fn C.ImColor_SetHSV(self &ImColor, h f32, s f32, v f32, a f32)
+
+@[inline]
+pub fn im_color_set_hsv(self &ImColor, h f32, s f32, v f32, a f32) {
+	C.ImColor_SetHSV(self, h, s, v, a)
+}
+
+
+@[keep_args_alive]
+fn C.ImColor_HSV(h f32, s f32, v f32, a f32) ImColor_c
+
+@[inline]
+pub fn im_color_hsv(h f32, s f32, v f32, a f32) ImColor_c {
+	return C.ImColor_HSV(h, s, v, a)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawCmd_ImDrawCmd() &imgui.ImDrawCmd
+
+@[inline]
+pub fn im_draw_cmd_im_draw_cmd() &imgui.ImDrawCmd {
+	return C.ImDrawCmd_ImDrawCmd()
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawCmd_destroy(self &imgui.ImDrawCmd)
+
+@[inline]
+pub fn im_draw_cmd_destroy(self &imgui.ImDrawCmd) {
+	C.ImDrawCmd_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawCmd_GetTexID(self &imgui.ImDrawCmd) imgui.ImTextureID
+
+@[inline]
+pub fn im_draw_cmd_get_tex_id(self &imgui.ImDrawCmd) imgui.ImTextureID {
+	return C.ImDrawCmd_GetTexID(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSplitter_ImDrawListSplitter() &imgui.ImDrawListSplitter
+
+@[inline]
+pub fn im_draw_list_splitter_im_draw_list_splitter() &imgui.ImDrawListSplitter {
+	return C.ImDrawListSplitter_ImDrawListSplitter()
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSplitter_destroy(self &imgui.ImDrawListSplitter)
+
+@[inline]
+pub fn im_draw_list_splitter_destroy(self &imgui.ImDrawListSplitter) {
+	C.ImDrawListSplitter_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSplitter_Clear(self &imgui.ImDrawListSplitter)
+
+@[inline]
+pub fn im_draw_list_splitter_clear(self &imgui.ImDrawListSplitter) {
+	C.ImDrawListSplitter_Clear(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSplitter_ClearFreeMemory(self &imgui.ImDrawListSplitter)
+
+@[inline]
+pub fn im_draw_list_splitter_clear_free_memory(self &imgui.ImDrawListSplitter) {
+	C.ImDrawListSplitter_ClearFreeMemory(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSplitter_Split(self &imgui.ImDrawListSplitter, draw_list &imgui.ImDrawList, count i32)
+
+@[inline]
+pub fn im_draw_list_splitter_split(self &imgui.ImDrawListSplitter, draw_list &imgui.ImDrawList, count i32) {
+	C.ImDrawListSplitter_Split(self, draw_list, count)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSplitter_Merge(self &imgui.ImDrawListSplitter, draw_list &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list_splitter_merge(self &imgui.ImDrawListSplitter, draw_list &imgui.ImDrawList) {
+	C.ImDrawListSplitter_Merge(self, draw_list)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSplitter_SetCurrentChannel(self &imgui.ImDrawListSplitter, draw_list &imgui.ImDrawList, channel_idx i32)
+
+@[inline]
+pub fn im_draw_list_splitter_set_current_channel(self &imgui.ImDrawListSplitter, draw_list &imgui.ImDrawList, channel_idx i32) {
+	C.ImDrawListSplitter_SetCurrentChannel(self, draw_list, channel_idx)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_ImDrawList(shared_data &imgui.ImDrawListSharedData) &imgui.ImDrawList
+
+@[inline]
+pub fn im_draw_list_im_draw_list(shared_data &imgui.ImDrawListSharedData) &imgui.ImDrawList {
+	return C.ImDrawList_ImDrawList(shared_data)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_destroy(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list_destroy(self &imgui.ImDrawList) {
+	C.ImDrawList_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PushClipRect(self &imgui.ImDrawList, clip_rect_min ImVec2_c, clip_rect_max ImVec2_c, intersect_with_current_clip_rect bool)
+
+@[inline]
+pub fn im_draw_list_push_clip_rect(self &imgui.ImDrawList, clip_rect_min ImVec2_c, clip_rect_max ImVec2_c, intersect_with_current_clip_rect bool) {
+	C.ImDrawList_PushClipRect(self, clip_rect_min, clip_rect_max, intersect_with_current_clip_rect)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PushClipRectFullScreen(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list_push_clip_rect_full_screen(self &imgui.ImDrawList) {
+	C.ImDrawList_PushClipRectFullScreen(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PopClipRect(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list_pop_clip_rect(self &imgui.ImDrawList) {
+	C.ImDrawList_PopClipRect(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PushTexture(self &imgui.ImDrawList, tex_ref ImTextureRef_c)
+
+@[inline]
+pub fn im_draw_list_push_texture(self &imgui.ImDrawList, tex_ref ImTextureRef_c) {
+	C.ImDrawList_PushTexture(self, tex_ref)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PopTexture(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list_pop_texture(self &imgui.ImDrawList) {
+	C.ImDrawList_PopTexture(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_GetClipRectMin(self &imgui.ImDrawList) ImVec2_c
+
+@[inline]
+pub fn im_draw_list_get_clip_rect_min(self &imgui.ImDrawList) ImVec2_c {
+	return C.ImDrawList_GetClipRectMin(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_GetClipRectMax(self &imgui.ImDrawList) ImVec2_c
+
+@[inline]
+pub fn im_draw_list_get_clip_rect_max(self &imgui.ImDrawList) ImVec2_c {
+	return C.ImDrawList_GetClipRectMax(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddLine(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col u32, thickness f32)
+
+@[inline]
+pub fn im_draw_list_add_line(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col u32, thickness f32) {
+	C.ImDrawList_AddLine(self, p1, p2, col, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddLineH(self &imgui.ImDrawList, min_x f32, max_x f32, y f32, col u32, thickness f32)
+
+@[inline]
+pub fn im_draw_list_add_line_h(self &imgui.ImDrawList, min_x f32, max_x f32, y f32, col u32, thickness f32) {
+	C.ImDrawList_AddLineH(self, min_x, max_x, y, col, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddLineV(self &imgui.ImDrawList, x f32, min_y f32, max_y f32, col u32, thickness f32)
+
+@[inline]
+pub fn im_draw_list_add_line_v(self &imgui.ImDrawList, x f32, min_y f32, max_y f32, col u32, thickness f32) {
+	C.ImDrawList_AddLineV(self, x, min_y, max_y, col, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddRect(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, rounding f32, thickness f32, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list_add_rect(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, rounding f32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddRect(self, p_min, p_max, col, rounding, thickness, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddRectFilled(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, rounding f32, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list_add_rect_filled(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, rounding f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddRectFilled(self, p_min, p_max, col, rounding, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddRectFilledMultiColor(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col_upr_left u32, col_upr_right u32, col_bot_right u32, col_bot_left u32)
+
+@[inline]
+pub fn im_draw_list_add_rect_filled_multi_color(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col_upr_left u32, col_upr_right u32, col_bot_right u32, col_bot_left u32) {
+	C.ImDrawList_AddRectFilledMultiColor(self, p_min, p_max, col_upr_left, col_upr_right, col_bot_right, col_bot_left)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddQuad(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32)
+
+@[inline]
+pub fn im_draw_list_add_quad(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32) {
+	C.ImDrawList_AddQuad(self, p1, p2, p3, p4, col, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddQuadFilled(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32)
+
+@[inline]
+pub fn im_draw_list_add_quad_filled(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32) {
+	C.ImDrawList_AddQuadFilled(self, p1, p2, p3, p4, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddTriangle(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32)
+
+@[inline]
+pub fn im_draw_list_add_triangle(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32) {
+	C.ImDrawList_AddTriangle(self, p1, p2, p3, col, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddTriangleFilled(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32)
+
+@[inline]
+pub fn im_draw_list_add_triangle_filled(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32) {
+	C.ImDrawList_AddTriangleFilled(self, p1, p2, p3, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddCircle(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32)
+
+@[inline]
+pub fn im_draw_list_add_circle(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32) {
+	C.ImDrawList_AddCircle(self, center, radius, col, num_segments, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddCircleFilled(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32)
+
+@[inline]
+pub fn im_draw_list_add_circle_filled(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32) {
+	C.ImDrawList_AddCircleFilled(self, center, radius, col, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddNgon(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32)
+
+@[inline]
+pub fn im_draw_list_add_ngon(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32) {
+	C.ImDrawList_AddNgon(self, center, radius, col, num_segments, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddNgonFilled(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32)
+
+@[inline]
+pub fn im_draw_list_add_ngon_filled(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32) {
+	C.ImDrawList_AddNgonFilled(self, center, radius, col, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddEllipse(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, col u32, rot f32, num_segments i32, thickness f32)
+
+@[inline]
+pub fn im_draw_list_add_ellipse(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, col u32, rot f32, num_segments i32, thickness f32) {
+	C.ImDrawList_AddEllipse(self, center, radius, col, rot, num_segments, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddEllipseFilled(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, col u32, rot f32, num_segments i32)
+
+@[inline]
+pub fn im_draw_list_add_ellipse_filled(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, col u32, rot f32, num_segments i32) {
+	C.ImDrawList_AddEllipseFilled(self, center, radius, col, rot, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddText_Vec2(self &imgui.ImDrawList, pos ImVec2_c, col u32, text_begin &char, const_text_end &char)
+
+@[inline]
+pub fn im_draw_list_add_text_vec2(self &imgui.ImDrawList, pos ImVec2_c, col u32, text_begin &char, const_text_end &char) {
+	C.ImDrawList_AddText_Vec2(self, pos, col, text_begin, const_text_end)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddText_FontPtr(self &imgui.ImDrawList, font &imgui.ImFont, font_size f32, pos ImVec2_c, col u32, text_begin &char, const_text_end &char, wrap_width f32, cpu_fine_clip_rect &imgui.ImVec4)
+
+@[inline]
+pub fn im_draw_list_add_text_font_ptr(self &imgui.ImDrawList, font &imgui.ImFont, font_size f32, pos ImVec2_c, col u32, text_begin &char, const_text_end &char, wrap_width f32, cpu_fine_clip_rect &imgui.ImVec4) {
+	C.ImDrawList_AddText_FontPtr(self, font, font_size, pos, col, text_begin, const_text_end, wrap_width, cpu_fine_clip_rect)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddBezierCubic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32, num_segments i32)
+
+@[inline]
+pub fn im_draw_list_add_bezier_cubic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32, num_segments i32) {
+	C.ImDrawList_AddBezierCubic(self, p1, p2, p3, p4, col, thickness, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddBezierQuadratic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32, num_segments i32)
+
+@[inline]
+pub fn im_draw_list_add_bezier_quadratic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32, num_segments i32) {
+	C.ImDrawList_AddBezierQuadratic(self, p1, p2, p3, col, thickness, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddPolyline(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32, thickness f32, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list_add_polyline(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddPolyline(self, points, num_points, col, thickness, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddConvexPolyFilled(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32)
+
+@[inline]
+pub fn im_draw_list_add_convex_poly_filled(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32) {
+	C.ImDrawList_AddConvexPolyFilled(self, points, num_points, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddConcavePolyFilled(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32)
+
+@[inline]
+pub fn im_draw_list_add_concave_poly_filled(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32) {
+	C.ImDrawList_AddConcavePolyFilled(self, points, num_points, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddImage(self &imgui.ImDrawList, tex_ref ImTextureRef_c, p_min ImVec2_c, p_max ImVec2_c, uv_min ImVec2_c, uv_max ImVec2_c, col u32)
+
+@[inline]
+pub fn im_draw_list_add_image(self &imgui.ImDrawList, tex_ref ImTextureRef_c, p_min ImVec2_c, p_max ImVec2_c, uv_min ImVec2_c, uv_max ImVec2_c, col u32) {
+	C.ImDrawList_AddImage(self, tex_ref, p_min, p_max, uv_min, uv_max, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddImageQuad(self &imgui.ImDrawList, tex_ref ImTextureRef_c, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, uv1 ImVec2_c, uv2 ImVec2_c, uv3 ImVec2_c, uv4 ImVec2_c, col u32)
+
+@[inline]
+pub fn im_draw_list_add_image_quad(self &imgui.ImDrawList, tex_ref ImTextureRef_c, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, uv1 ImVec2_c, uv2 ImVec2_c, uv3 ImVec2_c, uv4 ImVec2_c, col u32) {
+	C.ImDrawList_AddImageQuad(self, tex_ref, p1, p2, p3, p4, uv1, uv2, uv3, uv4, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddImageRounded(self &imgui.ImDrawList, tex_ref ImTextureRef_c, p_min ImVec2_c, p_max ImVec2_c, uv_min ImVec2_c, uv_max ImVec2_c, col u32, rounding f32, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list_add_image_rounded(self &imgui.ImDrawList, tex_ref ImTextureRef_c, p_min ImVec2_c, p_max ImVec2_c, uv_min ImVec2_c, uv_max ImVec2_c, col u32, rounding f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddImageRounded(self, tex_ref, p_min, p_max, uv_min, uv_max, col, rounding, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathClear(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list_path_clear(self &imgui.ImDrawList) {
+	C.ImDrawList_PathClear(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathLineTo(self &imgui.ImDrawList, pos ImVec2_c)
+
+@[inline]
+pub fn im_draw_list_path_line_to(self &imgui.ImDrawList, pos ImVec2_c) {
+	C.ImDrawList_PathLineTo(self, pos)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathLineToMergeDuplicate(self &imgui.ImDrawList, pos ImVec2_c)
+
+@[inline]
+pub fn im_draw_list_path_line_to_merge_duplicate(self &imgui.ImDrawList, pos ImVec2_c) {
+	C.ImDrawList_PathLineToMergeDuplicate(self, pos)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathFillConvex(self &imgui.ImDrawList, col u32)
+
+@[inline]
+pub fn im_draw_list_path_fill_convex(self &imgui.ImDrawList, col u32) {
+	C.ImDrawList_PathFillConvex(self, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathFillConcave(self &imgui.ImDrawList, col u32)
+
+@[inline]
+pub fn im_draw_list_path_fill_concave(self &imgui.ImDrawList, col u32) {
+	C.ImDrawList_PathFillConcave(self, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathStroke(self &imgui.ImDrawList, col u32, thickness f32, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list_path_stroke(self &imgui.ImDrawList, col u32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_PathStroke(self, col, thickness, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathArcTo(self &imgui.ImDrawList, center ImVec2_c, radius f32, a_min f32, a_max f32, num_segments i32)
+
+@[inline]
+pub fn im_draw_list_path_arc_to(self &imgui.ImDrawList, center ImVec2_c, radius f32, a_min f32, a_max f32, num_segments i32) {
+	C.ImDrawList_PathArcTo(self, center, radius, a_min, a_max, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathArcToFast(self &imgui.ImDrawList, center ImVec2_c, radius f32, a_min_of_12 i32, a_max_of_12 i32)
+
+@[inline]
+pub fn im_draw_list_path_arc_to_fast(self &imgui.ImDrawList, center ImVec2_c, radius f32, a_min_of_12 i32, a_max_of_12 i32) {
+	C.ImDrawList_PathArcToFast(self, center, radius, a_min_of_12, a_max_of_12)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathEllipticalArcTo(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, rot f32, a_min f32, a_max f32, num_segments i32)
+
+@[inline]
+pub fn im_draw_list_path_elliptical_arc_to(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, rot f32, a_min f32, a_max f32, num_segments i32) {
+	C.ImDrawList_PathEllipticalArcTo(self, center, radius, rot, a_min, a_max, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathBezierCubicCurveTo(self &imgui.ImDrawList, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, num_segments i32)
+
+@[inline]
+pub fn im_draw_list_path_bezier_cubic_curve_to(self &imgui.ImDrawList, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, num_segments i32) {
+	C.ImDrawList_PathBezierCubicCurveTo(self, p2, p3, p4, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathBezierQuadraticCurveTo(self &imgui.ImDrawList, p2 ImVec2_c, p3 ImVec2_c, num_segments i32)
+
+@[inline]
+pub fn im_draw_list_path_bezier_quadratic_curve_to(self &imgui.ImDrawList, p2 ImVec2_c, p3 ImVec2_c, num_segments i32) {
+	C.ImDrawList_PathBezierQuadraticCurveTo(self, p2, p3, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PathRect(self &imgui.ImDrawList, rect_min ImVec2_c, rect_max ImVec2_c, rounding f32, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list_path_rect(self &imgui.ImDrawList, rect_min ImVec2_c, rect_max ImVec2_c, rounding f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_PathRect(self, rect_min, rect_max, rounding, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddCallback(self &imgui.ImDrawList, callback imgui.ImDrawCallback, userdata voidptr, userdata_size usize)
+
+@[inline]
+pub fn im_draw_list_add_callback(self &imgui.ImDrawList, callback imgui.ImDrawCallback, userdata voidptr, userdata_size usize) {
+	C.ImDrawList_AddCallback(self, callback, userdata, userdata_size)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_AddDrawCmd(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list_add_draw_cmd(self &imgui.ImDrawList) {
+	C.ImDrawList_AddDrawCmd(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_CloneOutput(self &imgui.ImDrawList) &imgui.ImDrawList
+
+@[inline]
+pub fn im_draw_list_clone_output(self &imgui.ImDrawList) &imgui.ImDrawList {
+	return C.ImDrawList_CloneOutput(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_ChannelsSplit(self &imgui.ImDrawList, count i32)
+
+@[inline]
+pub fn im_draw_list_channels_split(self &imgui.ImDrawList, count i32) {
+	C.ImDrawList_ChannelsSplit(self, count)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_ChannelsMerge(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list_channels_merge(self &imgui.ImDrawList) {
+	C.ImDrawList_ChannelsMerge(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_ChannelsSetCurrent(self &imgui.ImDrawList, n i32)
+
+@[inline]
+pub fn im_draw_list_channels_set_current(self &imgui.ImDrawList, n i32) {
+	C.ImDrawList_ChannelsSetCurrent(self, n)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PrimReserve(self &imgui.ImDrawList, idx_count i32, vtx_count i32)
+
+@[inline]
+pub fn im_draw_list_prim_reserve(self &imgui.ImDrawList, idx_count i32, vtx_count i32) {
+	C.ImDrawList_PrimReserve(self, idx_count, vtx_count)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PrimUnreserve(self &imgui.ImDrawList, idx_count i32, vtx_count i32)
+
+@[inline]
+pub fn im_draw_list_prim_unreserve(self &imgui.ImDrawList, idx_count i32, vtx_count i32) {
+	C.ImDrawList_PrimUnreserve(self, idx_count, vtx_count)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PrimRect(self &imgui.ImDrawList, a ImVec2_c, b ImVec2_c, col u32)
+
+@[inline]
+pub fn im_draw_list_prim_rect(self &imgui.ImDrawList, a ImVec2_c, b ImVec2_c, col u32) {
+	C.ImDrawList_PrimRect(self, a, b, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PrimRectUV(self &imgui.ImDrawList, a ImVec2_c, b ImVec2_c, uv_a ImVec2_c, uv_b ImVec2_c, col u32)
+
+@[inline]
+pub fn im_draw_list_prim_rect_uv(self &imgui.ImDrawList, a ImVec2_c, b ImVec2_c, uv_a ImVec2_c, uv_b ImVec2_c, col u32) {
+	C.ImDrawList_PrimRectUV(self, a, b, uv_a, uv_b, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PrimQuadUV(self &imgui.ImDrawList, a ImVec2_c, b ImVec2_c, c ImVec2_c, d ImVec2_c, uv_a ImVec2_c, uv_b ImVec2_c, uv_c ImVec2_c, uv_d ImVec2_c, col u32)
+
+@[inline]
+pub fn im_draw_list_prim_quad_uv(self &imgui.ImDrawList, a ImVec2_c, b ImVec2_c, c ImVec2_c, d ImVec2_c, uv_a ImVec2_c, uv_b ImVec2_c, uv_c ImVec2_c, uv_d ImVec2_c, col u32) {
+	C.ImDrawList_PrimQuadUV(self, a, b, c, d, uv_a, uv_b, uv_c, uv_d, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PrimWriteVtx(self &imgui.ImDrawList, pos ImVec2_c, uv ImVec2_c, col u32)
+
+@[inline]
+pub fn im_draw_list_prim_write_vtx(self &imgui.ImDrawList, pos ImVec2_c, uv ImVec2_c, col u32) {
+	C.ImDrawList_PrimWriteVtx(self, pos, uv, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PrimWriteIdx(self &imgui.ImDrawList, idx imgui.ImDrawIdx)
+
+@[inline]
+pub fn im_draw_list_prim_write_idx(self &imgui.ImDrawList, idx imgui.ImDrawIdx) {
+	C.ImDrawList_PrimWriteIdx(self, idx)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PrimVtx(self &imgui.ImDrawList, pos ImVec2_c, uv ImVec2_c, col u32)
+
+@[inline]
+pub fn im_draw_list_prim_vtx(self &imgui.ImDrawList, pos ImVec2_c, uv ImVec2_c, col u32) {
+	C.ImDrawList_PrimVtx(self, pos, uv, col)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__SetDrawListSharedData(self &imgui.ImDrawList, data &imgui.ImDrawListSharedData)
+
+@[inline]
+pub fn im_draw_list__set_draw_list_shared_data(self &imgui.ImDrawList, data &imgui.ImDrawListSharedData) {
+	C.ImDrawList__SetDrawListSharedData(self, data)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__ResetForNewFrame(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list__reset_for_new_frame(self &imgui.ImDrawList) {
+	C.ImDrawList__ResetForNewFrame(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__ClearFreeMemory(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list__clear_free_memory(self &imgui.ImDrawList) {
+	C.ImDrawList__ClearFreeMemory(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__PopUnusedDrawCmd(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list__pop_unused_draw_cmd(self &imgui.ImDrawList) {
+	C.ImDrawList__PopUnusedDrawCmd(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__TryMergeDrawCmds(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list__try_merge_draw_cmds(self &imgui.ImDrawList) {
+	C.ImDrawList__TryMergeDrawCmds(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__OnChangedClipRect(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list__on_changed_clip_rect(self &imgui.ImDrawList) {
+	C.ImDrawList__OnChangedClipRect(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__OnChangedTexture(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list__on_changed_texture(self &imgui.ImDrawList) {
+	C.ImDrawList__OnChangedTexture(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__OnChangedVtxOffset(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list__on_changed_vtx_offset(self &imgui.ImDrawList) {
+	C.ImDrawList__OnChangedVtxOffset(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__SetTexture(self &imgui.ImDrawList, tex_ref ImTextureRef_c)
+
+@[inline]
+pub fn im_draw_list__set_texture(self &imgui.ImDrawList, tex_ref ImTextureRef_c) {
+	C.ImDrawList__SetTexture(self, tex_ref)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__CalcCircleAutoSegmentCount(self &imgui.ImDrawList, radius f32) i32
+
+@[inline]
+pub fn im_draw_list__calc_circle_auto_segment_count(self &imgui.ImDrawList, radius f32) i32 {
+	return C.ImDrawList__CalcCircleAutoSegmentCount(self, radius)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__PathArcToFastEx(self &imgui.ImDrawList, center ImVec2_c, radius f32, a_min_sample i32, a_max_sample i32, a_step i32)
+
+@[inline]
+pub fn im_draw_list__path_arc_to_fast_ex(self &imgui.ImDrawList, center ImVec2_c, radius f32, a_min_sample i32, a_max_sample i32, a_step i32) {
+	C.ImDrawList__PathArcToFastEx(self, center, radius, a_min_sample, a_max_sample, a_step)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__PathArcToN(self &imgui.ImDrawList, center ImVec2_c, radius f32, a_min f32, a_max f32, num_segments i32)
+
+@[inline]
+pub fn im_draw_list__path_arc_to_n(self &imgui.ImDrawList, center ImVec2_c, radius f32, a_min f32, a_max f32, num_segments i32) {
+	C.ImDrawList__PathArcToN(self, center, radius, a_min, a_max, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawData_ImDrawData() &imgui.ImDrawData
+
+@[inline]
+pub fn im_draw_data_im_draw_data() &imgui.ImDrawData {
+	return C.ImDrawData_ImDrawData()
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawData_destroy(self &imgui.ImDrawData)
+
+@[inline]
+pub fn im_draw_data_destroy(self &imgui.ImDrawData) {
+	C.ImDrawData_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawData_Clear(self &imgui.ImDrawData)
+
+@[inline]
+pub fn im_draw_data_clear(self &imgui.ImDrawData) {
+	C.ImDrawData_Clear(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawData_AddDrawList(self &imgui.ImDrawData, draw_list &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_data_add_draw_list(self &imgui.ImDrawData, draw_list &imgui.ImDrawList) {
+	C.ImDrawData_AddDrawList(self, draw_list)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawData_DeIndexAllBuffers(self &imgui.ImDrawData)
+
+@[inline]
+pub fn im_draw_data_de_index_all_buffers(self &imgui.ImDrawData) {
+	C.ImDrawData_DeIndexAllBuffers(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawData_ScaleClipRects(self &imgui.ImDrawData, fb_scale ImVec2_c)
+
+@[inline]
+pub fn im_draw_data_scale_clip_rects(self &imgui.ImDrawData, fb_scale ImVec2_c) {
+	C.ImDrawData_ScaleClipRects(self, fb_scale)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_ImTextureData() &ImTextureData
+
+@[inline]
+pub fn im_texture_data_im_texture_data() &ImTextureData {
+	return C.ImTextureData_ImTextureData()
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_destroy(self &ImTextureData)
+
+@[inline]
+pub fn im_texture_data_destroy(self &ImTextureData) {
+	C.ImTextureData_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_Create(self &ImTextureData, format i32, w i32, h i32)
+
+@[inline]
+pub fn im_texture_data_create(self &ImTextureData, format i32, w i32, h i32) {
+	C.ImTextureData_Create(self, format, w, h)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_DestroyPixels(self &ImTextureData)
+
+@[inline]
+pub fn im_texture_data_destroy_pixels(self &ImTextureData) {
+	C.ImTextureData_DestroyPixels(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_GetPixels(self &ImTextureData) voidptr
+
+@[inline]
+pub fn im_texture_data_get_pixels(self &ImTextureData) voidptr {
+	return C.ImTextureData_GetPixels(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_GetPixelsAt(self &ImTextureData, x i32, y i32) voidptr
+
+@[inline]
+pub fn im_texture_data_get_pixels_at(self &ImTextureData, x i32, y i32) voidptr {
+	return C.ImTextureData_GetPixelsAt(self, x, y)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_GetSizeInBytes(self &ImTextureData) i32
+
+@[inline]
+pub fn im_texture_data_get_size_in_bytes(self &ImTextureData) i32 {
+	return C.ImTextureData_GetSizeInBytes(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_GetPitch(self &ImTextureData) i32
+
+@[inline]
+pub fn im_texture_data_get_pitch(self &ImTextureData) i32 {
+	return C.ImTextureData_GetPitch(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_GetTexRef(self &ImTextureData) ImTextureRef_c
+
+@[inline]
+pub fn im_texture_data_get_tex_ref(self &ImTextureData) ImTextureRef_c {
+	return C.ImTextureData_GetTexRef(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_GetTexID(self &ImTextureData) imgui.ImTextureID
+
+@[inline]
+pub fn im_texture_data_get_tex_id(self &ImTextureData) imgui.ImTextureID {
+	return C.ImTextureData_GetTexID(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_SetTexID(self &ImTextureData, tex_id imgui.ImTextureID)
+
+@[inline]
+pub fn im_texture_data_set_tex_id(self &ImTextureData, tex_id imgui.ImTextureID) {
+	C.ImTextureData_SetTexID(self, tex_id)
+}
+
+
+@[keep_args_alive]
+fn C.ImTextureData_SetStatus(self &ImTextureData, status i32)
+
+@[inline]
+pub fn im_texture_data_set_status(self &ImTextureData, status i32) {
+	C.ImTextureData_SetStatus(self, status)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontConfig_ImFontConfig() &imgui.ImFontConfig
+
+@[inline]
+pub fn im_font_config_im_font_config() &imgui.ImFontConfig {
+	return C.ImFontConfig_ImFontConfig()
+}
+
+
+@[keep_args_alive]
+fn C.ImFontConfig_destroy(self &imgui.ImFontConfig)
+
+@[inline]
+pub fn im_font_config_destroy(self &imgui.ImFontConfig) {
+	C.ImFontConfig_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyph_ImFontGlyph() &imgui.ImFontGlyph
+
+@[inline]
+pub fn im_font_glyph_im_font_glyph() &imgui.ImFontGlyph {
+	return C.ImFontGlyph_ImFontGlyph()
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyph_destroy(self &imgui.ImFontGlyph)
+
+@[inline]
+pub fn im_font_glyph_destroy(self &imgui.ImFontGlyph) {
+	C.ImFontGlyph_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyphRangesBuilder_ImFontGlyphRangesBuilder() &imgui.ImFontGlyphRangesBuilder
+
+@[inline]
+pub fn im_font_glyph_ranges_builder_im_font_glyph_ranges_builder() &imgui.ImFontGlyphRangesBuilder {
+	return C.ImFontGlyphRangesBuilder_ImFontGlyphRangesBuilder()
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyphRangesBuilder_destroy(self &imgui.ImFontGlyphRangesBuilder)
+
+@[inline]
+pub fn im_font_glyph_ranges_builder_destroy(self &imgui.ImFontGlyphRangesBuilder) {
+	C.ImFontGlyphRangesBuilder_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyphRangesBuilder_Clear(self &imgui.ImFontGlyphRangesBuilder)
+
+@[inline]
+pub fn im_font_glyph_ranges_builder_clear(self &imgui.ImFontGlyphRangesBuilder) {
+	C.ImFontGlyphRangesBuilder_Clear(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyphRangesBuilder_GetBit(self &imgui.ImFontGlyphRangesBuilder, n usize) bool
+
+@[inline]
+pub fn im_font_glyph_ranges_builder_get_bit(self &imgui.ImFontGlyphRangesBuilder, n usize) bool {
+	return C.ImFontGlyphRangesBuilder_GetBit(self, n)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyphRangesBuilder_SetBit(self &imgui.ImFontGlyphRangesBuilder, n usize)
+
+@[inline]
+pub fn im_font_glyph_ranges_builder_set_bit(self &imgui.ImFontGlyphRangesBuilder, n usize) {
+	C.ImFontGlyphRangesBuilder_SetBit(self, n)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyphRangesBuilder_AddChar(self &imgui.ImFontGlyphRangesBuilder, c u32)
+
+@[inline]
+pub fn im_font_glyph_ranges_builder_add_char(self &imgui.ImFontGlyphRangesBuilder, c u32) {
+	C.ImFontGlyphRangesBuilder_AddChar(self, c)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyphRangesBuilder_AddText(self &imgui.ImFontGlyphRangesBuilder, const_text &char, const_text_end &char)
+
+@[inline]
+pub fn im_font_glyph_ranges_builder_add_text(self &imgui.ImFontGlyphRangesBuilder, const_text &char, const_text_end &char) {
+	C.ImFontGlyphRangesBuilder_AddText(self, const_text, const_text_end)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyphRangesBuilder_AddRanges(self &imgui.ImFontGlyphRangesBuilder, ranges &u32)
+
+@[inline]
+pub fn im_font_glyph_ranges_builder_add_ranges(self &imgui.ImFontGlyphRangesBuilder, ranges &u32) {
+	C.ImFontGlyphRangesBuilder_AddRanges(self, ranges)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontGlyphRangesBuilder_BuildRanges(self &imgui.ImFontGlyphRangesBuilder, out_ranges &ImVector_ImWchar)
+
+@[inline]
+pub fn im_font_glyph_ranges_builder_build_ranges(self &imgui.ImFontGlyphRangesBuilder, out_ranges &ImVector_ImWchar) {
+	C.ImFontGlyphRangesBuilder_BuildRanges(self, out_ranges)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlasRect_ImFontAtlasRect() &imgui.ImFontAtlasRect
+
+@[inline]
+pub fn im_font_atlas_rect_im_font_atlas_rect() &imgui.ImFontAtlasRect {
+	return C.ImFontAtlasRect_ImFontAtlasRect()
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlasRect_destroy(self &imgui.ImFontAtlasRect)
+
+@[inline]
+pub fn im_font_atlas_rect_destroy(self &imgui.ImFontAtlasRect) {
+	C.ImFontAtlasRect_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_ImFontAtlas() &imgui.ImFontAtlas
+
+@[inline]
+pub fn im_font_atlas_im_font_atlas() &imgui.ImFontAtlas {
+	return C.ImFontAtlas_ImFontAtlas()
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_destroy(self &imgui.ImFontAtlas)
+
+@[inline]
+pub fn im_font_atlas_destroy(self &imgui.ImFontAtlas) {
+	C.ImFontAtlas_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_AddFont(self &imgui.ImFontAtlas, font_cfg &imgui.ImFontConfig) &imgui.ImFont
+
+@[inline]
+pub fn im_font_atlas_add_font(self &imgui.ImFontAtlas, font_cfg &imgui.ImFontConfig) &imgui.ImFont {
+	return C.ImFontAtlas_AddFont(self, font_cfg)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_AddFontDefault(self &imgui.ImFontAtlas, font_cfg &imgui.ImFontConfig) &imgui.ImFont
+
+@[inline]
+pub fn im_font_atlas_add_font_default(self &imgui.ImFontAtlas, font_cfg &imgui.ImFontConfig) &imgui.ImFont {
+	return C.ImFontAtlas_AddFontDefault(self, font_cfg)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_AddFontDefaultVector(self &imgui.ImFontAtlas, font_cfg &imgui.ImFontConfig) &imgui.ImFont
+
+@[inline]
+pub fn im_font_atlas_add_font_default_vector(self &imgui.ImFontAtlas, font_cfg &imgui.ImFontConfig) &imgui.ImFont {
+	return C.ImFontAtlas_AddFontDefaultVector(self, font_cfg)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_AddFontDefaultBitmap(self &imgui.ImFontAtlas, font_cfg &imgui.ImFontConfig) &imgui.ImFont
+
+@[inline]
+pub fn im_font_atlas_add_font_default_bitmap(self &imgui.ImFontAtlas, font_cfg &imgui.ImFontConfig) &imgui.ImFont {
+	return C.ImFontAtlas_AddFontDefaultBitmap(self, font_cfg)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_AddFontFromFileTTF(self &imgui.ImFontAtlas, filename &char, size_pixels f32, font_cfg &imgui.ImFontConfig, glyph_ranges &u32) &imgui.ImFont
+
+@[inline]
+pub fn im_font_atlas_add_font_from_file_ttf(self &imgui.ImFontAtlas, filename &char, size_pixels f32, font_cfg &imgui.ImFontConfig, glyph_ranges &u32) &imgui.ImFont {
+	return C.ImFontAtlas_AddFontFromFileTTF(self, filename, size_pixels, font_cfg, glyph_ranges)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_AddFontFromMemoryTTF(self &imgui.ImFontAtlas, font_data voidptr, font_data_size i32, size_pixels f32, font_cfg &imgui.ImFontConfig, glyph_ranges &u32) &imgui.ImFont
+
+@[inline]
+pub fn im_font_atlas_add_font_from_memory_ttf(self &imgui.ImFontAtlas, font_data voidptr, font_data_size i32, size_pixels f32, font_cfg &imgui.ImFontConfig, glyph_ranges &u32) &imgui.ImFont {
+	return C.ImFontAtlas_AddFontFromMemoryTTF(self, font_data, font_data_size, size_pixels, font_cfg, glyph_ranges)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_AddFontFromMemoryCompressedTTF(self &imgui.ImFontAtlas, compressed_font_data voidptr, compressed_font_data_size i32, size_pixels f32, font_cfg &imgui.ImFontConfig, glyph_ranges &u32) &imgui.ImFont
+
+@[inline]
+pub fn im_font_atlas_add_font_from_memory_compressed_ttf(self &imgui.ImFontAtlas, compressed_font_data voidptr, compressed_font_data_size i32, size_pixels f32, font_cfg &imgui.ImFontConfig, glyph_ranges &u32) &imgui.ImFont {
+	return C.ImFontAtlas_AddFontFromMemoryCompressedTTF(self, compressed_font_data, compressed_font_data_size, size_pixels, font_cfg, glyph_ranges)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_AddFontFromMemoryCompressedBase85TTF(self &imgui.ImFontAtlas, compressed_font_data_base85 &char, size_pixels f32, font_cfg &imgui.ImFontConfig, glyph_ranges &u32) &imgui.ImFont
+
+@[inline]
+pub fn im_font_atlas_add_font_from_memory_compressed_base85_ttf(self &imgui.ImFontAtlas, compressed_font_data_base85 &char, size_pixels f32, font_cfg &imgui.ImFontConfig, glyph_ranges &u32) &imgui.ImFont {
+	return C.ImFontAtlas_AddFontFromMemoryCompressedBase85TTF(self, compressed_font_data_base85, size_pixels, font_cfg, glyph_ranges)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_RemoveFont(self &imgui.ImFontAtlas, font &imgui.ImFont)
+
+@[inline]
+pub fn im_font_atlas_remove_font(self &imgui.ImFontAtlas, font &imgui.ImFont) {
+	C.ImFontAtlas_RemoveFont(self, font)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_CompactCache(self &imgui.ImFontAtlas)
+
+@[inline]
+pub fn im_font_atlas_compact_cache(self &imgui.ImFontAtlas) {
+	C.ImFontAtlas_CompactCache(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_SetFontLoader(self &imgui.ImFontAtlas, font_loader &imgui.ImFontLoader)
+
+@[inline]
+pub fn im_font_atlas_set_font_loader(self &imgui.ImFontAtlas, font_loader &imgui.ImFontLoader) {
+	C.ImFontAtlas_SetFontLoader(self, font_loader)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_Clear(self &imgui.ImFontAtlas)
+
+@[inline]
+pub fn im_font_atlas_clear(self &imgui.ImFontAtlas) {
+	C.ImFontAtlas_Clear(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_ClearFonts(self &imgui.ImFontAtlas)
+
+@[inline]
+pub fn im_font_atlas_clear_fonts(self &imgui.ImFontAtlas) {
+	C.ImFontAtlas_ClearFonts(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_ClearInputData(self &imgui.ImFontAtlas)
+
+@[inline]
+pub fn im_font_atlas_clear_input_data(self &imgui.ImFontAtlas) {
+	C.ImFontAtlas_ClearInputData(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_ClearTexData(self &imgui.ImFontAtlas)
+
+@[inline]
+pub fn im_font_atlas_clear_tex_data(self &imgui.ImFontAtlas) {
+	C.ImFontAtlas_ClearTexData(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_GetGlyphRangesDefault(self &imgui.ImFontAtlas) &u32
+
+@[inline]
+pub fn im_font_atlas_get_glyph_ranges_default(self &imgui.ImFontAtlas) &u32 {
+	return C.ImFontAtlas_GetGlyphRangesDefault(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_AddCustomRect(self &imgui.ImFontAtlas, width i32, height i32, out_r &imgui.ImFontAtlasRect) imgui.ImFontAtlasRectId
+
+@[inline]
+pub fn im_font_atlas_add_custom_rect(self &imgui.ImFontAtlas, width i32, height i32, out_r &imgui.ImFontAtlasRect) imgui.ImFontAtlasRectId {
+	return C.ImFontAtlas_AddCustomRect(self, width, height, out_r)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_RemoveCustomRect(self &imgui.ImFontAtlas, id imgui.ImFontAtlasRectId)
+
+@[inline]
+pub fn im_font_atlas_remove_custom_rect(self &imgui.ImFontAtlas, id imgui.ImFontAtlasRectId) {
+	C.ImFontAtlas_RemoveCustomRect(self, id)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlas_GetCustomRect(self &imgui.ImFontAtlas, id imgui.ImFontAtlasRectId, out_r &imgui.ImFontAtlasRect) bool
+
+@[inline]
+pub fn im_font_atlas_get_custom_rect(self &imgui.ImFontAtlas, id imgui.ImFontAtlasRectId, out_r &imgui.ImFontAtlasRect) bool {
+	return C.ImFontAtlas_GetCustomRect(self, id, out_r)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontBaked_ImFontBaked() &imgui.ImFontBaked
+
+@[inline]
+pub fn im_font_baked_im_font_baked() &imgui.ImFontBaked {
+	return C.ImFontBaked_ImFontBaked()
+}
+
+
+@[keep_args_alive]
+fn C.ImFontBaked_destroy(self &imgui.ImFontBaked)
+
+@[inline]
+pub fn im_font_baked_destroy(self &imgui.ImFontBaked) {
+	C.ImFontBaked_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontBaked_ClearOutputData(self &imgui.ImFontBaked)
+
+@[inline]
+pub fn im_font_baked_clear_output_data(self &imgui.ImFontBaked) {
+	C.ImFontBaked_ClearOutputData(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontBaked_FindGlyph(self &imgui.ImFontBaked, c u32) &imgui.ImFontGlyph
+
+@[inline]
+pub fn im_font_baked_find_glyph(self &imgui.ImFontBaked, c u32) &imgui.ImFontGlyph {
+	return C.ImFontBaked_FindGlyph(self, c)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontBaked_FindGlyphNoFallback(self &imgui.ImFontBaked, c u32) &imgui.ImFontGlyph
+
+@[inline]
+pub fn im_font_baked_find_glyph_no_fallback(self &imgui.ImFontBaked, c u32) &imgui.ImFontGlyph {
+	return C.ImFontBaked_FindGlyphNoFallback(self, c)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontBaked_GetCharAdvance(self &imgui.ImFontBaked, c u32) f32
+
+@[inline]
+pub fn im_font_baked_get_char_advance(self &imgui.ImFontBaked, c u32) f32 {
+	return C.ImFontBaked_GetCharAdvance(self, c)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontBaked_IsGlyphLoaded(self &imgui.ImFontBaked, c u32) bool
+
+@[inline]
+pub fn im_font_baked_is_glyph_loaded(self &imgui.ImFontBaked, c u32) bool {
+	return C.ImFontBaked_IsGlyphLoaded(self, c)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_ImFont() &imgui.ImFont
+
+@[inline]
+pub fn im_font_im_font() &imgui.ImFont {
+	return C.ImFont_ImFont()
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_destroy(self &imgui.ImFont)
+
+@[inline]
+pub fn im_font_destroy(self &imgui.ImFont) {
+	C.ImFont_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_IsGlyphInFont(self &imgui.ImFont, c u32) bool
+
+@[inline]
+pub fn im_font_is_glyph_in_font(self &imgui.ImFont, c u32) bool {
+	return C.ImFont_IsGlyphInFont(self, c)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_IsLoaded(self &imgui.ImFont) bool
+
+@[inline]
+pub fn im_font_is_loaded(self &imgui.ImFont) bool {
+	return C.ImFont_IsLoaded(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_GetDebugName(self &imgui.ImFont) &char
+
+@[inline]
+pub fn im_font_get_debug_name(self &imgui.ImFont) &char {
+	return C.ImFont_GetDebugName(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_GetFontBaked(self &imgui.ImFont, font_size f32, density f32) &imgui.ImFontBaked
+
+@[inline]
+pub fn im_font_get_font_baked(self &imgui.ImFont, font_size f32, density f32) &imgui.ImFontBaked {
+	return C.ImFont_GetFontBaked(self, font_size, density)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_CalcTextSizeA(self &imgui.ImFont, size f32, max_width f32, wrap_width f32, text_begin &char, const_text_end &char, out_remaining &&u8) ImVec2_c
+
+@[inline]
+pub fn im_font_calc_text_size_a(self &imgui.ImFont, size f32, max_width f32, wrap_width f32, text_begin &char, const_text_end &char, out_remaining &&u8) ImVec2_c {
+	return C.ImFont_CalcTextSizeA(self, size, max_width, wrap_width, text_begin, const_text_end, out_remaining)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_CalcWordWrapPosition(self &imgui.ImFont, size f32, const_text &char, const_text_end &char, wrap_width f32) &char
+
+@[inline]
+pub fn im_font_calc_word_wrap_position(self &imgui.ImFont, size f32, const_text &char, const_text_end &char, wrap_width f32) &char {
+	return C.ImFont_CalcWordWrapPosition(self, size, const_text, const_text_end, wrap_width)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_RenderChar(self &imgui.ImFont, draw_list &imgui.ImDrawList, size f32, pos ImVec2_c, col u32, c u32, cpu_fine_clip &imgui.ImVec4)
+
+@[inline]
+pub fn im_font_render_char(self &imgui.ImFont, draw_list &imgui.ImDrawList, size f32, pos ImVec2_c, col u32, c u32, cpu_fine_clip &imgui.ImVec4) {
+	C.ImFont_RenderChar(self, draw_list, size, pos, col, c, cpu_fine_clip)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_RenderText(self &imgui.ImFont, draw_list &imgui.ImDrawList, size f32, pos ImVec2_c, col u32, clip_rect ImVec4_c, text_begin &char, const_text_end &char, wrap_width f32, flags imgui.ImDrawTextFlags)
+
+@[inline]
+pub fn im_font_render_text(self &imgui.ImFont, draw_list &imgui.ImDrawList, size f32, pos ImVec2_c, col u32, clip_rect ImVec4_c, text_begin &char, const_text_end &char, wrap_width f32, flags imgui.ImDrawTextFlags) {
+	C.ImFont_RenderText(self, draw_list, size, pos, col, clip_rect, text_begin, const_text_end, wrap_width, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_ClearOutputData(self &imgui.ImFont)
+
+@[inline]
+pub fn im_font_clear_output_data(self &imgui.ImFont) {
+	C.ImFont_ClearOutputData(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_AddRemapChar(self &imgui.ImFont, from_codepoint u32, to_codepoint u32)
+
+@[inline]
+pub fn im_font_add_remap_char(self &imgui.ImFont, from_codepoint u32, to_codepoint u32) {
+	C.ImFont_AddRemapChar(self, from_codepoint, to_codepoint)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_IsGlyphRangeUnused(self &imgui.ImFont, c_begin u32, c_last u32) bool
+
+@[inline]
+pub fn im_font_is_glyph_range_unused(self &imgui.ImFont, c_begin u32, c_last u32) bool {
+	return C.ImFont_IsGlyphRangeUnused(self, c_begin, c_last)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec1_ImVec1_Nil() &ImVec1
+
+@[inline]
+pub fn im_vec1_im_vec1_nil() &ImVec1 {
+	return C.ImVec1_ImVec1_Nil()
+}
+
+
+@[keep_args_alive]
+fn C.ImVec1_destroy(self &ImVec1)
+
+@[inline]
+pub fn im_vec1_destroy(self &ImVec1) {
+	C.ImVec1_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec1_ImVec1_Float(_x f32) &ImVec1
+
+@[inline]
+pub fn im_vec1_im_vec1_float(_x f32) &ImVec1 {
+	return C.ImVec1_ImVec1_Float(_x)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec2i_ImVec2i_Nil() &ImVec2i
+
+@[inline]
+pub fn im_vec2i_im_vec2i_nil() &ImVec2i {
+	return C.ImVec2i_ImVec2i_Nil()
+}
+
+
+@[keep_args_alive]
+fn C.ImVec2i_destroy(self &ImVec2i)
+
+@[inline]
+pub fn im_vec2i_destroy(self &ImVec2i) {
+	C.ImVec2i_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec2i_ImVec2i_Int(_x i32, _y i32) &ImVec2i
+
+@[inline]
+pub fn im_vec2i_im_vec2i_int(_x i32, _y i32) &ImVec2i {
+	return C.ImVec2i_ImVec2i_Int(_x, _y)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec2ih_ImVec2ih_Nil() &ImVec2ih
+
+@[inline]
+pub fn im_vec2ih_im_vec2ih_nil() &ImVec2ih {
+	return C.ImVec2ih_ImVec2ih_Nil()
+}
+
+
+@[keep_args_alive]
+fn C.ImVec2ih_destroy(self &ImVec2ih)
+
+@[inline]
+pub fn im_vec2ih_destroy(self &ImVec2ih) {
+	C.ImVec2ih_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec2ih_ImVec2ih_short(_x i16, _y i16) &ImVec2ih
+
+@[inline]
+pub fn im_vec2ih_im_vec2ih_short(_x i16, _y i16) &ImVec2ih {
+	return C.ImVec2ih_ImVec2ih_short(_x, _y)
+}
+
+
+@[keep_args_alive]
+fn C.ImVec2ih_ImVec2ih_Vec2(rhs ImVec2_c) &ImVec2ih
+
+@[inline]
+pub fn im_vec2ih_im_vec2ih_vec2(rhs ImVec2_c) &ImVec2ih {
+	return C.ImVec2ih_ImVec2ih_Vec2(rhs)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_ImRect_Nil() &ImRect
+
+@[inline]
+pub fn im_rect_im_rect_nil() &ImRect {
+	return C.ImRect_ImRect_Nil()
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_destroy(self &ImRect)
+
+@[inline]
+pub fn im_rect_destroy(self &ImRect) {
+	C.ImRect_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_ImRect_Vec2(min ImVec2_c, max ImVec2_c) &ImRect
+
+@[inline]
+pub fn im_rect_im_rect_vec2(min ImVec2_c, max ImVec2_c) &ImRect {
+	return C.ImRect_ImRect_Vec2(min, max)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_ImRect_Vec4(v ImVec4_c) &ImRect
+
+@[inline]
+pub fn im_rect_im_rect_vec4(v ImVec4_c) &ImRect {
+	return C.ImRect_ImRect_Vec4(v)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_ImRect_Float(x1 f32, y1 f32, x2 f32, y2 f32) &ImRect
+
+@[inline]
+pub fn im_rect_im_rect_float(x1 f32, y1 f32, x2 f32, y2 f32) &ImRect {
+	return C.ImRect_ImRect_Float(x1, y1, x2, y2)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_GetCenter(self &ImRect) ImVec2_c
+
+@[inline]
+pub fn im_rect_get_center(self &ImRect) ImVec2_c {
+	return C.ImRect_GetCenter(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_GetSize(self &ImRect) ImVec2_c
+
+@[inline]
+pub fn im_rect_get_size(self &ImRect) ImVec2_c {
+	return C.ImRect_GetSize(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_GetWidth(self &ImRect) f32
+
+@[inline]
+pub fn im_rect_get_width(self &ImRect) f32 {
+	return C.ImRect_GetWidth(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_GetHeight(self &ImRect) f32
+
+@[inline]
+pub fn im_rect_get_height(self &ImRect) f32 {
+	return C.ImRect_GetHeight(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_GetArea(self &ImRect) f32
+
+@[inline]
+pub fn im_rect_get_area(self &ImRect) f32 {
+	return C.ImRect_GetArea(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_GetTL(self &ImRect) ImVec2_c
+
+@[inline]
+pub fn im_rect_get_tl(self &ImRect) ImVec2_c {
+	return C.ImRect_GetTL(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_GetTR(self &ImRect) ImVec2_c
+
+@[inline]
+pub fn im_rect_get_tr(self &ImRect) ImVec2_c {
+	return C.ImRect_GetTR(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_GetBL(self &ImRect) ImVec2_c
+
+@[inline]
+pub fn im_rect_get_bl(self &ImRect) ImVec2_c {
+	return C.ImRect_GetBL(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_GetBR(self &ImRect) ImVec2_c
+
+@[inline]
+pub fn im_rect_get_br(self &ImRect) ImVec2_c {
+	return C.ImRect_GetBR(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_Contains_Vec2(self &ImRect, p ImVec2_c) bool
+
+@[inline]
+pub fn im_rect_contains_vec2(self &ImRect, p ImVec2_c) bool {
+	return C.ImRect_Contains_Vec2(self, p)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_Contains_Rect(self &ImRect, r ImRect_c) bool
+
+@[inline]
+pub fn im_rect_contains_rect(self &ImRect, r ImRect_c) bool {
+	return C.ImRect_Contains_Rect(self, r)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_ContainsWithPad(self &ImRect, p ImVec2_c, pad ImVec2_c) bool
+
+@[inline]
+pub fn im_rect_contains_with_pad(self &ImRect, p ImVec2_c, pad ImVec2_c) bool {
+	return C.ImRect_ContainsWithPad(self, p, pad)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_Overlaps(self &ImRect, r ImRect_c) bool
+
+@[inline]
+pub fn im_rect_overlaps(self &ImRect, r ImRect_c) bool {
+	return C.ImRect_Overlaps(self, r)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_Add_Vec2(self &ImRect, p ImVec2_c)
+
+@[inline]
+pub fn im_rect_add_vec2(self &ImRect, p ImVec2_c) {
+	C.ImRect_Add_Vec2(self, p)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_Add_Rect(self &ImRect, r ImRect_c)
+
+@[inline]
+pub fn im_rect_add_rect(self &ImRect, r ImRect_c) {
+	C.ImRect_Add_Rect(self, r)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_AddX(self &ImRect, x f32)
+
+@[inline]
+pub fn im_rect_add_x(self &ImRect, x f32) {
+	C.ImRect_AddX(self, x)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_AddY(self &ImRect, y f32)
+
+@[inline]
+pub fn im_rect_add_y(self &ImRect, y f32) {
+	C.ImRect_AddY(self, y)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_Expand_Float(self &ImRect, amount f32)
+
+@[inline]
+pub fn im_rect_expand_float(self &ImRect, amount f32) {
+	C.ImRect_Expand_Float(self, amount)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_Expand_Vec2(self &ImRect, amount ImVec2_c)
+
+@[inline]
+pub fn im_rect_expand_vec2(self &ImRect, amount ImVec2_c) {
+	C.ImRect_Expand_Vec2(self, amount)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_Translate(self &ImRect, d ImVec2_c)
+
+@[inline]
+pub fn im_rect_translate(self &ImRect, d ImVec2_c) {
+	C.ImRect_Translate(self, d)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_TranslateX(self &ImRect, dx f32)
+
+@[inline]
+pub fn im_rect_translate_x(self &ImRect, dx f32) {
+	C.ImRect_TranslateX(self, dx)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_TranslateY(self &ImRect, dy f32)
+
+@[inline]
+pub fn im_rect_translate_y(self &ImRect, dy f32) {
+	C.ImRect_TranslateY(self, dy)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_ClipWith(self &ImRect, r ImRect_c)
+
+@[inline]
+pub fn im_rect_clip_with(self &ImRect, r ImRect_c) {
+	C.ImRect_ClipWith(self, r)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_ClipWithFull(self &ImRect, r ImRect_c)
+
+@[inline]
+pub fn im_rect_clip_with_full(self &ImRect, r ImRect_c) {
+	C.ImRect_ClipWithFull(self, r)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_IsInverted(self &ImRect) bool
+
+@[inline]
+pub fn im_rect_is_inverted(self &ImRect) bool {
+	return C.ImRect_IsInverted(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_ToVec4(self &ImRect) ImVec4_c
+
+@[inline]
+pub fn im_rect_to_vec4(self &ImRect) ImVec4_c {
+	return C.ImRect_ToVec4(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImRect_AsVec4(self &ImRect) &ImVec4_c
+
+@[inline]
+pub fn im_rect_as_vec4(self &ImRect) &ImVec4_c {
+	return C.ImRect_AsVec4(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImBitVector_Create(self &ImBitVector, sz i32)
+
+@[inline]
+pub fn im_bit_vector_create(self &ImBitVector, sz i32) {
+	C.ImBitVector_Create(self, sz)
+}
+
+
+@[keep_args_alive]
+fn C.ImBitVector_Clear(self &ImBitVector)
+
+@[inline]
+pub fn im_bit_vector_clear(self &ImBitVector) {
+	C.ImBitVector_Clear(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImBitVector_TestBit(self &ImBitVector, n i32) bool
+
+@[inline]
+pub fn im_bit_vector_test_bit(self &ImBitVector, n i32) bool {
+	return C.ImBitVector_TestBit(self, n)
+}
+
+
+@[keep_args_alive]
+fn C.ImBitVector_SetBit(self &ImBitVector, n i32)
+
+@[inline]
+pub fn im_bit_vector_set_bit(self &ImBitVector, n i32) {
+	C.ImBitVector_SetBit(self, n)
+}
+
+
+@[keep_args_alive]
+fn C.ImBitVector_ClearBit(self &ImBitVector, n i32)
+
+@[inline]
+pub fn im_bit_vector_clear_bit(self &ImBitVector, n i32) {
+	C.ImBitVector_ClearBit(self, n)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSharedData_ImDrawListSharedData() &imgui.ImDrawListSharedData
+
+@[inline]
+pub fn im_draw_list_shared_data_im_draw_list_shared_data() &imgui.ImDrawListSharedData {
+	return C.ImDrawListSharedData_ImDrawListSharedData()
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSharedData_destroy(self &imgui.ImDrawListSharedData)
+
+@[inline]
+pub fn im_draw_list_shared_data_destroy(self &imgui.ImDrawListSharedData) {
+	C.ImDrawListSharedData_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawListSharedData_SetCircleTessellationMaxError(self &imgui.ImDrawListSharedData, max_error f32)
+
+@[inline]
+pub fn im_draw_list_shared_data_set_circle_tessellation_max_error(self &imgui.ImDrawListSharedData, max_error f32) {
+	C.ImDrawListSharedData_SetCircleTessellationMaxError(self, max_error)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawDataBuilder_ImDrawDataBuilder() &imgui.ImDrawDataBuilder
+
+@[inline]
+pub fn im_draw_data_builder_im_draw_data_builder() &imgui.ImDrawDataBuilder {
+	return C.ImDrawDataBuilder_ImDrawDataBuilder()
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawDataBuilder_destroy(self &imgui.ImDrawDataBuilder)
+
+@[inline]
+pub fn im_draw_data_builder_destroy(self &imgui.ImDrawDataBuilder) {
+	C.ImDrawDataBuilder_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontLoader_ImFontLoader() &imgui.ImFontLoader
+
+@[inline]
+pub fn im_font_loader_im_font_loader() &imgui.ImFontLoader {
+	return C.ImFontLoader_ImFontLoader()
+}
+
+
+@[keep_args_alive]
+fn C.ImFontLoader_destroy(self &imgui.ImFontLoader)
+
+@[inline]
+pub fn im_font_loader_destroy(self &imgui.ImFontLoader) {
+	C.ImFontLoader_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlasBuilder_ImFontAtlasBuilder() &imgui.ImFontAtlasBuilder
+
+@[inline]
+pub fn im_font_atlas_builder_im_font_atlas_builder() &imgui.ImFontAtlasBuilder {
+	return C.ImFontAtlasBuilder_ImFontAtlasBuilder()
+}
+
+
+@[keep_args_alive]
+fn C.ImFontAtlasBuilder_destroy(self &imgui.ImFontAtlasBuilder)
+
+@[inline]
+pub fn im_font_atlas_builder_destroy(self &imgui.ImFontAtlasBuilder) {
+	C.ImFontAtlasBuilder_destroy(self)
+}
 
 /////////////////////////hand written functions
 // no appendfV
+
 // for getting FLT_MAX in bindings
+
 // for getting FLT_MIN in bindings
+
+
+@[keep_args_alive]
+fn C.ImVector_ImWchar_create() &ImVector_ImWchar
+
+@[inline]
+pub fn im_vector_im_wchar_create() &ImVector_ImWchar {
+	return C.ImVector_ImWchar_create()
+}
+
+
+@[keep_args_alive]
+fn C.ImVector_ImWchar_destroy(self &ImVector_ImWchar)
+
+@[inline]
+pub fn im_vector_im_wchar_destroy(self &ImVector_ImWchar) {
+	C.ImVector_ImWchar_destroy(self)
+}
+
+
+@[keep_args_alive]
+fn C.ImVector_ImWchar_Init(p &ImVector_ImWchar)
+
+@[inline]
+pub fn im_vector_im_wchar_init(p &ImVector_ImWchar) {
+	C.ImVector_ImWchar_Init(p)
+}
+
+
+@[keep_args_alive]
+fn C.ImVector_ImWchar_UnInit(p &ImVector_ImWchar)
+
+@[inline]
+pub fn im_vector_im_wchar_un_init(p &ImVector_ImWchar) {
+	C.ImVector_ImWchar_UnInit(p)
+}
+
 // CIMGUI_INCLUDED
+
+
+pub type Tm = C.Tm
+@[typedef]
+pub struct C.Tm {}
+
+pub type Axis = Axis_c
+
+pub type DateTimeSpec = C.DateTimeSpec_c
+
+pub type Point = Point_c
+
+pub type Range = Range_c
+
+pub type Rect = Rect_c
+
+pub type Spec = C.Spec_c
+
+pub type Tick = Tick_c
+
+pub type Time = Time_c
+
+
+pub type AxisColor = C.ImPlotAxisColor
+@[typedef]
+pub struct C.ImPlotAxisColor {}
 
 
 pub type ImVector_ImS16 = C.ImVector_ImS16
@@ -2562,9 +4578,9 @@ pub enum Bin_ {
 }
 
 
-pub type Spec_c = C.ImPlotSpec_c
+pub type Point_c = C.ImPlotPoint_c
 @[typedef]
-pub struct C.ImPlotSpec_c {
+pub struct C.ImPlotPoint_c {
 pub mut:
 	LineColor ImVec4_c
 	LineColors &u32
@@ -2586,21 +4602,12 @@ pub mut:
 }
 
 
-pub type Point_c = C.ImPlotPoint_c
-@[typedef]
-pub struct C.ImPlotPoint_c {
-pub mut:
-	X f64
-	Y f64
-}
-
-
 pub type Range_c = C.ImPlotRange_c
 @[typedef]
 pub struct C.ImPlotRange_c {
 pub mut:
-	Min f64
-	Max f64
+	X f64
+	Y f64
 }
 
 
@@ -2608,8 +4615,8 @@ pub type Rect_c = C.ImPlotRect_c
 @[typedef]
 pub struct C.ImPlotRect_c {
 pub mut:
-	X Range_c
-	Y Range_c
+	Min f64
+	Max f64
 }
 
 
@@ -2663,11 +4670,11 @@ pub mut:
 	ZoomRate f32
 }
 
-pub type Formatter = fn(f64, &char, i32, voidptr) i32
+pub type Formatter = fn (f64, &char, i32, voidptr) i32
 
-pub type Getter = fn(i32, voidptr) Point_c
+pub type Getter = fn (i32, voidptr) Point_c
 
-pub type Transform = fn(f64, voidptr) f64
+pub type Transform = fn (f64, voidptr) f64
 
 pub const implot_min_time = f64(0)
 
@@ -2725,26 +4732,17 @@ pub enum MarkerInternal_ {
  marker_invalid                     = -3
 }
 
-pub type Locator = fn(&Ticker, Range_c, f32, bool, Formatter, voidptr)
-
-
-pub type DateTimeSpec_c = C.ImPlotDateTimeSpec_c
-@[typedef]
-pub struct C.ImPlotDateTimeSpec_c {
-pub mut:
-	Date DateFmt
-	Time TimeFmt
-	UseISO8601 bool
-	Use24HourClock bool
-}
+pub type Locator = fn (&Ticker, Range_c, f32, bool, Formatter, voidptr)
 
 
 pub type Time_c = C.ImPlotTime_c
 @[typedef]
 pub struct C.ImPlotTime_c {
 pub mut:
-	S i64
-	Us i32
+	Date DateFmt
+	Time TimeFmt
+	UseISO8601 bool
+	Use24HourClock bool
 }
 
 
@@ -3241,7 +5239,11 @@ pub mut:
 }
 
 
-pub type DateTimeSpec = C.ImPlotDateTimeSpec
+pub type Formatter_Time_Data = C.Formatter_Time_Data
+@[typedef]
+pub struct C.Formatter_Time_Data {}
+
+
 @[typedef]
 pub struct C.ImPlotDateTimeSpec {
 pub mut:
@@ -3252,7 +5254,7 @@ pub mut:
 }
 
 // Point getters manually wrapped use this
-pub type Point_getter = fn(voidptr, i32, &Point_c) voidptr
+pub type Point_getter = fn (voidptr, i32, &Point_c) voidptr
 
 
 @[keep_args_alive]
@@ -6412,10 +8414,10 @@ pub fn annotation_str(x f64, y f64, col ImVec4_c, pix_offset ImVec2_c, clamp boo
 
 
 @[keep_args_alive]
-fn C.ImPlot_AnnotationV(x f64, y f64, col ImVec4_c, pix_offset ImVec2_c, clamp bool, const_fmt &char, args Va_list)
+fn C.ImPlot_AnnotationV(x f64, y f64, col ImVec4_c, pix_offset ImVec2_c, clamp bool, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn annotation_v(x f64, y f64, col ImVec4_c, pix_offset ImVec2_c, clamp bool, const_fmt &char, args Va_list) {
+pub fn annotation_v(x f64, y f64, col ImVec4_c, pix_offset ImVec2_c, clamp bool, const_fmt &char, args C.va_list) {
 	C.ImPlot_AnnotationV(x, y, col, pix_offset, clamp, const_fmt, args)
 }
 
@@ -6439,10 +8441,10 @@ pub fn tag_x_str(x f64, col ImVec4_c, const_fmt &char) {
 
 
 @[keep_args_alive]
-fn C.ImPlot_TagXV(x f64, col ImVec4_c, const_fmt &char, args Va_list)
+fn C.ImPlot_TagXV(x f64, col ImVec4_c, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn tag_xv(x f64, col ImVec4_c, const_fmt &char, args Va_list) {
+pub fn tag_xv(x f64, col ImVec4_c, const_fmt &char, args C.va_list) {
 	C.ImPlot_TagXV(x, col, const_fmt, args)
 }
 
@@ -6466,10 +8468,10 @@ pub fn tag_y_str(y f64, col ImVec4_c, const_fmt &char) {
 
 
 @[keep_args_alive]
-fn C.ImPlot_TagYV(y f64, col ImVec4_c, const_fmt &char, args Va_list)
+fn C.ImPlot_TagYV(y f64, col ImVec4_c, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn tag_yv(y f64, col ImVec4_c, const_fmt &char, args Va_list) {
+pub fn tag_yv(y f64, col ImVec4_c, const_fmt &char, args C.va_list) {
 	C.ImPlot_TagYV(y, col, const_fmt, args)
 }
 
@@ -8428,10 +10430,10 @@ pub fn annotation_collection_destroy(self &AnnotationCollection) {
 
 
 @[keep_args_alive]
-fn C.ImPlotAnnotationCollection_AppendV(self &AnnotationCollection, pos ImVec2_c, off ImVec2_c, bg u32, fg u32, clamp bool, const_fmt &char, args Va_list)
+fn C.ImPlotAnnotationCollection_AppendV(self &AnnotationCollection, pos ImVec2_c, off ImVec2_c, bg u32, fg u32, clamp bool, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn annotation_collection_append_v(self &AnnotationCollection, pos ImVec2_c, off ImVec2_c, bg u32, fg u32, clamp bool, const_fmt &char, args Va_list) {
+pub fn annotation_collection_append_v(self &AnnotationCollection, pos ImVec2_c, off ImVec2_c, bg u32, fg u32, clamp bool, const_fmt &char, args C.va_list) {
 	C.ImPlotAnnotationCollection_AppendV(self, pos, off, bg, fg, clamp, const_fmt, args)
 }
 
@@ -8500,10 +10502,10 @@ pub fn tag_collection_destroy(self &TagCollection) {
 
 
 @[keep_args_alive]
-fn C.ImPlotTagCollection_AppendV(self &TagCollection, axis ImAxis, value f64, bg u32, fg u32, const_fmt &char, args Va_list)
+fn C.ImPlotTagCollection_AppendV(self &TagCollection, axis ImAxis, value f64, bg u32, fg u32, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn tag_collection_append_v(self &TagCollection, axis ImAxis, value f64, bg u32, fg u32, const_fmt &char, args Va_list) {
+pub fn tag_collection_append_v(self &TagCollection, axis ImAxis, value f64, bg u32, fg u32, const_fmt &char, args C.va_list) {
 	C.ImPlotTagCollection_AppendV(self, axis, value, bg, fg, const_fmt, args)
 }
 

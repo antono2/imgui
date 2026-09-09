@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+regenerate_c=0
+while (($#)); do
+	case "$1" in
+		--regenerate-c) regenerate_c=1; shift ;;
+		-h|--help)
+			printf '%s\n' 'Usage: generate_v.sh [--regenerate-c]'
+			printf '%s\n' 'By default, translate the generated C API committed by cimgui/cimplot.'
+			exit 0 ;;
+		*) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
+	esac
+done
+
 # Make sure the current working dir = this script dir
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
 pushd "$SCRIPT_DIR" >/dev/null
 printf " --- Changed working dir to\n$SCRIPT_DIR\n\n"
-
-printf " --- Stashing CIMGUI / CIMPLOT changes"
-#pushd cimgui
-#git stash
-#popd
-#pushd cimplot
-#git stash
-#popd
-printf " --- Updating Submodules"
-printf "     Note: Change submodule version to change cimgui version"
-#git submodule update --init --recursive
-#git submodule foreach git pull
 
 TARGETS_CIMGUI="internal" #"comments constructors internal noimstrv"
 TARGETS_CIMPLOT="internal"
@@ -26,48 +26,40 @@ CFLAGS="glfw" #opengl3 opengl2 sdl2 sdl3"
 
 printf " --- Generate cimgui\n\n"
 rm -f cimgui/CMakeCache.txt cimplot/CMakeCache.txt CMakeCache.txt
-pushd cimgui/generator
-  # ./generator.lua <compiler> "<targets>" <CFLAGS>
-  luajit ./generator.lua gcc $TARGETS_CIMGUI $CFLAGS &> /dev/null
-popd
+if ((regenerate_c)); then
+	pushd cimgui/generator
+	# ./generator.lua <compiler> "<targets>" <CFLAGS>
+	luajit ./generator.lua gcc $TARGETS_CIMGUI $CFLAGS &> /dev/null
+	popd
+else
+	printf "     Using the generated API committed by the pinned cimgui revision\n"
+fi
 
-printf " --- Build cimgui\n\n"
-pushd cimgui
-#  cmake $DFLAGS $CFLAGS . &> /dev/null
-#  make &> /dev/null
-printf " --- Add ____TRANSLATIONFIX____ to cimgui.h\n\n"
+printf " --- Copy cimgui to include\n\n"
+cp cimgui/*.h include/
+cp cimgui/*.cpp include/
+
+printf " --- Add ____TRANSLATIONFIX____ to include/cimgui.h\n\n"
 # -p=print each line -i=edit in place -g=whole file at once -e=execute
 # Each struct, where typedef comes right after, but not struct or enum
 # Note: Struct may contain another scope inside for the union definition, which has { }
-perl -p -i -g -e 's/(struct\s[\w\d]+\s\{[^\}]+(?:union\s+\{[^\}]+\};[^\}]+)?\};\s)(typedef\s(?!struct|enum)[^\n]+)/$1\n\nstruct ____TRANSLATIONFIX____;\n$2/g' cimgui.h
-popd
-
-printf " --- Copy cimgui to include & lib\n\n"
-cp cimgui/*.a lib/
-cp cimgui/*.h include/
-cp cimgui/*.cpp include/
-# Keep a copy at its original place. For the next run
-cp include/cimgui_impl.h cimgui/generator/output/
-cp include/cimgui_impl.cpp cimgui/generator/output/
+perl -p -i -g -e 's/(struct\s[\w\d]+\s\{[^\}]+(?:union\s+\{[^\}]+\};[^\}]+)?\};\s)(typedef\s(?!struct|enum)[^\n]+)/$1\n\nstruct ____TRANSLATIONFIX____;\n$2/g' include/cimgui.h
 
 printf " --- Generate cimplot\n\n"
-pushd cimplot/generator
-  luajit ./generator.lua gcc $TARGETS_CIMPLOT $CFLAGS &> /dev/null
-popd
+if ((regenerate_c)); then
+	pushd cimplot/generator
+	luajit ./generator.lua gcc $TARGETS_CIMPLOT $CFLAGS &> /dev/null
+	popd
+else
+	printf "     Using the generated API committed by the pinned cimplot revision\n"
+fi
 
-printf " --- Build cimplot\n\n"
-pushd cimplot
-printf " --- Add ____TRANSLATIONFIX____ to cimplot.h\n\n"
-perl -p -i -g -e 's/(struct\s[\w\d]+\s\{[^\}]+(?:union\s+\{[^\}]+\};[^\}]+)?\};\s)(typedef\s(?!struct|enum)[^\n]+)/$1\n\nstruct ____TRANSLATIONFIX____;\n$2/g' cimplot.h
-popd
-
-printf " --- Copy cimplot to include & lib\n\n"
-cp cimplot/*.a lib/
+printf " --- Copy cimplot to include\n\n"
 cp cimplot/*.cpp include/
 cp cimplot/*.h include/
-# Keep a copy at its original place. For the next run
-cp include/cimplot.h cimplot/generator/output/
-cp include/cimplot.cpp cimplot/generator/output/
+
+printf " --- Add ____TRANSLATIONFIX____ to include/cimplot.h\n\n"
+perl -p -i -g -e 's/(struct\s[\w\d]+\s\{[^\}]+(?:union\s+\{[^\}]+\};[^\}]+)?\};\s)(typedef\s(?!struct|enum)[^\n]+)/$1\n\nstruct ____TRANSLATIONFIX____;\n$2/g' include/cimplot.h
 
 #printf "Remove Asserts"
 #perl -p -i -g -e 's/(IM_ASSERT\(ImGuiImplVulkanFuncs_vkCmdBeginRenderingKHR != nullptr\);)/\/\/$1/g' cimgui/imgui/backends/imgui_impl_vulkan.cpp
