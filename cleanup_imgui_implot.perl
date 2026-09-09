@@ -177,6 +177,11 @@ sub clean_one {
   $final =~ s/\bmain\.//g;
   $final =~ s/\bMain\.//g;
   $final = final_sanitize($kind, $final);
+  my $header_aliases = header_alias_decls($kind, $final, $hdr);
+  $final =~ s/(pub const version_num[^\n]*\n\n)/$1$header_aliases/s if $header_aliases ne '';
+  my $c_alias_targets = missing_c_alias_target_decls($final);
+  $final =~ s/(pub const version_num[^\n]*\n\n)/$1$c_alias_targets/s if $c_alias_targets ne '';
+  $final = final_sanitize($kind, $final);
   $final =~ s/\n{4,}/\n\n\n/g;
   write_file($outfile, $final);
   print "cleaned $kind: $infile -> $outfile\n";
@@ -573,7 +578,7 @@ sub emit_struct {
     next if $l =~ /^\s*$/;
     if ($l =~ /^\s*([A-Za-z_]\w*)\s+(.+?)\s*$/) {
       my ($field,$typ)=($1,clean_type_expr($kind,$2));
-      $field = ucfirst($field) unless $orig_name =~ /^(ImVec2|ImVec4|ImVec2_c|ImVec4_c|ImDrawVert)$/;
+      $field = ucfirst($field) unless $orig_name =~ /^(ImVec2|ImVec4|ImVec2_c|ImVec2i_c|ImVec2ih|ImVec4_c|ImDrawVert)$/;
       push @fields, "\t$field $typ";
     }
   }
@@ -853,13 +858,19 @@ sub header_alias_decls {
   while ($body =~ /^\s*(?:pub\s+)?type\s+([A-Za-z_]\w*)\s*=/gm) { $defined{$1}=1; }
   my %body_c_struct;
   while ($body =~ /^\s*pub\s+struct\s+C\.([A-Za-z_]\w*)\b/gm) { $body_c_struct{$1}=1; }
+  my %referenced;
+  while ($body =~ /(?<![\w.])([A-Z][A-Za-z0-9_]*)(?![\w.])/g) { $referenced{$1}=1; }
   my @decls;
   while ($hdr =~ /^\s*typedef\s+struct\s+([A-Za-z_]\w*)\s+([A-Za-z_]\w*)\s*;/gm) {
     my ($backing, $public) = ($1, $2);
-    next if $backing eq $public || !$body_c_struct{$backing};
     my $alias = clean_type_name($kind, $public);
-    next if $alias eq '' || $defined{$alias};
+    next if $alias eq '' || $alias !~ /^[A-Z]/ || $defined{$alias};
+    next unless $referenced{$alias} || $body_c_struct{$backing};
     push @decls, "pub type $alias = C.$backing";
+    if (!$body_c_struct{$backing}) {
+      push @decls, "@[typedef]\npub struct C.$backing {}";
+      $body_c_struct{$backing}=1;
+    }
     $defined{$alias}=1;
   }
   return @decls ? join("\n", @decls) . "\n\n" : '';
@@ -876,6 +887,17 @@ sub bridge_c_suffix_aliases {
   }
   if (@decls) { my $insert=join("\n",@decls)."\n\n"; $s =~ s/(pub const version_num[^\n]*\n\n)/$1$insert/s; }
   return $s;
+}
+
+sub missing_c_alias_target_decls {
+  my ($s)=@_;
+  my %declared;
+  while ($s =~ /^\s*pub\s+struct\s+C\.([A-Za-z_]\w*)\b/gm) { $declared{$1}=1; }
+  my %missing;
+  while ($s =~ /^\s*pub\s+type\s+[A-Za-z_]\w*\s*=\s*C\.([A-Za-z_]\w*)\s*$/gm) {
+    $missing{$1}=1 unless $declared{$1};
+  }
+  return join('', map { "@[typedef]\npub struct C.$_ {}\n\n" } sort keys %missing);
 }
 
 sub final_sanitize {
@@ -904,15 +926,38 @@ sub final_sanitize {
     }
   }
 
+  # c2v currently truncates compact C declarations such as `float x, y;`.
+  # These ABI-critical value types are deliberately written in that form by
+  # cimgui, so restore their complete layouts after translating either branch.
+  $s =~ s{pub struct C\.ImVec2_c \{(?:[ \t]*\}|[^\n]*\n.*?^\})}{pub struct C.ImVec2_c {
+pub mut:
+\tx f32
+\ty f32
+}}ms;
+  $s =~ s{pub struct C\.ImVec2i_c \{(?:[ \t]*\}|[^\n]*\n.*?^\})}{pub struct C.ImVec2i_c {
+pub mut:
+\tx int
+\ty int
+}}ms;
+  $s =~ s{pub struct C\.ImVec2ih \{(?:[ \t]*\}|[^\n]*\n.*?^\})}{pub struct C.ImVec2ih {
+pub mut:
+\tx i16
+\ty i16
+}}ms;
+  $s =~ s{pub struct C\.ImVec4_c \{(?:[ \t]*\}|[^\n]*\n.*?^\})}{pub struct C.ImVec4_c {
+pub mut:
+\tx f32
+\ty f32
+\tz f32
+\tw f32
+}}ms;
+
   my %seen; my @out;
   for my $line (split /\n/, $s) {
     if ($line =~ /^\s*pub\s+type\s+([A-Za-z_]\w*)\s*=/) { next if $seen{$1}++; }
     push @out,$line;
   }
   $s=join("\n",@out)."\n";
-  $s =~ s/(pub struct C\.ImVec2_c \{\n\s*pub mut:\n)\s*[Xx] f32\n\s*[Yy] f32/$1\tx f32\n\ty f32/s;
-  $s =~ s/(pub struct C\.ImVec2i_c \{\n\s*pub mut:\n)\s*[Xx] i32\n\s*[Yy] i32/$1\tx i32\n\ty i32/s;
-  $s =~ s/(pub struct C\.ImVec4_c \{\n\s*pub mut:\n)\s*[Xx] f32\n\s*[Yy] f32\n\s*[Zz] f32\n\s*[Ww] f32/$1\tx f32\n\ty f32\n\tz f32\n\tw f32/s;
   $s =~ s/\bimgui\.([A-Z][A-Za-z0-9_]*)\b/$1/g if $kind eq 'imgui';
   $s =~ s/\bimplot\.([A-Z][A-Za-z0-9_]*)\b/$1/g if $kind eq 'implot';
   $s =~ s/\n{4,}/\n\n\n/g;

@@ -39,4 +39,15 @@ grep -Fq "pub const version = '$version'" "$repo_dir/imgui.v" || {
 	exit 1
 }
 
+if ! rg -U -q 'pub struct C\.ImVec2_c \{\s+pub mut:\s+x f32\s+y f32\s+\}' "$repo_dir/imgui.v" \
+	|| ! rg -U -q 'pub struct C\.ImVec4_c \{\s+pub mut:\s+x f32\s+y f32\s+z f32\s+w f32\s+\}' "$repo_dir/imgui.v"; then
+	echo 'Generated ImVec2/ImVec4 layouts are incomplete.' >&2
+	exit 1
+fi
+if ! grep -Fqx 'pub type ImVec2 = C.ImVec2_c' "$repo_dir/imgui.v" \
+	|| ! grep -Fqx 'pub type ImVec4 = C.ImVec4_c' "$repo_dir/imgui.v"; then
+	echo 'Generated public ImVec2/ImVec4 aliases are missing.' >&2
+	exit 1
+fi
+
 printf 'Dear ImGui %s (%s variant)\n' "$version" "$variant"

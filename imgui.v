@@ -81,7 +81,11 @@ pub struct C.va_list {}
 pub type ImVec2_c = C.ImVec2_c
 
 @[typedef]
-pub struct C.ImVec2_c {}
+pub struct C.ImVec2_c {
+pub mut:
+	x f32
+	y f32
+}
 
 // docking branch
 pub type ImColor = ImColor_c
@@ -249,6 +253,8 @@ pub struct C.ImVec4_c {
 pub mut:
 	x f32
 	y f32
+	z f32
+	w f32
 }
 
 pub type ImTextureID = i64
@@ -2288,7 +2294,8 @@ pub type ImVec2i_c = C.ImVec2i_c
 @[typedef]
 pub struct C.ImVec2i_c {
 pub mut:
-	X f32
+	x int
+	y int
 }
 
 pub type ImVec2ih = C.ImVec2ih
@@ -2296,8 +2303,8 @@ pub type ImVec2ih = C.ImVec2ih
 @[typedef]
 pub struct C.ImVec2ih {
 pub mut:
-	X i16
-	Y i16
+	x i16
+	y i16
 }
 
 pub type ImRect_c = C.ImRect_c
