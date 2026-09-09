@@ -83,6 +83,7 @@ pub type ImVec2_c = C.ImVec2_c
 @[typedef]
 pub struct C.ImVec2_c {}
 
+// docking branch
 pub type ImColor = ImColor_c
 
 pub type ImRect = ImRect_c
@@ -100,6 +101,16 @@ pub type TextFilter = C.ImGuiTextFilter
 @[typedef]
 pub struct C.ImGuiTextFilter {}
 
+pub type DockRequest = C.ImGuiDockRequest
+
+@[typedef]
+pub struct C.ImGuiDockRequest {}
+
+pub type DockNodeSettings = C.ImGuiDockNodeSettings
+
+@[typedef]
+pub struct C.ImGuiDockNodeSettings {}
+
 pub type InputTextDeactivateData = C.ImGuiInputTextDeactivateData
 
 @[typedef]
@@ -114,6 +125,16 @@ pub type Stbrp_node = C.stbrp_node
 
 @[typedef]
 pub struct C.stbrp_node {}
+
+pub type ImVector_const_charPtr = C.ImVector_const_charPtr
+
+@[typedef]
+pub struct C.ImVector_const_charPtr {
+pub mut:
+	Size     i32
+	Capacity i32
+	Data     &&u8
+}
 
 pub type ID = u32
 
@@ -168,6 +189,8 @@ pub type ColorEditFlags = i32
 pub type ConfigFlags = i32
 
 pub type ComboFlags = i32
+
+pub type DockNodeFlags = i32
 
 pub type DragDropFlags = i32
 
@@ -260,9 +283,11 @@ pub enum WindowFlags_ {
 	no_nav_inputs               = 1 << 16
 	no_nav_focus                = 1 << 17
 	unsaved_document            = 1 << 18
+	no_docking                  = 1 << 19
 	no_nav                      = 1 << 16 | 1 << 17
 	no_decoration               = 1 << 0 | 1 << 1 | 1 << 3 | 1 << 5
 	no_inputs                   = 1 << 9 | 1 << 16 | 1 << 17
+	dock_node_host              = 1 << 23
 	child_window                = 1 << 24
 	tooltip                     = 1 << 25
 	popup                       = 1 << 26
@@ -426,6 +451,7 @@ pub enum FocusedFlags_ {
 	root_window            = 1 << 1
 	any_window             = 1 << 2
 	no_popup_hierarchy     = 1 << 3
+	dock_hierarchy         = 1 << 4
 	root_and_child_windows = 1 << 0 | 1 << 1
 }
 
@@ -435,6 +461,7 @@ pub enum HoveredFlags_ {
 	root_window                       = 1 << 1
 	any_window                        = 1 << 2
 	no_popup_hierarchy                = 1 << 3
+	dock_hierarchy                    = 1 << 4
 	allow_when_blocked_by_popup       = 1 << 5
 	allow_when_blocked_by_active_item = 1 << 7
 	allow_when_overlapped_by_item     = 1 << 8
@@ -450,6 +477,17 @@ pub enum HoveredFlags_ {
 	delay_short                       = 1 << 15
 	delay_normal                      = 1 << 16
 	no_shared_delay                   = 1 << 17
+}
+
+pub enum DockNodeFlags_ {
+	none                         = 0
+	keep_alive_only              = 1 << 0
+	no_docking_over_central_node = 1 << 2
+	passthru_central_node        = 1 << 3
+	no_docking_split             = 1 << 4
+	no_resize                    = 1 << 5
+	auto_hide_tab_bar            = 1 << 6
+	no_undocking                 = 1 << 7
 }
 
 pub enum DragDropFlags_ {
@@ -689,17 +727,23 @@ pub enum ConfigFlags_ {
 	no_mouse               = 1 << 4
 	no_mouse_cursor_change = 1 << 5
 	no_keyboard            = 1 << 6
+	docking_enable         = 1 << 7
+	viewports_enable       = 1 << 10
 	is_srgb                = 1 << 20
 	is_touch_screen        = 1 << 21
 }
 
 pub enum BackendFlags_ {
-	none                    = 0
-	has_gamepad             = 1 << 0
-	has_mouse_cursors       = 1 << 1
-	has_set_mouse_pos       = 1 << 2
-	renderer_has_vtx_offset = 1 << 3
-	renderer_has_textures   = 1 << 4
+	none                       = 0
+	has_gamepad                = 1 << 0
+	has_mouse_cursors          = 1 << 1
+	has_set_mouse_pos          = 1 << 2
+	renderer_has_vtx_offset    = 1 << 3
+	renderer_has_textures      = 1 << 4
+	renderer_has_viewports     = 1 << 10
+	platform_has_viewports     = 1 << 11
+	has_mouse_hovered_viewport = 1 << 12
+	has_parent_viewport        = 1 << 13
 }
 
 pub enum Col_ {
@@ -745,6 +789,8 @@ pub enum Col_ {
 	tab_dimmed
 	tab_dimmed_selected
 	tab_dimmed_selected_overline
+	docking_preview
+	docking_empty_bg
 	plot_lines
 	plot_lines_hovered
 	plot_histogram
@@ -812,6 +858,7 @@ pub enum StyleVar_ {
 	separator_text_border_size
 	separator_text_align
 	separator_text_padding
+	docking_separator_size
 	count
 }
 
@@ -1084,13 +1131,15 @@ pub mut:
 	SeparatorTextPadding             ImVec2_c
 	DisplayWindowPadding             ImVec2_c
 	DisplaySafeAreaPadding           ImVec2_c
+	DockingNodeHasCloseButton        bool
+	DockingSeparatorSize             f32
 	MouseCursorScale                 f32
 	AntiAliasedLines                 bool
 	AntiAliasedLinesUseTex           bool
 	AntiAliasedFill                  bool
 	CurveTessellationTol             f32
 	CircleTessellationMaxError       f32
-	Colors                           [61]ImVec4_c
+	Colors                           [63]ImVec4_c
 	HoverStationaryDelay             f32
 	HoverDelayShort                  f32
 	HoverDelayNormal                 f32
@@ -1145,6 +1194,18 @@ pub mut:
 	ConfigNavEscapeClearFocusWindow               bool
 	ConfigNavCursorVisibleAuto                    bool
 	ConfigNavCursorVisibleAlways                  bool
+	ConfigDockingNoSplit                          bool
+	ConfigDockingNoDockingOver                    bool
+	ConfigDockingWithShift                        bool
+	ConfigDockingAlwaysTabBar                     bool
+	ConfigDockingTransparentPayload               bool
+	ConfigViewportsNoAutoMerge                    bool
+	ConfigViewportsNoTaskBarIcon                  bool
+	ConfigViewportsNoDecoration                   bool
+	ConfigViewportsNoDefaultParent                bool
+	ConfigViewportsPlatformFocusSetsImGuiFocus    bool
+	ConfigDpiScaleFonts                           bool
+	ConfigDpiScaleViewports                       bool
 	ConfigMacOSXBehaviors                         bool
 	ConfigInputTrickleEventQueue                  bool
 	ConfigInputTextCursorBlink                    bool
@@ -1200,6 +1261,7 @@ pub mut:
 	MouseWheel                                    f32
 	MouseWheelH                                   f32
 	MouseSource                                   MouseSource
+	MouseHoveredViewport                          ID
 	KeyCtrl                                       bool
 	KeyShift                                      bool
 	KeyAlt                                        bool
@@ -1222,6 +1284,7 @@ pub mut:
 	MouseCtrlLeftAsRightClick                     bool
 	MouseDownDuration                             [5]f32
 	MouseDownDurationPrev                         [5]f32
+	MouseDragMaxDistanceAbs                       [5]ImVec2_c
 	MouseDragMaxDistanceSqr                       [5]f32
 	PenPressure                                   f32
 	AppFocusLost                                  bool
@@ -1261,6 +1324,23 @@ pub mut:
 	Pos         ImVec2_c
 	CurrentSize ImVec2_c
 	DesiredSize ImVec2_c
+}
+
+pub type WindowClass = C.ImGuiWindowClass
+
+@[typedef]
+pub struct C.ImGuiWindowClass {
+pub mut:
+	ClassId                    ID
+	ParentViewportId           ID
+	FocusRouteParentWindowId   ID
+	ViewportFlagsOverrideSet   ViewportFlags
+	ViewportFlagsOverrideClear ViewportFlags
+	TabItemFlagsOverrideSet    TabItemFlags
+	DockNodeFlagsOverrideSet   DockNodeFlags
+	DockingAlwaysTabBar        bool
+	DockingAllowUnclassed      bool
+	PlatformIconData           voidptr
 }
 
 pub type Payload = C.ImGuiPayload
@@ -2002,10 +2082,21 @@ pub mut:
 }
 
 pub enum ViewportFlags_ {
-	none                = 0
-	is_platform_window  = 1 << 0
-	is_platform_monitor = 1 << 1
-	owned_by_app        = 1 << 2
+	none                   = 0
+	is_platform_window     = 1 << 0
+	is_platform_monitor    = 1 << 1
+	owned_by_app           = 1 << 2
+	no_decoration          = 1 << 3
+	no_task_bar_icon       = 1 << 4
+	no_focus_on_appearing  = 1 << 5
+	no_focus_on_click      = 1 << 6
+	no_inputs              = 1 << 7
+	no_renderer_clear      = 1 << 8
+	no_auto_merge          = 1 << 9
+	top_most               = 1 << 10
+	can_host_other_windows = 1 << 11
+	is_minimized           = 1 << 12
+	is_focused             = 1 << 13
 }
 
 pub type Viewport = C.ImGuiViewport
@@ -2013,15 +2104,46 @@ pub type Viewport = C.ImGuiViewport
 @[typedef]
 pub struct C.ImGuiViewport {
 pub mut:
-	ID                ID
-	Flags             ViewportFlags
-	Pos               ImVec2_c
-	Size              ImVec2_c
-	FramebufferScale  ImVec2_c
-	WorkPos           ImVec2_c
-	WorkSize          ImVec2_c
-	PlatformHandle    voidptr
-	PlatformHandleRaw voidptr
+	ID                    ID
+	Flags                 ViewportFlags
+	Pos                   ImVec2_c
+	Size                  ImVec2_c
+	FramebufferScale      ImVec2_c
+	WorkPos               ImVec2_c
+	WorkSize              ImVec2_c
+	DpiScale              f32
+	ParentViewportId      ID
+	ParentViewport        &Viewport
+	DrawData              &ImDrawData
+	RendererUserData      voidptr
+	PlatformUserData      voidptr
+	PlatformIconData      voidptr
+	PlatformHandle        voidptr
+	PlatformHandleRaw     voidptr
+	PlatformWindowCreated bool
+	PlatformRequestMove   bool
+	PlatformRequestResize bool
+	PlatformRequestClose  bool
+}
+
+pub type ImVector_PlatformMonitor = C.ImVector_ImGuiPlatformMonitor
+
+@[typedef]
+pub struct C.ImVector_ImGuiPlatformMonitor {
+pub mut:
+	Size     i32
+	Capacity i32
+	Data     &PlatformMonitor
+}
+
+pub type ImVector_ViewportPtr = C.ImVector_ImGuiViewportPtr
+
+@[typedef]
+pub struct C.ImVector_ImGuiViewportPtr {
+pub mut:
+	Size     i32
+	Capacity i32
+	Data     &&Viewport
 }
 
 pub type PlatformIO = C.ImGuiPlatformIO
@@ -2029,22 +2151,62 @@ pub type PlatformIO = C.ImGuiPlatformIO
 @[typedef]
 pub struct C.ImGuiPlatformIO {
 pub mut:
-	Platform_GetClipboardTextFn    fn (&Context) &char
-	Platform_SetClipboardTextFn    fn (&Context, &char)
-	Platform_ClipboardUserData     voidptr
-	Platform_OpenInShellFn         fn (&Context, &char) bool
-	Platform_OpenInShellUserData   voidptr
-	Platform_SetImeDataFn          fn (&Context, &Viewport, &PlatformImeData)
-	Platform_ImeUserData           voidptr
-	Platform_LocaleDecimalPoint    ImWchar
-	Platform_SessionDate           i32
-	Renderer_TextureMaxWidth       i32
-	Renderer_TextureMaxHeight      i32
-	Renderer_RenderState           voidptr
-	DrawCallback_ResetRenderState  ImDrawCallback
-	DrawCallback_SetSamplerLinear  ImDrawCallback
-	DrawCallback_SetSamplerNearest ImDrawCallback
-	Textures                       ImVector_ImTextureDataPtr
+	Platform_GetClipboardTextFn        fn (&Context) &char
+	Platform_SetClipboardTextFn        fn (&Context, &char)
+	Platform_ClipboardUserData         voidptr
+	Platform_OpenInShellFn             fn (&Context, &char) bool
+	Platform_OpenInShellUserData       voidptr
+	Platform_SetImeDataFn              fn (&Context, &Viewport, &PlatformImeData)
+	Platform_ImeUserData               voidptr
+	Platform_LocaleDecimalPoint        ImWchar
+	Platform_SessionDate               i32
+	Renderer_TextureMaxWidth           i32
+	Renderer_TextureMaxHeight          i32
+	Renderer_RenderState               voidptr
+	DrawCallback_ResetRenderState      ImDrawCallback
+	DrawCallback_SetSamplerLinear      ImDrawCallback
+	DrawCallback_SetSamplerNearest     ImDrawCallback
+	Platform_CreateWindow              fn (&Viewport)
+	Platform_DestroyWindow             fn (&Viewport)
+	Platform_ShowWindow                fn (&Viewport)
+	Platform_SetWindowPos              fn (&Viewport, ImVec2_c)
+	Platform_GetWindowPos              fn (&Viewport) ImVec2_c
+	Platform_SetWindowSize             fn (&Viewport, ImVec2_c)
+	Platform_GetWindowSize             fn (&Viewport) ImVec2_c
+	Platform_GetWindowFramebufferScale fn (&Viewport) ImVec2_c
+	Platform_SetWindowFocus            fn (&Viewport)
+	Platform_GetWindowFocus            fn (&Viewport) bool
+	Platform_GetWindowMinimized        fn (&Viewport) bool
+	Platform_SetWindowTitle            fn (&Viewport, &char)
+	Platform_SetWindowAlpha            fn (&Viewport, f32)
+	Platform_UpdateWindow              fn (&Viewport)
+	Platform_RenderWindow              fn (&Viewport, voidptr)
+	Platform_SwapBuffers               fn (&Viewport, voidptr)
+	Platform_GetWindowDpiScale         fn (&Viewport) f32
+	Platform_OnChangedViewport         fn (&Viewport)
+	Platform_GetWindowWorkAreaInsets   fn (&Viewport) ImVec4_c
+	Platform_CreateVkSurface           fn (&Viewport, ImU64, voidptr, &ImU64) i32
+	Renderer_CreateWindow              fn (&Viewport)
+	Renderer_DestroyWindow             fn (&Viewport)
+	Renderer_SetWindowSize             fn (&Viewport, ImVec2_c)
+	Renderer_RenderWindow              fn (&Viewport, voidptr)
+	Renderer_SwapBuffers               fn (&Viewport, voidptr)
+	Monitors                           ImVector_PlatformMonitor
+	Textures                           ImVector_ImTextureDataPtr
+	Viewports                          ImVector_ViewportPtr
+}
+
+pub type PlatformMonitor = C.ImGuiPlatformMonitor
+
+@[typedef]
+pub struct C.ImGuiPlatformMonitor {
+pub mut:
+	MainPos        ImVec2_c
+	MainSize       ImVec2_c
+	WorkPos        ImVec2_c
+	WorkSize       ImVec2_c
+	DpiScale       f32
+	PlatformHandle voidptr
 }
 
 pub type PlatformImeData = C.ImGuiPlatformImeData
@@ -2058,6 +2220,8 @@ pub mut:
 	InputLineHeight f32
 	ViewportId      ID
 }
+
+pub type DataAuthority = u32
 
 pub type LayoutType = i32
 
@@ -2312,7 +2476,7 @@ pub enum ItemStatusFlags_ {
 
 pub enum HoveredFlagsPrivate_ {
 	delay_mask_                        = 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
-	allowed_mask_for_is_window_hovered = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 7 | 1 << 12 | 1 << 13
+	allowed_mask_for_is_window_hovered = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 7 | 1 << 12 | 1 << 13
 	allowed_mask_for_is_item_hovered   = 1 << 5 | 1 << 7 | 1 << 8 | 1 << 9 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
 }
 
@@ -2536,6 +2700,9 @@ pub enum NextWindowDataFlags_ {
 	has_window_flags    = 1 << 8
 	has_child_flags     = 1 << 9
 	has_refresh_policy  = 1 << 10
+	has_viewport        = 1 << 11
+	has_dock            = 1 << 12
+	has_window_class    = 1 << 13
 }
 
 pub type NextWindowData = C.ImGuiNextWindowData
@@ -2547,6 +2714,7 @@ pub mut:
 	PosCond              Cond
 	SizeCond             Cond
 	CollapsedCond        Cond
+	DockCond             Cond
 	PosVal               ImVec2_c
 	PosPivotVal          ImVec2_c
 	SizeVal              ImVec2_c
@@ -2554,11 +2722,15 @@ pub mut:
 	ScrollVal            ImVec2_c
 	WindowFlags          WindowFlags
 	ChildFlags           ChildFlags
+	PosUndock            bool
 	CollapsedVal         bool
 	SizeConstraintRect   ImRect_c
 	SizeCallback         SizeCallback
 	SizeCallbackUserData voidptr
 	BgAlphaVal           f32
+	ViewportId           ID
+	DockId               ID
+	WindowClass          WindowClass
 	MenuBarOffsetMinVal  ImVec2_c
 	RefreshFlagsVal      WindowRefreshFlags
 }
@@ -2717,6 +2889,7 @@ pub enum InputEventType {
 	mouse_pos
 	mouse_wheel
 	mouse_button
+	mouse_viewport
 	key
 	text
 	focus
@@ -2759,6 +2932,14 @@ pub mut:
 	Button      i32
 	Down        bool
 	MouseSource MouseSource
+}
+
+pub type InputEventMouseViewport = C.ImGuiInputEventMouseViewport
+
+@[typedef]
+pub struct C.ImGuiInputEventMouseViewport {
+pub mut:
+	HoveredViewportID ID
 }
 
 pub type InputEventKey = C.ImGuiInputEventKey
@@ -3133,16 +3314,175 @@ pub mut:
 	NavIdItem         SelectionUserData
 }
 
+pub enum DockNodeFlagsPrivate_ {
+	dock_space                    = 1 << 10
+	central_node                  = 1 << 11
+	no_tab_bar                    = 1 << 12
+	hidden_tab_bar                = 1 << 13
+	no_window_menu_button         = 1 << 14
+	no_close_button               = 1 << 15
+	no_resize_x                   = 1 << 16
+	no_resize_y                   = 1 << 17
+	docked_windows_in_focus_route = 1 << 18
+	no_docking_split_other        = 1 << 19
+	no_docking_over_me            = 1 << 20
+	no_docking_over_other         = 1 << 21
+	no_docking_over_empty         = 1 << 22
+	no_docking                    = 1 << 4 | 1 << 19 | 1 << 20 | 1 << 21 | 1 << 22
+	shared_flags_inherit_mask_    = -1
+	no_resize_flags_mask_         = 1 << 5 | 1 << 16 | 1 << 17
+	local_flags_transfer_mask_    = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
+	saved_flags_mask_             = 1 << 5 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
+}
+
+pub enum DataAuthority_ {
+	auto
+	dock_node
+	window
+}
+
+pub enum DockNodeState {
+	unknown
+	host_window_hidden_because_single_window
+	host_window_hidden_because_windows_are_resizing
+	host_window_visible
+}
+
+pub type ImVector_WindowPtr = C.ImVector_ImGuiWindowPtr
+
+@[typedef]
+pub struct C.ImVector_ImGuiWindowPtr {
+pub mut:
+	Size     i32
+	Capacity i32
+	Data     &&Window
+}
+
+pub type DockNode = C.ImGuiDockNode
+
+@[typedef]
+pub struct C.ImGuiDockNode {
+pub mut:
+	ID                     ID
+	SharedFlags            DockNodeFlags
+	LocalFlags             DockNodeFlags
+	LocalFlagsInWindows    DockNodeFlags
+	MergedFlags            DockNodeFlags
+	State                  DockNodeState
+	ParentNode             &DockNode
+	ChildNodes             [2]&DockNode
+	Windows                ImVector_WindowPtr
+	TabBar                 &TabBar
+	Pos                    ImVec2_c
+	Size                   ImVec2_c
+	SizeRef                ImVec2_c
+	SplitAxis              Axis
+	LastBgColor            ImU32
+	WindowClass            WindowClass
+	HostWindow             &Window
+	VisibleWindow          &Window
+	CentralNode            &DockNode
+	OnlyNodeWithWindows    &DockNode
+	CountNodeWithWindows   i32
+	LastFrameAlive         i32
+	LastFrameActive        i32
+	LastFrameFocused       i32
+	LastFocusedNodeId      ID
+	SelectedTabId          ID
+	WantCloseTabId         ID
+	RefViewportId          ID
+	AuthorityForPos        ImU8
+	AuthorityForSize       ImU8
+	AuthorityForViewport   ImU8
+	IsVisible              bool
+	IsFocused              bool
+	IsBgDrawnThisFrame     bool
+	HasCloseButton         bool
+	HasWindowMenuButton    bool
+	HasCentralNodeChild    bool
+	WantCloseAll           bool
+	WantLockSizeOnce       bool
+	WantMouseMove          bool
+	WantHiddenTabBarUpdate bool
+	WantHiddenTabBarToggle bool
+}
+
+pub enum WindowDockStyleCol {
+	text
+	tab_hovered
+	tab_focused
+	tab_selected
+	tab_selected_overline
+	tab_dimmed
+	tab_dimmed_selected
+	tab_dimmed_selected_overline
+	unsaved_marker
+	count
+}
+
+pub type WindowDockStyle = C.ImGuiWindowDockStyle
+
+@[typedef]
+pub struct C.ImGuiWindowDockStyle {
+pub mut:
+	Colors [9]ImU32
+}
+
+pub type ImVector_DockRequest = C.ImVector_ImGuiDockRequest
+
+@[typedef]
+pub struct C.ImVector_ImGuiDockRequest {
+pub mut:
+	Size     i32
+	Capacity i32
+	Data     &DockRequest
+}
+
+pub type ImVector_DockNodeSettings = C.ImVector_ImGuiDockNodeSettings
+
+@[typedef]
+pub struct C.ImVector_ImGuiDockNodeSettings {
+pub mut:
+	Size     i32
+	Capacity i32
+	Data     &DockNodeSettings
+}
+
+pub type DockContext = C.ImGuiDockContext
+
+@[typedef]
+pub struct C.ImGuiDockContext {
+pub mut:
+	Nodes           Storage
+	Requests        ImVector_DockRequest
+	NodesSettings   ImVector_DockNodeSettings
+	WantFullRebuild bool
+}
+
 pub type ViewportP = C.ImGuiViewportP
 
 @[typedef]
 pub struct C.ImGuiViewportP {
 pub mut:
 	_ImGuiViewport              Viewport
+	Window                      &Window
+	Idx                         i32
+	LastFrameActive             i32
+	LastFocusedStampCount       i32
+	LastNameHash                ID
+	LastPos                     ImVec2_c
+	LastSize                    ImVec2_c
+	Alpha                       f32
+	LastAlpha                   f32
+	LastFocusedHadNavWindow     bool
+	PlatformMonitor             i16
 	BgFgDrawListsLastTimeActive [2]f32
 	BgFgDrawLists               [2]&ImDrawList
 	DrawDataP                   ImDrawData
 	DrawDataBuilder             ImDrawDataBuilder
+	LastPlatformPos             ImVec2_c
+	LastPlatformSize            ImVec2_c
+	LastRendererSize            ImVec2_c
 	WorkInsetMin                ImVec2_c
 	WorkInsetMax                ImVec2_c
 	BuildWorkInsetMin           ImVec2_c
@@ -3157,6 +3497,11 @@ pub mut:
 	ID           ID
 	Pos          ImVec2ih
 	Size         ImVec2ih
+	ViewportPos  ImVec2ih
+	ViewportId   ID
+	DockId       ID
+	ClassId      ID
+	DockOrder    i16
 	LastUsedDate PackedDate
 	Collapsed    bool
 	IsChild      bool
@@ -3195,19 +3540,22 @@ pub mut:
 }
 
 pub enum LocKey {
-	version_str             = 0
-	table_size_one          = 1
-	table_size_all_fit      = 2
-	table_size_all_default  = 3
-	table_reset             = 4
-	table_reset_order       = 5
-	table_reset_visibility  = 6
-	windowing_main_menu_bar = 7
-	windowing_popup         = 8
-	windowing_untitled      = 9
-	open_link_s             = 10
-	copy_link               = 11
-	count                   = 12
+	version_str                         = 0
+	table_size_one                      = 1
+	table_size_all_fit                  = 2
+	table_size_all_default              = 3
+	table_reset                         = 4
+	table_reset_order                   = 5
+	table_reset_visibility              = 6
+	windowing_main_menu_bar             = 7
+	windowing_popup                     = 8
+	windowing_untitled                  = 9
+	open_link_s                         = 10
+	copy_link                           = 11
+	docking_hide_tab_bar                = 12
+	docking_hold_shift_to_dock          = 13
+	docking_drag_to_undock_or_move_node = 14
+	count                               = 15
 }
 
 pub type LocEntry = C.ImGuiLocEntry
@@ -3277,6 +3625,7 @@ pub mut:
 	ShowDrawCmdBoundingBoxes    bool
 	ShowTextEncodingViewer      bool
 	ShowTextureUsedRect         bool
+	ShowDockingNodes            bool
 	ShowWindowsRectsType        i32
 	ShowTablesRectsType         i32
 	HighlightMonitorIdx         i32
@@ -3378,16 +3727,6 @@ pub mut:
 	Size     i32
 	Capacity i32
 	Data     &InputEvent
-}
-
-pub type ImVector_WindowPtr = C.ImVector_ImGuiWindowPtr
-
-@[typedef]
-pub struct C.ImVector_ImGuiWindowPtr {
-pub mut:
-	Size     i32
-	Capacity i32
-	Data     &&Window
 }
 
 pub type ImVector_WindowStackData = C.ImVector_ImGuiWindowStackData
@@ -3670,12 +4009,15 @@ pub mut:
 	TestEngineHookItems                bool
 	FrameCount                         i32
 	FrameCountEnded                    i32
+	FrameCountPlatformEnded            i32
 	FrameCountRendered                 i32
 	Time                               f64
 	ContextName                        [16]i8
 	IO                                 IO
 	PlatformIO                         PlatformIO
 	Style                              Style
+	ConfigFlagsCurrFrame               ConfigFlags
+	ConfigFlagsLastFrame               ConfigFlags
 	FontAtlases                        ImVector_ImFontAtlasPtr
 	Font                               &ImFont
 	FontBaked                          &ImFontBaked
@@ -3775,6 +4117,15 @@ pub mut:
 	BeginPopupStack                    ImVector_PopupData
 	TreeNodeStack                      ImVector_TreeNodeStackData
 	Viewports                          ImVector_ViewportPPtr
+	CurrentViewport                    &ViewportP
+	MouseViewport                      &ViewportP
+	MouseLastHoveredViewport           &ViewportP
+	PlatformLastFocusedViewportId      ID
+	FallbackMonitor                    PlatformMonitor
+	PlatformMonitorsFullWorkRect       ImRect_c
+	ViewportCreatedCount               i32
+	PlatformWindowsCreatedCount        i32
+	ViewportFocusedStampCount          i32
 	NavCursorVisible                   bool
 	NavHighlightItemUnderNav           bool
 	NavMousePosDirty                   bool
@@ -3925,6 +4276,8 @@ pub mut:
 	PlatformImeData                    PlatformImeData
 	PlatformImeDataPrev                PlatformImeData
 	UserTextures                       ImVector_ImTextureDataPtr
+	DockContext                        DockContext
+	DockNodeWindowMenuHandler          fn (&Context, &DockNode, &TabBar)
 	SessionDate                        PackedDate
 	SettingsLoaded                     bool
 	SettingsDirtyTimer                 f32
@@ -3935,7 +4288,7 @@ pub mut:
 	Hooks                              ImVector_ContextHook
 	HookIdNext                         ID
 	DemoMarkerCallback                 DemoMarkerCallback
-	LocalizationTable                  [12]&char
+	LocalizationTable                  [15]&char
 	LogEnabled                         bool
 	LogLineFirstItem                   bool
 	LogFlags                           LogFlags
@@ -3975,6 +4328,7 @@ pub mut:
 	DebugItemPathQuery                 DebugItemPathQuery
 	DebugIDStackTool                   IDStackTool
 	DebugAllocInfo                     DebugAllocInfo
+	DebugHoveredDockNode               &DockNode
 	FramerateSecPerFrame               [60]f32
 	FramerateSecPerFrameIdx            i32
 	FramerateSecPerFrameCount          i32
@@ -4027,6 +4381,8 @@ pub mut:
 	ModalDimBgColor               ImU32
 	WindowItemStatusFlags         ItemStatusFlags
 	ChildItemStatusFlags          ItemStatusFlags
+	DockTabItemStatusFlags        ItemStatusFlags
+	DockTabItemRect               ImRect_c
 	ItemWidth                     f32
 	ItemWidthDefault              f32
 	TextWrapPos                   f32
@@ -4049,112 +4405,131 @@ pub type Window = C.ImGuiWindow
 @[typedef]
 pub struct C.ImGuiWindow {
 pub mut:
-	Ctx                               &Context
-	Name                              &char
-	ID                                ID
-	Flags                             WindowFlags
-	ChildFlags                        ChildFlags
-	Viewport                          &ViewportP
-	Pos                               ImVec2_c
-	Size                              ImVec2_c
-	SizeFull                          ImVec2_c
-	ContentSize                       ImVec2_c
-	ContentSizeIdeal                  ImVec2_c
-	ContentSizeExplicit               ImVec2_c
-	WindowPadding                     ImVec2_c
-	WindowRounding                    f32
-	WindowBorderSize                  f32
-	TitleBarHeight                    f32
-	MenuBarHeight                     f32
-	DecoOuterSizeX1                   f32
-	DecoOuterSizeY1                   f32
-	DecoOuterSizeX2                   f32
-	DecoOuterSizeY2                   f32
-	DecoInnerSizeX1                   f32
-	DecoInnerSizeY1                   f32
-	NameBufLen                        i32
-	MoveId                            ID
-	ChildId                           ID
-	PopupId                           ID
-	Scroll                            ImVec2_c
-	ScrollMax                         ImVec2_c
-	ScrollTarget                      ImVec2_c
-	ScrollTargetCenterRatio           ImVec2_c
-	ScrollTargetEdgeSnapDist          ImVec2_c
-	ScrollbarSizes                    ImVec2_c
-	ScrollbarX                        bool
-	ScrollbarY                        bool
-	ScrollbarXStabilizeEnabled        bool
-	ScrollbarXStabilizeToggledHistory ImU8
-	Active                            bool
-	WasActive                         bool
-	WriteAccessed                     bool
-	Collapsed                         bool
-	WantCollapseToggle                bool
-	SkipItems                         bool
-	SkipRefresh                       bool
-	Appearing                         bool
-	Hidden                            bool
-	IsFallbackWindow                  bool
-	IsExplicitChild                   bool
-	HasCloseButton                    bool
-	ResizeBorderHovered               i8
-	ResizeBorderHeld                  i8
-	BeginCount                        i16
-	BeginCountPreviousFrame           i16
-	BeginOrderWithinParent            i16
-	BeginOrderWithinContext           i16
-	FocusOrder                        i16
-	AutoPosLastDirection              Dir
-	AutoFitFramesX                    ImS8
-	AutoFitFramesY                    ImS8
-	AutoFitOnlyGrows                  bool
-	HiddenFramesCanSkipItems          ImS8
-	HiddenFramesCannotSkipItems       ImS8
-	HiddenFramesForRenderOnly         ImS8
-	DisableInputsFrames               ImS8
-	BgClickFlags                      WindowBgClickFlags
-	SetWindowPosAllowFlags            Cond
-	SetWindowSizeAllowFlags           Cond
-	SetWindowCollapsedAllowFlags      Cond
-	SetWindowPosVal                   ImVec2_c
-	SetWindowPosPivot                 ImVec2_c
-	IDStack                           ImVector_ID
-	DC                                WindowTempData
-	OuterRectClipped                  ImRect_c
-	InnerRect                         ImRect_c
-	InnerClipRect                     ImRect_c
-	WorkRect                          ImRect_c
-	ParentWorkRect                    ImRect_c
-	ClipRect                          ImRect_c
-	ContentRegionRect                 ImRect_c
-	HitTestHoleSize                   ImVec2ih
-	HitTestHoleOffset                 ImVec2ih
-	LastFrameActive                   i32
-	LastTimeActive                    f32
-	StateStorage                      Storage
-	ColumnsStorage                    ImVector_OldColumns
-	FontWindowScale                   f32
-	FontWindowScaleParents            f32
-	FontRefSize                       f32
-	SettingsOffset                    i32
-	DrawList                          &ImDrawList
-	DrawListInst                      ImDrawList
-	ParentWindow                      &Window
-	ParentWindowInBeginStack          &Window
-	RootWindow                        &Window
-	RootWindowPopupTree               &Window
-	RootWindowForTitleBarHighlight    &Window
-	RootWindowForNav                  &Window
-	ParentWindowForFocusRoute         &Window
-	NavLastChildNavWindow             &Window
-	NavLastIds                        [2]ID
-	NavRectRel                        [2]ImRect_c
-	NavPreferredScoringPosRel         [2]ImVec2_c
-	NavRootFocusScopeId               ID
-	MemoryDrawListIdxCapacity         i32
-	MemoryDrawListVtxCapacity         i32
-	MemoryCompacted                   bool
+	Ctx                                &Context
+	Name                               &char
+	ID                                 ID
+	Flags                              WindowFlags
+	FlagsPreviousFrame                 WindowFlags
+	ChildFlags                         ChildFlags
+	WindowClass                        WindowClass
+	Viewport                           &ViewportP
+	ViewportId                         ID
+	ViewportPos                        ImVec2_c
+	ViewportAllowPlatformMonitorExtend i32
+	Pos                                ImVec2_c
+	Size                               ImVec2_c
+	SizeFull                           ImVec2_c
+	ContentSize                        ImVec2_c
+	ContentSizeIdeal                   ImVec2_c
+	ContentSizeExplicit                ImVec2_c
+	WindowPadding                      ImVec2_c
+	WindowRounding                     f32
+	WindowBorderSize                   f32
+	TitleBarHeight                     f32
+	MenuBarHeight                      f32
+	DecoOuterSizeX1                    f32
+	DecoOuterSizeY1                    f32
+	DecoOuterSizeX2                    f32
+	DecoOuterSizeY2                    f32
+	DecoInnerSizeX1                    f32
+	DecoInnerSizeY1                    f32
+	NameBufLen                         i32
+	MoveId                             ID
+	TabId                              ID
+	ChildId                            ID
+	PopupId                            ID
+	Scroll                             ImVec2_c
+	ScrollMax                          ImVec2_c
+	ScrollTarget                       ImVec2_c
+	ScrollTargetCenterRatio            ImVec2_c
+	ScrollTargetEdgeSnapDist           ImVec2_c
+	ScrollbarSizes                     ImVec2_c
+	ScrollbarX                         bool
+	ScrollbarY                         bool
+	ScrollbarXStabilizeEnabled         bool
+	ScrollbarXStabilizeToggledHistory  ImU8
+	ViewportOwned                      bool
+	Active                             bool
+	WasActive                          bool
+	WriteAccessed                      bool
+	Collapsed                          bool
+	WantCollapseToggle                 bool
+	SkipItems                          bool
+	SkipRefresh                        bool
+	Appearing                          bool
+	Hidden                             bool
+	IsFallbackWindow                   bool
+	IsExplicitChild                    bool
+	HasCloseButton                     bool
+	ResizeBorderHovered                i8
+	ResizeBorderHeld                   i8
+	BeginCount                         i16
+	BeginCountPreviousFrame            i16
+	BeginOrderWithinParent             i16
+	BeginOrderWithinContext            i16
+	FocusOrder                         i16
+	AutoPosLastDirection               Dir
+	AutoFitFramesX                     ImS8
+	AutoFitFramesY                     ImS8
+	AutoFitOnlyGrows                   bool
+	HiddenFramesCanSkipItems           ImS8
+	HiddenFramesCannotSkipItems        ImS8
+	HiddenFramesForRenderOnly          ImS8
+	DisableInputsFrames                ImS8
+	BgClickFlags                       WindowBgClickFlags
+	SetWindowPosAllowFlags             Cond
+	SetWindowSizeAllowFlags            Cond
+	SetWindowCollapsedAllowFlags       Cond
+	SetWindowDockAllowFlags            Cond
+	SetWindowPosVal                    ImVec2_c
+	SetWindowPosPivot                  ImVec2_c
+	IDStack                            ImVector_ID
+	DC                                 WindowTempData
+	OuterRectClipped                   ImRect_c
+	InnerRect                          ImRect_c
+	InnerClipRect                      ImRect_c
+	WorkRect                           ImRect_c
+	ParentWorkRect                     ImRect_c
+	ClipRect                           ImRect_c
+	ContentRegionRect                  ImRect_c
+	HitTestHoleSize                    ImVec2ih
+	HitTestHoleOffset                  ImVec2ih
+	LastFrameActive                    i32
+	LastFrameJustFocused               i32
+	LastTimeActive                     f32
+	StateStorage                       Storage
+	ColumnsStorage                     ImVector_OldColumns
+	FontWindowScale                    f32
+	FontWindowScaleParents             f32
+	FontRefSize                        f32
+	SettingsOffset                     i32
+	DrawList                           &ImDrawList
+	DrawListInst                       ImDrawList
+	ParentWindow                       &Window
+	ParentWindowInBeginStack           &Window
+	RootWindow                         &Window
+	RootWindowPopupTree                &Window
+	RootWindowDockTree                 &Window
+	RootWindowForTitleBarHighlight     &Window
+	RootWindowForNav                   &Window
+	ParentWindowForFocusRoute          &Window
+	NavLastChildNavWindow              &Window
+	NavLastIds                         [2]ID
+	NavRectRel                         [2]ImRect_c
+	NavPreferredScoringPosRel          [2]ImVec2_c
+	NavRootFocusScopeId                ID
+	MemoryDrawListIdxCapacity          i32
+	MemoryDrawListVtxCapacity          i32
+	MemoryCompacted                    bool
+	DockIsActive                       bool
+	DockNodeIsVisible                  bool
+	DockTabIsVisible                   bool
+	DockTabWantClose                   bool
+	DockOrder                          i16
+	DockStyle                          WindowDockStyle
+	DockNode                           &DockNode
+	DockNodeAsHost                     &DockNode
+	DockId                             ID
 }
 
 pub enum TabBarFlagsPrivate_ {
@@ -4168,6 +4543,7 @@ pub enum TabItemFlagsPrivate_ {
 	no_close_button = 1 << 20
 	button          = 1 << 21
 	invisible       = 1 << 22
+	unsorted        = 1 << 23
 }
 
 pub type TabItem = C.ImGuiTabItem
@@ -4177,6 +4553,7 @@ pub struct C.ImGuiTabItem {
 pub mut:
 	ID                ID
 	Flags             TabItemFlags
+	Window            &Window
 	LastFrameVisible  i32
 	LastFrameSelected i32
 	Offset            f32
@@ -5126,6 +5503,14 @@ pub fn get_window_draw_list() &ImDrawList {
 }
 
 @[keep_args_alive]
+fn C.igGetWindowDpiScale() f32
+
+@[inline]
+pub fn get_window_dpi_scale() f32 {
+	return C.igGetWindowDpiScale()
+}
+
+@[keep_args_alive]
 fn C.igGetWindowPos() ImVec2_c
 
 @[inline]
@@ -5155,6 +5540,14 @@ fn C.igGetWindowHeight() f32
 @[inline]
 pub fn get_window_height() f32 {
 	return C.igGetWindowHeight()
+}
+
+@[keep_args_alive]
+fn C.igGetWindowViewport() &Viewport
+
+@[inline]
+pub fn get_window_viewport() &Viewport {
+	return C.igGetWindowViewport()
 }
 
 @[keep_args_alive]
@@ -5219,6 +5612,14 @@ fn C.igSetNextWindowBgAlpha(alpha f32)
 @[inline]
 pub fn set_next_window_bg_alpha(alpha f32) {
 	C.igSetNextWindowBgAlpha(alpha)
+}
+
+@[keep_args_alive]
+fn C.igSetNextWindowViewport(viewport_id ID)
+
+@[inline]
+pub fn set_next_window_viewport(viewport_id ID) {
+	C.igSetNextWindowViewport(viewport_id)
 }
 
 @[keep_args_alive]
@@ -7246,6 +7647,54 @@ pub fn set_tab_item_closed(tab_or_docked_window_label &char) {
 }
 
 @[keep_args_alive]
+fn C.igDockSpace(dockspace_id ID, size ImVec2_c, flags DockNodeFlags, window_class &WindowClass) ID
+
+@[inline]
+pub fn dock_space(dockspace_id ID, size ImVec2_c, flags DockNodeFlags, window_class &WindowClass) ID {
+	return C.igDockSpace(dockspace_id, size, flags, window_class)
+}
+
+@[keep_args_alive]
+fn C.igDockSpaceOverViewport(dockspace_id ID, viewport &Viewport, flags DockNodeFlags, window_class &WindowClass) ID
+
+@[inline]
+pub fn dock_space_over_viewport(dockspace_id ID, viewport &Viewport, flags DockNodeFlags, window_class &WindowClass) ID {
+	return C.igDockSpaceOverViewport(dockspace_id, viewport, flags, window_class)
+}
+
+@[keep_args_alive]
+fn C.igSetNextWindowDockID(dock_id ID, cond Cond)
+
+@[inline]
+pub fn set_next_window_dock_id(dock_id ID, cond Cond) {
+	C.igSetNextWindowDockID(dock_id, cond)
+}
+
+@[keep_args_alive]
+fn C.igSetNextWindowClass(window_class &WindowClass)
+
+@[inline]
+pub fn set_next_window_class(window_class &WindowClass) {
+	C.igSetNextWindowClass(window_class)
+}
+
+@[keep_args_alive]
+fn C.igGetWindowDockID() ID
+
+@[inline]
+pub fn get_window_dock_id() ID {
+	return C.igGetWindowDockID()
+}
+
+@[keep_args_alive]
+fn C.igIsWindowDocked() bool
+
+@[inline]
+pub fn is_window_docked() bool {
+	return C.igIsWindowDocked()
+}
+
+@[keep_args_alive]
 fn C.igLogToTTY(auto_open_depth i32)
 
 @[inline]
@@ -7582,19 +8031,19 @@ pub fn get_main_viewport() &Viewport {
 }
 
 @[keep_args_alive]
-fn C.igGetBackgroundDrawList_Nil() &ImDrawList
+fn C.igGetBackgroundDrawList(viewport &Viewport) &ImDrawList
 
 @[inline]
-pub fn get_background_draw_list_nil() &ImDrawList {
-	return C.igGetBackgroundDrawList_Nil()
+pub fn get_background_draw_list(viewport &Viewport) &ImDrawList {
+	return C.igGetBackgroundDrawList(viewport)
 }
 
 @[keep_args_alive]
-fn C.igGetForegroundDrawList_Nil() &ImDrawList
+fn C.igGetForegroundDrawList_ViewportPtr(viewport &Viewport) &ImDrawList
 
 @[inline]
-pub fn get_foreground_draw_list_nil() &ImDrawList {
-	return C.igGetForegroundDrawList_Nil()
+pub fn get_foreground_draw_list_viewport_ptr(viewport &Viewport) &ImDrawList {
+	return C.igGetForegroundDrawList_ViewportPtr(viewport)
 }
 
 @[keep_args_alive]
@@ -8046,6 +8495,46 @@ pub fn mem_free(ptr voidptr) {
 }
 
 @[keep_args_alive]
+fn C.igUpdatePlatformWindows()
+
+@[inline]
+pub fn update_platform_windows() {
+	C.igUpdatePlatformWindows()
+}
+
+@[keep_args_alive]
+fn C.igRenderPlatformWindowsDefault(platform_render_arg voidptr, renderer_render_arg voidptr)
+
+@[inline]
+pub fn render_platform_windows_default(platform_render_arg voidptr, renderer_render_arg voidptr) {
+	C.igRenderPlatformWindowsDefault(platform_render_arg, renderer_render_arg)
+}
+
+@[keep_args_alive]
+fn C.igDestroyPlatformWindows()
+
+@[inline]
+pub fn destroy_platform_windows() {
+	C.igDestroyPlatformWindows()
+}
+
+@[keep_args_alive]
+fn C.igFindViewportByID(viewport_id ID) &Viewport
+
+@[inline]
+pub fn find_viewport_by_id(viewport_id ID) &Viewport {
+	return C.igFindViewportByID(viewport_id)
+}
+
+@[keep_args_alive]
+fn C.igFindViewportByPlatformHandle(platform_handle voidptr) &Viewport
+
+@[inline]
+pub fn find_viewport_by_platform_handle(platform_handle voidptr) &Viewport {
+	return C.igFindViewportByPlatformHandle(platform_handle)
+}
+
+@[keep_args_alive]
 fn C.ImGuiTableSortSpecs_ImGuiTableSortSpecs() &TableSortSpecs
 
 @[inline]
@@ -8147,6 +8636,14 @@ fn C.ImGuiIO_AddMouseSourceEvent(self &IO, source i32)
 @[inline]
 pub fn io_add_mouse_source_event(self &IO, source i32) {
 	C.ImGuiIO_AddMouseSourceEvent(self, source)
+}
+
+@[keep_args_alive]
+fn C.ImGuiIO_AddMouseViewportEvent(self &IO, id ID)
+
+@[inline]
+pub fn io_add_mouse_viewport_event(self &IO, id ID) {
+	C.ImGuiIO_AddMouseViewportEvent(self, id)
 }
 
 @[keep_args_alive]
@@ -8299,6 +8796,22 @@ fn C.ImGuiInputTextCallbackData_HasSelection(self &InputTextCallbackData) bool
 @[inline]
 pub fn input_text_callback_data_has_selection(self &InputTextCallbackData) bool {
 	return C.ImGuiInputTextCallbackData_HasSelection(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiWindowClass_ImGuiWindowClass() &WindowClass
+
+@[inline]
+pub fn window_class_window_class() &WindowClass {
+	return C.ImGuiWindowClass_ImGuiWindowClass()
+}
+
+@[keep_args_alive]
+fn C.ImGuiWindowClass_destroy(self &WindowClass)
+
+@[inline]
+pub fn window_class_destroy(self &WindowClass) {
+	C.ImGuiWindowClass_destroy(self)
 }
 
 @[keep_args_alive]
@@ -10222,6 +10735,14 @@ pub fn viewport_get_work_center(self &Viewport) ImVec2_c {
 }
 
 @[keep_args_alive]
+fn C.ImGuiViewport_GetDebugName(self &Viewport) &char
+
+@[inline]
+pub fn viewport_get_debug_name(self &Viewport) &char {
+	return C.ImGuiViewport_GetDebugName(self)
+}
+
+@[keep_args_alive]
 fn C.ImGuiPlatformIO_ImGuiPlatformIO() &PlatformIO
 
 @[inline]
@@ -10251,6 +10772,22 @@ fn C.ImGuiPlatformIO_ClearRendererHandlers(self &PlatformIO)
 @[inline]
 pub fn platform_io_clear_renderer_handlers(self &PlatformIO) {
 	C.ImGuiPlatformIO_ClearRendererHandlers(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiPlatformMonitor_ImGuiPlatformMonitor() &PlatformMonitor
+
+@[inline]
+pub fn platform_monitor_platform_monitor() &PlatformMonitor {
+	return C.ImGuiPlatformMonitor_ImGuiPlatformMonitor()
+}
+
+@[keep_args_alive]
+fn C.ImGuiPlatformMonitor_destroy(self &PlatformMonitor)
+
+@[inline]
+pub fn platform_monitor_destroy(self &PlatformMonitor) {
+	C.ImGuiPlatformMonitor_destroy(self)
 }
 
 @[keep_args_alive]
@@ -12326,6 +12863,134 @@ pub fn multi_select_state_destroy(self &MultiSelectState) {
 }
 
 @[keep_args_alive]
+fn C.ImGuiDockNode_ImGuiDockNode(id ID) &DockNode
+
+@[inline]
+pub fn dock_node_dock_node(id ID) &DockNode {
+	return C.ImGuiDockNode_ImGuiDockNode(id)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_destroy(self &DockNode)
+
+@[inline]
+pub fn dock_node_destroy(self &DockNode) {
+	C.ImGuiDockNode_destroy(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_IsRootNode(self &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_root_node(self &DockNode) bool {
+	return C.ImGuiDockNode_IsRootNode(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_IsDockSpace(self &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_dock_space(self &DockNode) bool {
+	return C.ImGuiDockNode_IsDockSpace(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_IsFloatingNode(self &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_floating_node(self &DockNode) bool {
+	return C.ImGuiDockNode_IsFloatingNode(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_IsCentralNode(self &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_central_node(self &DockNode) bool {
+	return C.ImGuiDockNode_IsCentralNode(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_IsHiddenTabBar(self &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_hidden_tab_bar(self &DockNode) bool {
+	return C.ImGuiDockNode_IsHiddenTabBar(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_IsNoTabBar(self &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_no_tab_bar(self &DockNode) bool {
+	return C.ImGuiDockNode_IsNoTabBar(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_IsSplitNode(self &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_split_node(self &DockNode) bool {
+	return C.ImGuiDockNode_IsSplitNode(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_IsLeafNode(self &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_leaf_node(self &DockNode) bool {
+	return C.ImGuiDockNode_IsLeafNode(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_IsEmpty(self &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_empty(self &DockNode) bool {
+	return C.ImGuiDockNode_IsEmpty(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_Rect(self &DockNode) ImRect_c
+
+@[inline]
+pub fn dock_node_rect(self &DockNode) ImRect_c {
+	return C.ImGuiDockNode_Rect(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_SetLocalFlags(self &DockNode, flags DockNodeFlags)
+
+@[inline]
+pub fn dock_node_set_local_flags(self &DockNode, flags DockNodeFlags) {
+	C.ImGuiDockNode_SetLocalFlags(self, flags)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockNode_UpdateMergedFlags(self &DockNode)
+
+@[inline]
+pub fn dock_node_update_merged_flags(self &DockNode) {
+	C.ImGuiDockNode_UpdateMergedFlags(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockContext_ImGuiDockContext() &DockContext
+
+@[inline]
+pub fn dock_context_dock_context() &DockContext {
+	return C.ImGuiDockContext_ImGuiDockContext()
+}
+
+@[keep_args_alive]
+fn C.ImGuiDockContext_destroy(self &DockContext)
+
+@[inline]
+pub fn dock_context_destroy(self &DockContext) {
+	C.ImGuiDockContext_destroy(self)
+}
+
+@[keep_args_alive]
 fn C.ImGuiViewportP_ImGuiViewportP() &ViewportP
 
 @[inline]
@@ -12339,6 +13004,14 @@ fn C.ImGuiViewportP_destroy(self &ViewportP)
 @[inline]
 pub fn viewport_p_destroy(self &ViewportP) {
 	C.ImGuiViewportP_destroy(self)
+}
+
+@[keep_args_alive]
+fn C.ImGuiViewportP_ClearRequestFlags(self &ViewportP)
+
+@[inline]
+pub fn viewport_p_clear_request_flags(self &ViewportP) {
+	C.ImGuiViewportP_ClearRequestFlags(self)
 }
 
 @[keep_args_alive]
@@ -13382,11 +14055,11 @@ pub fn calc_window_next_auto_fit_size(window &Window) ImVec2_c {
 }
 
 @[keep_args_alive]
-fn C.igIsWindowChildOf(window &Window, potential_parent &Window, popup_hierarchy bool) bool
+fn C.igIsWindowChildOf(window &Window, potential_parent &Window, popup_hierarchy bool, dock_hierarchy bool) bool
 
 @[inline]
-pub fn is_window_child_of(window &Window, potential_parent &Window, popup_hierarchy bool) bool {
-	return C.igIsWindowChildOf(window, potential_parent, popup_hierarchy)
+pub fn is_window_child_of(window &Window, potential_parent &Window, popup_hierarchy bool, dock_hierarchy bool) bool {
+	return C.igIsWindowChildOf(window, potential_parent, popup_hierarchy, dock_hierarchy)
 }
 
 @[keep_args_alive]
@@ -13678,22 +14351,6 @@ pub fn get_foreground_draw_list_window_ptr(window &Window) &ImDrawList {
 }
 
 @[keep_args_alive]
-fn C.igGetBackgroundDrawList_ViewportPtr(viewport &Viewport) &ImDrawList
-
-@[inline]
-pub fn get_background_draw_list_viewport_ptr(viewport &Viewport) &ImDrawList {
-	return C.igGetBackgroundDrawList_ViewportPtr(viewport)
-}
-
-@[keep_args_alive]
-fn C.igGetForegroundDrawList_ViewportPtr(viewport &Viewport) &ImDrawList
-
-@[inline]
-pub fn get_foreground_draw_list_viewport_ptr(viewport &Viewport) &ImDrawList {
-	return C.igGetForegroundDrawList_ViewportPtr(viewport)
-}
-
-@[keep_args_alive]
 fn C.igAddDrawListToDrawDataEx(draw_data &ImDrawData, out_list &ImVector_ImDrawListPtr, draw_list &ImDrawList)
 
 @[inline]
@@ -13782,6 +14439,14 @@ pub fn start_mouse_moving_window(window &Window) {
 }
 
 @[keep_args_alive]
+fn C.igStartMouseMovingWindowOrNode(window &Window, node &DockNode, undock bool)
+
+@[inline]
+pub fn start_mouse_moving_window_or_node(window &Window, node &DockNode, undock bool) {
+	C.igStartMouseMovingWindowOrNode(window, node, undock)
+}
+
+@[keep_args_alive]
 fn C.igStopMouseMovingWindow()
 
 @[inline]
@@ -13806,11 +14471,11 @@ pub fn update_mouse_moving_window_end_frame() {
 }
 
 @[keep_args_alive]
-fn C.igGetWindowViewport() &Viewport
+fn C.igTranslateWindowsInViewport(viewport &ViewportP, old_pos ImVec2_c, new_pos ImVec2_c, old_size ImVec2_c, new_size ImVec2_c)
 
 @[inline]
-pub fn get_window_viewport() &Viewport {
-	return C.igGetWindowViewport()
+pub fn translate_windows_in_viewport(viewport &ViewportP, old_pos ImVec2_c, new_pos ImVec2_c, old_size ImVec2_c, new_size ImVec2_c) {
+	C.igTranslateWindowsInViewport(viewport, old_pos, new_pos, old_size, new_size)
 }
 
 @[keep_args_alive]
@@ -13822,11 +14487,43 @@ pub fn scale_windows_in_viewport(viewport &ViewportP, scale f32) {
 }
 
 @[keep_args_alive]
+fn C.igDestroyPlatformWindow(viewport &ViewportP)
+
+@[inline]
+pub fn destroy_platform_window(viewport &ViewportP) {
+	C.igDestroyPlatformWindow(viewport)
+}
+
+@[keep_args_alive]
 fn C.igSetWindowViewport(window &Window, viewport &ViewportP)
 
 @[inline]
 pub fn set_window_viewport(window &Window, viewport &ViewportP) {
 	C.igSetWindowViewport(window, viewport)
+}
+
+@[keep_args_alive]
+fn C.igSetCurrentViewport(window &Window, viewport &ViewportP)
+
+@[inline]
+pub fn set_current_viewport(window &Window, viewport &ViewportP) {
+	C.igSetCurrentViewport(window, viewport)
+}
+
+@[keep_args_alive]
+fn C.igGetViewportPlatformMonitor(viewport &Viewport) &PlatformMonitor
+
+@[inline]
+pub fn get_viewport_platform_monitor(viewport &Viewport) &PlatformMonitor {
+	return C.igGetViewportPlatformMonitor(viewport)
+}
+
+@[keep_args_alive]
+fn C.igFindHoveredViewportFromPlatformWindowStack(mouse_platform_pos ImVec2_c) &ViewportP
+
+@[inline]
+pub fn find_hovered_viewport_from_platform_window_stack(mouse_platform_pos ImVec2_c) &ViewportP {
+	return C.igFindHoveredViewportFromPlatformWindowStack(mouse_platform_pos)
 }
 
 @[keep_args_alive]
@@ -14934,6 +15631,342 @@ pub fn get_shortcut_routing_data(key_chord KeyChord) &KeyRoutingData {
 }
 
 @[keep_args_alive]
+fn C.igDockContextInitialize(ctx &Context)
+
+@[inline]
+pub fn dock_context_initialize(ctx &Context) {
+	C.igDockContextInitialize(ctx)
+}
+
+@[keep_args_alive]
+fn C.igDockContextShutdown(ctx &Context)
+
+@[inline]
+pub fn dock_context_shutdown(ctx &Context) {
+	C.igDockContextShutdown(ctx)
+}
+
+@[keep_args_alive]
+fn C.igDockContextClearNodes(ctx &Context, root_id ID, clear_settings_refs bool)
+
+@[inline]
+pub fn dock_context_clear_nodes(ctx &Context, root_id ID, clear_settings_refs bool) {
+	C.igDockContextClearNodes(ctx, root_id, clear_settings_refs)
+}
+
+@[keep_args_alive]
+fn C.igDockContextRebuildNodes(ctx &Context)
+
+@[inline]
+pub fn dock_context_rebuild_nodes(ctx &Context) {
+	C.igDockContextRebuildNodes(ctx)
+}
+
+@[keep_args_alive]
+fn C.igDockContextNewFrameUpdateUndocking(ctx &Context)
+
+@[inline]
+pub fn dock_context_new_frame_update_undocking(ctx &Context) {
+	C.igDockContextNewFrameUpdateUndocking(ctx)
+}
+
+@[keep_args_alive]
+fn C.igDockContextNewFrameUpdateDocking(ctx &Context)
+
+@[inline]
+pub fn dock_context_new_frame_update_docking(ctx &Context) {
+	C.igDockContextNewFrameUpdateDocking(ctx)
+}
+
+@[keep_args_alive]
+fn C.igDockContextEndFrame(ctx &Context)
+
+@[inline]
+pub fn dock_context_end_frame(ctx &Context) {
+	C.igDockContextEndFrame(ctx)
+}
+
+@[keep_args_alive]
+fn C.igDockContextGenNodeID(ctx &Context) ID
+
+@[inline]
+pub fn dock_context_gen_node_id(ctx &Context) ID {
+	return C.igDockContextGenNodeID(ctx)
+}
+
+@[keep_args_alive]
+fn C.igDockContextQueueDock(ctx &Context, target &Window, target_node &DockNode, payload &Window, split_dir i32, split_ratio f32, split_outer bool)
+
+@[inline]
+pub fn dock_context_queue_dock(ctx &Context, target &Window, target_node &DockNode, payload &Window, split_dir i32, split_ratio f32, split_outer bool) {
+	C.igDockContextQueueDock(ctx, target, target_node, payload, split_dir, split_ratio, split_outer)
+}
+
+@[keep_args_alive]
+fn C.igDockContextQueueUndockWindow(ctx &Context, window &Window)
+
+@[inline]
+pub fn dock_context_queue_undock_window(ctx &Context, window &Window) {
+	C.igDockContextQueueUndockWindow(ctx, window)
+}
+
+@[keep_args_alive]
+fn C.igDockContextQueueUndockNode(ctx &Context, node &DockNode)
+
+@[inline]
+pub fn dock_context_queue_undock_node(ctx &Context, node &DockNode) {
+	C.igDockContextQueueUndockNode(ctx, node)
+}
+
+@[keep_args_alive]
+fn C.igDockContextProcessUndockWindow(ctx &Context, window &Window, clear_persistent_docking_ref bool)
+
+@[inline]
+pub fn dock_context_process_undock_window(ctx &Context, window &Window, clear_persistent_docking_ref bool) {
+	C.igDockContextProcessUndockWindow(ctx, window, clear_persistent_docking_ref)
+}
+
+@[keep_args_alive]
+fn C.igDockContextProcessUndockNode(ctx &Context, node &DockNode)
+
+@[inline]
+pub fn dock_context_process_undock_node(ctx &Context, node &DockNode) {
+	C.igDockContextProcessUndockNode(ctx, node)
+}
+
+@[keep_args_alive]
+fn C.igDockContextCalcDropPosForDocking(target &Window, target_node &DockNode, payload_window &Window, payload_node &DockNode, split_dir i32, split_outer bool, out_pos &ImVec2_c) bool
+
+@[inline]
+pub fn dock_context_calc_drop_pos_for_docking(target &Window, target_node &DockNode, payload_window &Window, payload_node &DockNode, split_dir i32, split_outer bool, out_pos &ImVec2_c) bool {
+	return C.igDockContextCalcDropPosForDocking(target, target_node, payload_window, payload_node, split_dir, split_outer, out_pos)
+}
+
+@[keep_args_alive]
+fn C.igDockContextFindNodeByID(ctx &Context, id ID) &DockNode
+
+@[inline]
+pub fn dock_context_find_node_by_id(ctx &Context, id ID) &DockNode {
+	return C.igDockContextFindNodeByID(ctx, id)
+}
+
+@[keep_args_alive]
+fn C.igDockNodeWindowMenuHandler_Default(ctx &Context, node &DockNode, tab_bar &TabBar)
+
+@[inline]
+pub fn dock_node_window_menu_handler_default(ctx &Context, node &DockNode, tab_bar &TabBar) {
+	C.igDockNodeWindowMenuHandler_Default(ctx, node, tab_bar)
+}
+
+@[keep_args_alive]
+fn C.igDockNodeBeginAmendTabBar(node &DockNode) bool
+
+@[inline]
+pub fn dock_node_begin_amend_tab_bar(node &DockNode) bool {
+	return C.igDockNodeBeginAmendTabBar(node)
+}
+
+@[keep_args_alive]
+fn C.igDockNodeEndAmendTabBar()
+
+@[inline]
+pub fn dock_node_end_amend_tab_bar() {
+	C.igDockNodeEndAmendTabBar()
+}
+
+@[keep_args_alive]
+fn C.igDockNodeGetRootNode(node &DockNode) &DockNode
+
+@[inline]
+pub fn dock_node_get_root_node(node &DockNode) &DockNode {
+	return C.igDockNodeGetRootNode(node)
+}
+
+@[keep_args_alive]
+fn C.igDockNodeIsInHierarchyOf(node &DockNode, parent &DockNode) bool
+
+@[inline]
+pub fn dock_node_is_in_hierarchy_of(node &DockNode, parent &DockNode) bool {
+	return C.igDockNodeIsInHierarchyOf(node, parent)
+}
+
+@[keep_args_alive]
+fn C.igDockNodeGetDepth(node &DockNode) i32
+
+@[inline]
+pub fn dock_node_get_depth(node &DockNode) i32 {
+	return C.igDockNodeGetDepth(node)
+}
+
+@[keep_args_alive]
+fn C.igDockNodeGetWindowMenuButtonId(node &DockNode) ID
+
+@[inline]
+pub fn dock_node_get_window_menu_button_id(node &DockNode) ID {
+	return C.igDockNodeGetWindowMenuButtonId(node)
+}
+
+@[keep_args_alive]
+fn C.igGetWindowDockNode() &DockNode
+
+@[inline]
+pub fn get_window_dock_node() &DockNode {
+	return C.igGetWindowDockNode()
+}
+
+@[keep_args_alive]
+fn C.igGetWindowAlwaysWantOwnTabBar(window &Window) bool
+
+@[inline]
+pub fn get_window_always_want_own_tab_bar(window &Window) bool {
+	return C.igGetWindowAlwaysWantOwnTabBar(window)
+}
+
+@[keep_args_alive]
+fn C.igBeginDocked(window &Window, p_open &bool)
+
+@[inline]
+pub fn begin_docked(window &Window, p_open &bool) {
+	C.igBeginDocked(window, p_open)
+}
+
+@[keep_args_alive]
+fn C.igBeginDockableDragDropSource(window &Window)
+
+@[inline]
+pub fn begin_dockable_drag_drop_source(window &Window) {
+	C.igBeginDockableDragDropSource(window)
+}
+
+@[keep_args_alive]
+fn C.igBeginDockableDragDropTarget(window &Window)
+
+@[inline]
+pub fn begin_dockable_drag_drop_target(window &Window) {
+	C.igBeginDockableDragDropTarget(window)
+}
+
+@[keep_args_alive]
+fn C.igSetWindowDock(window &Window, dock_id ID, cond Cond)
+
+@[inline]
+pub fn set_window_dock(window &Window, dock_id ID, cond Cond) {
+	C.igSetWindowDock(window, dock_id, cond)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderDockWindow(window_name &char, node_id ID)
+
+@[inline]
+pub fn dock_builder_dock_window(window_name &char, node_id ID) {
+	C.igDockBuilderDockWindow(window_name, node_id)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderGetNode(node_id ID) &DockNode
+
+@[inline]
+pub fn dock_builder_get_node(node_id ID) &DockNode {
+	return C.igDockBuilderGetNode(node_id)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderGetCentralNode(node_id ID) &DockNode
+
+@[inline]
+pub fn dock_builder_get_central_node(node_id ID) &DockNode {
+	return C.igDockBuilderGetCentralNode(node_id)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderAddNode(node_id ID, flags DockNodeFlags) ID
+
+@[inline]
+pub fn dock_builder_add_node(node_id ID, flags DockNodeFlags) ID {
+	return C.igDockBuilderAddNode(node_id, flags)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderRemoveNode(node_id ID)
+
+@[inline]
+pub fn dock_builder_remove_node(node_id ID) {
+	C.igDockBuilderRemoveNode(node_id)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderRemoveNodeDockedWindows(node_id ID, clear_settings_refs bool)
+
+@[inline]
+pub fn dock_builder_remove_node_docked_windows(node_id ID, clear_settings_refs bool) {
+	C.igDockBuilderRemoveNodeDockedWindows(node_id, clear_settings_refs)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderRemoveNodeChildNodes(node_id ID)
+
+@[inline]
+pub fn dock_builder_remove_node_child_nodes(node_id ID) {
+	C.igDockBuilderRemoveNodeChildNodes(node_id)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderSetNodePos(node_id ID, pos ImVec2_c)
+
+@[inline]
+pub fn dock_builder_set_node_pos(node_id ID, pos ImVec2_c) {
+	C.igDockBuilderSetNodePos(node_id, pos)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderSetNodeSize(node_id ID, size ImVec2_c)
+
+@[inline]
+pub fn dock_builder_set_node_size(node_id ID, size ImVec2_c) {
+	C.igDockBuilderSetNodeSize(node_id, size)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderSplitNode(node_id ID, split_dir i32, size_ratio_for_node_at_dir f32, out_id_at_dir &ID, out_id_at_opposite_dir &ID) ID
+
+@[inline]
+pub fn dock_builder_split_node(node_id ID, split_dir i32, size_ratio_for_node_at_dir f32, out_id_at_dir &ID, out_id_at_opposite_dir &ID) ID {
+	return C.igDockBuilderSplitNode(node_id, split_dir, size_ratio_for_node_at_dir, out_id_at_dir, out_id_at_opposite_dir)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderCopyDockSpace(src_dockspace_id ID, dst_dockspace_id ID, in_window_remap_pairs &ImVector_const_charPtr)
+
+@[inline]
+pub fn dock_builder_copy_dock_space(src_dockspace_id ID, dst_dockspace_id ID, in_window_remap_pairs &ImVector_const_charPtr) {
+	C.igDockBuilderCopyDockSpace(src_dockspace_id, dst_dockspace_id, in_window_remap_pairs)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderCopyNode(src_node_id ID, dst_node_id ID, out_node_remap_pairs &ImVector_ID)
+
+@[inline]
+pub fn dock_builder_copy_node(src_node_id ID, dst_node_id ID, out_node_remap_pairs &ImVector_ID) {
+	C.igDockBuilderCopyNode(src_node_id, dst_node_id, out_node_remap_pairs)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderCopyWindowSettings(src_name &char, dst_name &char)
+
+@[inline]
+pub fn dock_builder_copy_window_settings(src_name &char, dst_name &char) {
+	C.igDockBuilderCopyWindowSettings(src_name, dst_name)
+}
+
+@[keep_args_alive]
+fn C.igDockBuilderFinish(node_id ID)
+
+@[inline]
+pub fn dock_builder_finish(node_id ID) {
+	C.igDockBuilderFinish(node_id)
+}
+
+@[keep_args_alive]
 fn C.igPushFocusScope(id ID)
 
 @[inline]
@@ -15166,6 +16199,14 @@ pub fn tab_bar_find_tab_by_order(tab_bar &TabBar, order i32) &TabItem {
 }
 
 @[keep_args_alive]
+fn C.igTabBarFindMostRecentlySelectedTabForActiveWindow(tab_bar &TabBar) &TabItem
+
+@[inline]
+pub fn tab_bar_find_most_recently_selected_tab_for_active_window(tab_bar &TabBar) &TabItem {
+	return C.igTabBarFindMostRecentlySelectedTabForActiveWindow(tab_bar)
+}
+
+@[keep_args_alive]
 fn C.igTabBarGetCurrentTab(tab_bar &TabBar) &TabItem
 
 @[inline]
@@ -15187,6 +16228,14 @@ fn C.igTabBarGetTabName(tab_bar &TabBar, tab &TabItem) &char
 @[inline]
 pub fn tab_bar_get_tab_name(tab_bar &TabBar, tab &TabItem) &char {
 	return C.igTabBarGetTabName(tab_bar, tab)
+}
+
+@[keep_args_alive]
+fn C.igTabBarAddTab(tab_bar &TabBar, tab_flags TabItemFlags, window &Window)
+
+@[inline]
+pub fn tab_bar_add_tab(tab_bar &TabBar, tab_flags TabItemFlags, window &Window) {
+	C.igTabBarAddTab(tab_bar, tab_flags, window)
 }
 
 @[keep_args_alive]
@@ -15422,6 +16471,14 @@ pub fn render_arrow_pointing_at(draw_list &ImDrawList, pos ImVec2_c, half_sz ImV
 }
 
 @[keep_args_alive]
+fn C.igRenderArrowDockMenu(draw_list &ImDrawList, p_min ImVec2_c, sz f32, col ImU32)
+
+@[inline]
+pub fn render_arrow_dock_menu(draw_list &ImDrawList, p_min ImVec2_c, sz f32, col ImU32) {
+	C.igRenderArrowDockMenu(draw_list, p_min, sz, col)
+}
+
+@[keep_args_alive]
 fn C.igRenderRectFilledInRangeH(draw_list &ImDrawList, rect ImRect_c, col ImU32, fill_x0 f32, fill_x1 f32, rounding f32)
 
 @[inline]
@@ -15534,11 +16591,11 @@ pub fn close_button(id ID, pos ImVec2_c) bool {
 }
 
 @[keep_args_alive]
-fn C.igCollapseButton(id ID, pos ImVec2_c) bool
+fn C.igCollapseButton(id ID, pos ImVec2_c, dock_node &DockNode) bool
 
 @[inline]
-pub fn collapse_button(id ID, pos ImVec2_c) bool {
-	return C.igCollapseButton(id, pos)
+pub fn collapse_button(id ID, pos ImVec2_c, dock_node &DockNode) bool {
+	return C.igCollapseButton(id, pos, dock_node)
 }
 
 @[keep_args_alive]
@@ -16078,6 +17135,14 @@ pub fn debug_node_columns(columns &OldColumns) {
 }
 
 @[keep_args_alive]
+fn C.igDebugNodeDockNode(node &DockNode, const_label &char)
+
+@[inline]
+pub fn debug_node_dock_node(node &DockNode, const_label &char) {
+	C.igDebugNodeDockNode(node, const_label)
+}
+
+@[keep_args_alive]
 fn C.igDebugNodeDrawList(window &Window, viewport &ViewportP, draw_list &ImDrawList, const_label &char)
 
 @[inline]
@@ -16219,6 +17284,14 @@ fn C.igDebugNodeViewport(viewport &ViewportP)
 @[inline]
 pub fn debug_node_viewport(viewport &ViewportP) {
 	C.igDebugNodeViewport(viewport)
+}
+
+@[keep_args_alive]
+fn C.igDebugNodePlatformMonitor(monitor &PlatformMonitor, const_label &char, idx i32)
+
+@[inline]
+pub fn debug_node_platform_monitor(monitor &PlatformMonitor, const_label &char, idx i32) {
+	C.igDebugNodePlatformMonitor(monitor, const_label, idx)
 }
 
 @[keep_args_alive]
@@ -16818,6 +17891,22 @@ fn C.ImVector_ImWchar_UnInit(p &ImVector_ImWchar)
 @[inline]
 pub fn im_vector_im_wchar_un_init(p &ImVector_ImWchar) {
 	C.ImVector_ImWchar_UnInit(p)
+}
+
+@[keep_args_alive]
+fn C.ImGuiPlatformIO_Set_Platform_GetWindowPos(platform_io &PlatformIO, user_callback fn (&Viewport, &ImVec2))
+
+@[inline]
+pub fn platform_io_set_platform_get_window_pos(platform_io &PlatformIO, user_callback fn (&Viewport, &ImVec2)) {
+	C.ImGuiPlatformIO_Set_Platform_GetWindowPos(platform_io, user_callback)
+}
+
+@[keep_args_alive]
+fn C.ImGuiPlatformIO_Set_Platform_GetWindowSize(platform_io &PlatformIO, user_callback fn (&Viewport, &ImVec2))
+
+@[inline]
+pub fn platform_io_set_platform_get_window_size(platform_io &PlatformIO, user_callback fn (&Viewport, &ImVec2)) {
+	C.ImGuiPlatformIO_Set_Platform_GetWindowSize(platform_io, user_callback)
 }
 
 // CIMGUI_INCLUDED

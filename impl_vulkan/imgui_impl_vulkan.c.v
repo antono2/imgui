@@ -36,22 +36,28 @@ pub mut:
 	msaa_samples                   vk.SampleCountFlagBits
 	extra_dynamic_states           DynamicStateVector
 	pipeline_rendering_create_info vk.PipelineRenderingCreateInfoKHR
+	// VIMGUI_DOCKING_PIPELINE_BEGIN
+	swap_chain_image_usage vk.ImageUsageFlags
+	// VIMGUI_DOCKING_PIPELINE_END
 }
 
 pub struct InitInfo {
 pub mut:
-	api_version                    u32
-	instance                       vk.Instance
-	physical_device                vk.PhysicalDevice
-	device                         vk.Device
-	queue_family                   u32
-	queue                          vk.Queue
-	descriptor_pool                vk.DescriptorPool
-	descriptor_pool_size           u32
-	min_image_count                u32
-	image_count                    u32
-	pipeline_cache                 vk.PipelineCache
-	pipeline_info_main             PipelineInfo
+	api_version          u32
+	instance             vk.Instance
+	physical_device      vk.PhysicalDevice
+	device               vk.Device
+	queue_family         u32
+	queue                vk.Queue
+	descriptor_pool      vk.DescriptorPool
+	descriptor_pool_size u32
+	min_image_count      u32
+	image_count          u32
+	pipeline_cache       vk.PipelineCache
+	pipeline_info_main   PipelineInfo
+	// VIMGUI_DOCKING_INIT_BEGIN
+	pipeline_info_for_viewports PipelineInfo
+	// VIMGUI_DOCKING_INIT_END
 	use_dynamic_rendering          bool
 	allocator                      &vk.AllocationCallbacks = unsafe { nil }
 	check_vk_result_fn             PFN_CheckVkResult = unsafe { nil }
