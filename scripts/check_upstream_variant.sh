@@ -10,10 +10,18 @@ case "$variant" in
 		grep -q '^//docking branch$' "$header" || {
 			echo 'UPSTREAM_VARIANT says docking, but include/cimgui.h is standard.' >&2
 			exit 1
+		}
+		grep -q 'VIMGUI_DOCKING_INIT_BEGIN' "$repo_dir/impl_vulkan/imgui_impl_vulkan.c.v" || {
+			echo 'The docking Vulkan backend layout is not configured.' >&2
+			exit 1
 		} ;;
 	standard)
 		if grep -q '^//docking branch$' "$header"; then
 			echo 'UPSTREAM_VARIANT says standard, but include/cimgui.h is docking.' >&2
+			exit 1
+		fi
+		if grep -q 'VIMGUI_DOCKING_INIT_BEGIN' "$repo_dir/impl_vulkan/imgui_impl_vulkan.c.v"; then
+			echo 'The standard Vulkan backend still has docking-only ABI fields.' >&2
 			exit 1
 		fi ;;
 	*)

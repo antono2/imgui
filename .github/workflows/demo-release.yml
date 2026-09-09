@@ -16,6 +16,7 @@ on:
       - cleanup_imgui_implot.perl
       - scripts/update_upstream.sh
       - scripts/check_upstream_variant.sh
+      - scripts/configure_variant.sh
       - UPSTREAM_VARIANT
       - CMakeLists.txt
       - imgui.v

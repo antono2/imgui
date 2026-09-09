@@ -5,11 +5,14 @@ import antono2.vulkan as vk
 import antono2.imgui
 
 #flag -I @VMODROOT/include/imgui/backends
+
 #define IMGUI_DISABLE
+
 #define IMGUI_IMPL_VULKAN_USE_VOLK
 
 //#define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
 #define IMGUI_IMPL_VULKAN_USE_LOADER
+
 #include "imgui_impl_vulkan.h"
 
 pub type PFN_LoaderFunc = fn (function_name &char, user_data voidptr) voidptr
@@ -33,7 +36,6 @@ pub mut:
 	msaa_samples                   vk.SampleCountFlagBits
 	extra_dynamic_states           DynamicStateVector
 	pipeline_rendering_create_info vk.PipelineRenderingCreateInfoKHR
-	swap_chain_image_usage         vk.ImageUsageFlags
 }
 
 pub struct InitInfo {
@@ -50,10 +52,9 @@ pub mut:
 	image_count                    u32
 	pipeline_cache                 vk.PipelineCache
 	pipeline_info_main             PipelineInfo
-	pipeline_info_for_viewports    PipelineInfo
 	use_dynamic_rendering          bool
 	allocator                      &vk.AllocationCallbacks = unsafe { nil }
-	check_vk_result_fn             PFN_CheckVkResult       = unsafe { nil }
+	check_vk_result_fn             PFN_CheckVkResult = unsafe { nil }
 	min_allocation_size            vk.DeviceSize
 	custom_shader_vert_create_info vk.ShaderModuleCreateInfo
 	custom_shader_frag_create_info vk.ShaderModuleCreateInfo
@@ -194,8 +195,7 @@ pub fn set_min_image_count(min_image_count u32)
 pub fn shutdown()
 
 pub fn create_or_resize_window(instance vk.Instance, physical_device vk.PhysicalDevice, device vk.Device, wd &Window, queue_family u32, allocator &vk.AllocationCallbacks, width i32, height i32, min_image_count u32) {
-	create_window_swap_chain(physical_device, device, mut wd, allocator, width, height,
-		min_image_count)
+	create_window_swap_chain(physical_device, device, mut wd, allocator, width, height, min_image_count)
 	create_window_command_buffers(physical_device, device, wd, queue_family, allocator)
 }
 
@@ -380,17 +380,16 @@ pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Dev
 	image_view_ci.components.b = vk.ComponentSwizzle.b
 	image_view_ci.components.a = vk.ComponentSwizzle.a
 	image_range := vk.ImageSubresourceRange{
-		aspectMask:     vk.ImageAspectFlags(vk.ImageAspectFlagBits.color)
-		baseMipLevel:   0
-		levelCount:     1
+		aspectMask: vk.ImageAspectFlags(vk.ImageAspectFlagBits.color)
+		baseMipLevel: 0
+		levelCount: 1
 		baseArrayLayer: 0
-		layerCount:     1
+		layerCount: 1
 	}
 	image_view_ci.subresourceRange = image_range
 	for i in 0 .. wd.image_count {
 		image_view_ci.image = wd.frames[i].backbuffer
-		res = vk.create_image_view(device, &image_view_ci, const_allocator,
-			&wd.frames[i].backbuffer_view)
+		res = vk.create_image_view(device, &image_view_ci, const_allocator, &wd.frames[i].backbuffer_view)
 		assert res == vk.Result.success
 	}
 
@@ -406,8 +405,7 @@ pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Dev
 		frame_buffer_ci.layers = 1
 		for i in 0 .. wd.image_count {
 			image_view_att = wd.frames[i].backbuffer_view
-			res = vk.create_framebuffer(device, &frame_buffer_ci, const_allocator,
-				&wd.frames[i].framebuffer)
+			res = vk.create_framebuffer(device, &frame_buffer_ci, const_allocator, &wd.frames[i].framebuffer)
 			assert res == vk.Result.success
 		}
 	}
@@ -421,8 +419,7 @@ pub fn create_window_command_buffers(physical_device vk.PhysicalDevice, device v
 		mut command_pool_ci := vk.CommandPoolCreateInfo{}
 		command_pool_ci.flags = 0
 		command_pool_ci.queueFamilyIndex = queue_family
-		res = vk.create_command_pool(device, &command_pool_ci, const_allocator,
-			&wd.frames[i].command_pool)
+		res = vk.create_command_pool(device, &command_pool_ci, const_allocator, &wd.frames[i].command_pool)
 		assert res == vk.Result.success
 
 		mut command_buffer_ci := vk.CommandBufferAllocateInfo{}
@@ -440,17 +437,16 @@ pub fn create_window_command_buffers(physical_device vk.PhysicalDevice, device v
 
 	for i in 0 .. wd.semaphore_count {
 		mut semaphore_ci := vk.SemaphoreCreateInfo{}
-		res = vk.create_semaphore(device, &semaphore_ci, const_allocator,
-			&wd.frame_semaphores[i].image_acquired_semaphore)
+		res = vk.create_semaphore(device, &semaphore_ci, const_allocator, &wd.frame_semaphores[i].image_acquired_semaphore)
 		assert res == vk.Result.success
-		res = vk.create_semaphore(device, &semaphore_ci, const_allocator,
-			&wd.frame_semaphores[i].render_complete_semaphore)
+		res = vk.create_semaphore(device, &semaphore_ci, const_allocator, &wd.frame_semaphores[i].render_complete_semaphore)
 		assert res == vk.Result.success
 	}
 }
 
 pub fn destroy_window(instance vk.Instance, device vk.Device, mut wd Window, const_allocator &vk.AllocationCallbacks) {
 	vk.device_wait_idle(device)
+
 	// Could wait on the Queue if we had the queue in wd-> (otherwise VulkanH functions can't use globals)
 	// vk.queue_wait_idle(wd.queue)
 
