@@ -88,17 +88,17 @@ pub mut:
 }
 
 // docking branch
-pub type ImColor = ImColor_c
+pub type ImColor = C.ImColor_c
 
-pub type ImRect = ImRect_c
+pub type ImRect = C.ImRect_c
 
 pub type ImTextureRef = ImTextureRef_c
 
 pub type ImVec2 = C.ImVec2_c
 
-pub type ImVec2i = ImVec2i_c
+pub type ImVec2i = C.ImVec2i_c
 
-pub type ImVec4 = ImVec4_c
+pub type ImVec4 = C.ImVec4_c
 
 pub type TextFilter = C.ImGuiTextFilter
 

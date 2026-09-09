@@ -39,8 +39,11 @@ grep -Fq "pub const version = '$version'" "$repo_dir/imgui.v" || {
 	exit 1
 }
 
-if ! rg -U -q 'pub struct C\.ImVec2_c \{\s+pub mut:\s+x f32\s+y f32\s+\}' "$repo_dir/imgui.v" \
-	|| ! rg -U -q 'pub struct C\.ImVec4_c \{\s+pub mut:\s+x f32\s+y f32\s+z f32\s+w f32\s+\}' "$repo_dir/imgui.v"; then
+if ! perl -0777 -e '
+	my $source = <>;
+	exit(($source =~ /pub struct C\.ImVec2_c \{\s+pub mut:\s+x f32\s+y f32\s+\}/s
+		&& $source =~ /pub struct C\.ImVec4_c \{\s+pub mut:\s+x f32\s+y f32\s+z f32\s+w f32\s+\}/s) ? 0 : 1);
+' "$repo_dir/imgui.v"; then
 	echo 'Generated ImVec2/ImVec4 layouts are incomplete.' >&2
 	exit 1
 fi

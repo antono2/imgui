@@ -922,7 +922,7 @@ sub final_sanitize {
 
   for my $base (qw(ImVec2 ImVec2i ImVec4 ImColor ImRect)) {
     if ($s =~ /\b(?:pub\s+type\s+${base}_c\s*=\s*C\.${base}_c|pub\s+struct\s+C\.${base}_c\b)/) {
-      $s =~ s/pub\s+type\s+$base\s*=\s*C\.[A-Za-z_]\w*/pub type $base = C.${base}_c/;
+      $s =~ s/pub\s+type\s+$base\s*=\s*(?:C\.)?[A-Za-z_]\w*/pub type $base = C.${base}_c/;
     }
   }
 
