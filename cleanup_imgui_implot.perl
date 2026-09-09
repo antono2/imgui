@@ -179,7 +179,7 @@ sub clean_one {
   $final = final_sanitize($kind, $final);
   my $header_aliases = header_alias_decls($kind, $final, $hdr);
   $final =~ s/(pub const version_num[^\n]*\n\n)/$1$header_aliases/s if $header_aliases ne '';
-  my $c_alias_targets = missing_c_alias_target_decls($final);
+  my $c_alias_targets = missing_c_alias_target_decls($final, \%imported_c_struct);
   $final =~ s/(pub const version_num[^\n]*\n\n)/$1$c_alias_targets/s if $c_alias_targets ne '';
   $final = final_sanitize($kind, $final);
   $final =~ s/\n{4,}/\n\n\n/g;
@@ -890,12 +890,13 @@ sub bridge_c_suffix_aliases {
 }
 
 sub missing_c_alias_target_decls {
-  my ($s)=@_;
+  my ($s,$imported_c_struct)=@_;
+  $imported_c_struct //= {};
   my %declared;
   while ($s =~ /^\s*pub\s+struct\s+C\.([A-Za-z_]\w*)\b/gm) { $declared{$1}=1; }
   my %missing;
   while ($s =~ /^\s*pub\s+type\s+[A-Za-z_]\w*\s*=\s*C\.([A-Za-z_]\w*)\s*$/gm) {
-    $missing{$1}=1 unless $declared{$1};
+    $missing{$1}=1 unless $declared{$1} || $imported_c_struct->{$1};
   }
   return join('', map { "@[typedef]\npub struct C.$_ {}\n\n" } sort keys %missing);
 }
