@@ -2,7 +2,7 @@
 
 # [V](https://vlang.io) binding generator for [Dear ImGui](https://github.com/ocornut/imgui)
 
-[Project portfolio](https://oreskin.de/projects_en.php) · [Support independent development](https://oreskin.de/dono_en.php)
+[Project portfolio](https://oreskin.de/projects_en.php)
 
 For a fresh-clone setup and a one-command GLFW/Vulkan demo, see
 [`QUICKSTART.md`](QUICKSTART.md).
