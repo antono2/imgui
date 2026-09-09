@@ -29,6 +29,22 @@ suffix shared by the release; it does not identify the docking variant. Check
 native sources use. Do not mix a generated binding from one line with a native
 library built from the other.
 
+Applications can identify and configure the selected line without referring to
+docking-only generated symbols:
+
+```v
+println('Dear ImGui variant: ${imgui.upstream_variant}')
+if imgui.configure_docking(true) {
+	imgui.create_main_dockspace()
+}
+imgui.configure_platform_viewports(true)
+// After rendering the main viewport:
+imgui.render_platform_viewports()
+```
+
+The configuration functions return `false` on the standard branch. Dockspace
+and secondary-viewport rendering helpers become safe no-ops there.
+
 ## Dependencies
 `v install antono2.vulkan`<br>
 `v install antono2.glfw`
