@@ -54,10 +54,11 @@ Then run these commands from a Developer PowerShell:
 .\scripts\run_demo_windows.ps1
 ```
 
-The runner downloads GLFW 3.4 through CMake, installs the two small V module
+The runner downloads GLFW 3.4 through CMake, installs missing V module
 dependencies, checks out the tested demo revision, builds it, and launches it.
-Use `-BuildOnly` to compile without opening a window. The required compiler
-support landed upstream through
+Use `-BuildOnly` to compile without opening a window. CI checks the same path
+against pinned module and compiler revisions. The required compiler support
+landed upstream through
 [`vlang/v#28368`](https://github.com/vlang/v/pull/28368), so use a current
 compiler from the official `vlang/v` master branch until that change reaches a
 tagged V release; a custom fork is no longer required.
