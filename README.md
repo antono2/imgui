@@ -115,10 +115,9 @@ Compiling the generated ImGui and ImPlot V bindings can currently require about
 `scripts/run_demo.sh` remains the normal source/developer path; prebuilding the
 demo is not a requirement for every later release.
 
-Release binaries should be published for the useful platform combinations
-(Ubuntu 24.04 x86_64 and Windows x64 initially). Native-library linkage and the
-GLFW provider remain build-time choices for developers; they do not need to
-multiply the end-user demo downloads.
+Release binaries are built for Ubuntu 24.04 x86_64 and Windows 10/11 x64.
+Native-library linkage and the GLFW provider remain build-time choices for
+developers; they do not need to multiply the end-user demo downloads.
 
 ## Generate
 
