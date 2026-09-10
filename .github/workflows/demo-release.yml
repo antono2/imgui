@@ -3,29 +3,6 @@ name: Prebuilt demo
 on:
   pull_request:
     branches: [master, standard]
-    paths:
-      - .github/workflows/demo-release.yml
-      - packaging/demo/**
-      - scripts/run_demo.sh
-      - scripts/run_demo_windows.ps1
-      - scripts/check_windows.ps1
-      - .github/scripts/setup-vulkan-ci.sh
-      - build_vimgui.sh
-      - build_vimgui.vsh
-      - generate_v.sh
-      - cleanup_imgui_implot.perl
-      - scripts/update_upstream.sh
-      - scripts/check_upstream_variant.sh
-      - scripts/configure_variant.sh
-      - UPSTREAM_VARIANT
-      - CMakeLists.txt
-      - imgui.v
-      - variant.c.v
-      - variant.v
-      - vimgui_variant.h
-      - implot/**
-      - impl_glfw/**
-      - impl_vulkan/**
   push:
     branches: [master, standard]
   workflow_dispatch:
@@ -233,3 +210,16 @@ jobs:
           path: ${{ runner.temp }}/v-imgui-demo-${{ steps.variant.outputs.name }}-windows-x64.zip
           retention-days: 7
           if-no-files-found: error
+
+  required-checks:
+    if: always()
+    needs: [ubuntu24, windows-native]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify required jobs
+        env:
+          UBUNTU_RESULT: ${{ needs.ubuntu24.result }}
+          WINDOWS_RESULT: ${{ needs.windows-native.result }}
+        run: |
+          test "$UBUNTU_RESULT" = success
+          test "$WINDOWS_RESULT" = success
