@@ -3,29 +3,6 @@ name: Prebuilt demo
 on:
   pull_request:
     branches: [master, standard]
-    paths:
-      - .github/workflows/demo-release.yml
-      - packaging/demo/**
-      - scripts/run_demo.sh
-      - scripts/run_demo_windows.ps1
-      - scripts/check_windows.ps1
-      - .github/scripts/setup-vulkan-ci.sh
-      - build_vimgui.sh
-      - build_vimgui.vsh
-      - generate_v.sh
-      - cleanup_imgui_implot.perl
-      - scripts/update_upstream.sh
-      - scripts/check_upstream_variant.sh
-      - scripts/configure_variant.sh
-      - UPSTREAM_VARIANT
-      - CMakeLists.txt
-      - imgui.v
-      - variant.c.v
-      - variant.v
-      - vimgui_variant.h
-      - implot/**
-      - impl_glfw/**
-      - impl_vulkan/**
   push:
     branches: [master, standard]
   workflow_dispatch:
@@ -137,14 +114,60 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          path: source/modules/antono2/imgui
           submodules: recursive
-      - uses: prantlf/setup-v-action@v4
+      - uses: actions/checkout@v7
         with:
-          version: latest
+          repository: antono2/vulkan
+          ref: d9ad9fc5151aa19f58cd2fed1b6bcda9b210f098
+          path: source/modules/antono2/vulkan
+      - uses: actions/checkout@v7
+        with:
+          repository: antono2/glfw
+          ref: 3d7c1ddacb7215a7bbeb5fef0d7a68c90ba392ed
+          path: source/modules/antono2/glfw
+      - uses: actions/checkout@v7
+        with:
+          repository: antono2/v_imgui_examples
+          ref: c2b5083d42f052cfe73952542e86e4163c64ce79
+          path: source/demo
+      - uses: actions/checkout@v7
+        with:
+          repository: vlang/v
+          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          path: toolchain/v
+      - uses: actions/checkout@v7
+        with:
+          repository: zeux/volk
+          ref: 58689c063427f5bad4f133625049b1a3c5dd8287
+          path: source/third_party/volk
+      - name: Build official V compiler
+        shell: cmd
+        working-directory: toolchain/v
+        run: makev.bat
+      - name: Add V compiler to PATH
+        shell: pwsh
+        run: |
+          "$env:GITHUB_WORKSPACE\toolchain\v" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install Vulkan SDK and SwiftShader test artifacts
         shell: bash
-        run: bash .github/scripts/setup-vulkan-ci.sh 1.4.309.0 v1.2
-      - name: Exercise Windows demo setup and native build
+        run: bash source/modules/antono2/imgui/.github/scripts/setup-vulkan-ci.sh 1.4.309.0 v1.2
+      - name: Install matching Volk header
+        shell: pwsh
+        run: |
+          $Destination = Join-Path $env:VULKAN_SDK "Include\volk"
+          New-Item -ItemType Directory -Force $Destination | Out-Null
+          Copy-Item source/third_party/volk/volk.h, source/third_party/volk/volk.c $Destination
+      - name: Select package variant
+        id: variant
+        shell: pwsh
+        run: |
+          $Variant = (Get-Content source/modules/antono2/imgui/UPSTREAM_VARIANT -Raw).Trim()
+          if ($Variant -notin @("docking", "standard")) {
+            throw "Unsupported ImGui variant: $Variant"
+          }
+          "name=$Variant" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      - name: Build Windows demo and native libraries
         shell: pwsh
         run: |
           $VsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
@@ -152,13 +175,51 @@ jobs:
           if (-not $InstallPath) { throw 'Visual Studio C++ tools were not found' }
           Import-Module (Join-Path $InstallPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $InstallPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          ./scripts/run_demo_windows.ps1 -NativeOnly
-      - name: Verify native outputs
+          ./source/modules/antono2/imgui/scripts/run_demo_windows.ps1 -BuildOnly -DemoDirectory "$env:GITHUB_WORKSPACE\source\demo"
+      - name: Package and verify
         shell: pwsh
         run: |
-          if (-not (Test-Path lib/vimgui.dll)) { throw "Missing lib/vimgui.dll" }
-          if (-not (Test-Path lib/vimgui.lib)) { throw "Missing lib/vimgui.lib" }
-          $GlfwDll = Get-ChildItem build/shared-bundled-3.4 -Recurse -Filter glfw3.dll | Select-Object -First 1
-          $GlfwLib = Get-ChildItem build/shared-bundled-3.4 -Recurse -Include glfw3dll.lib, glfw3.lib | Select-Object -First 1
-          if (-not $GlfwDll) { throw "Missing glfw3.dll" }
-          if (-not $GlfwLib) { throw "Missing GLFW import library" }
+          $Variant = '${{ steps.variant.outputs.name }}'
+          $Source = "$env:GITHUB_WORKSPACE\source\modules\antono2\imgui"
+          $Runtime = "$Source\build\windows-demo"
+          $PackageName = "v-imgui-demo-$Variant-windows-x64"
+          $Package = Join-Path $env:RUNNER_TEMP $PackageName
+          New-Item -ItemType Directory -Force $Package | Out-Null
+          Copy-Item "$Runtime\v_imgui_demo.exe" $Package
+          Copy-Item "$Runtime\vimgui.dll" $Package
+          Copy-Item "$Runtime\glfw3.dll" $Package
+          Copy-Item "$Source\packaging\demo\windows\README.txt" $Package
+          Copy-Item "$Source\UPSTREAM_VARIANT" "$Package\VARIANT.txt"
+          foreach ($File in @("v_imgui_demo.exe", "vimgui.dll", "glfw3.dll", "README.txt", "VARIANT.txt")) {
+            if (-not (Test-Path (Join-Path $Package $File))) { throw "Missing package file: $File" }
+          }
+          if ((Get-Content "$Package\VARIANT.txt" -Raw).Trim() -ne $Variant) {
+            throw "Packaged variant marker does not match $Variant"
+          }
+          $Archive = Join-Path $env:RUNNER_TEMP "$PackageName.zip"
+          Compress-Archive -Path $Package -DestinationPath $Archive
+          $Extracted = Join-Path $env:RUNNER_TEMP "verify-$PackageName"
+          Expand-Archive -Path $Archive -DestinationPath $Extracted
+          foreach ($File in @("v_imgui_demo.exe", "vimgui.dll", "glfw3.dll", "README.txt", "VARIANT.txt")) {
+            if (-not (Test-Path "$Extracted\$PackageName\$File")) { throw "Archive is missing: $File" }
+          }
+          Get-FileHash -Algorithm SHA256 $Archive
+      - uses: actions/upload-artifact@v7
+        with:
+          name: v-imgui-demo-${{ steps.variant.outputs.name }}-windows-x64
+          path: ${{ runner.temp }}/v-imgui-demo-${{ steps.variant.outputs.name }}-windows-x64.zip
+          retention-days: 7
+          if-no-files-found: error
+
+  required-checks:
+    if: always()
+    needs: [ubuntu24, windows-native]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify required jobs
+        env:
+          UBUNTU_RESULT: ${{ needs.ubuntu24.result }}
+          WINDOWS_RESULT: ${{ needs.windows-native.result }}
+        run: |
+          test "$UBUNTU_RESULT" = success
+          test "$WINDOWS_RESULT" = success

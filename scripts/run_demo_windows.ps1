@@ -1,13 +1,16 @@
 param(
     [switch]$BuildOnly,
-    [switch]$NativeOnly
+    [switch]$NativeOnly,
+    [string]$DemoDirectory,
+    [string]$DemoRevision = "c2b5083d42f052cfe73952542e86e4163c64ce79"
 )
 
 $ErrorActionPreference = "Stop"
 $RepositoryDirectory = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 $RepositoryParent = Split-Path -Parent $RepositoryDirectory
-$DemoRevision = "5673324866e9825e217dfd1927145250d60f9e84"
-$DemoDirectory = Join-Path $RepositoryDirectory "build\v_imgui_examples"
+if (-not $DemoDirectory) {
+    $DemoDirectory = Join-Path $RepositoryDirectory "build\v_imgui_examples"
+}
 $NativeBuildDirectory = Join-Path $RepositoryDirectory "build\shared-bundled-3.4"
 $RuntimeDirectory = Join-Path $RepositoryDirectory "build\windows-demo"
 
@@ -27,8 +30,13 @@ if ($NativeOnly) {
 }
 
 foreach ($Module in @("vulkan", "glfw")) {
-    & v install "antono2.$Module"
-    if ($LASTEXITCODE -ne 0) { throw "Could not install the $Module V module." }
+    $LocalModule = Join-Path $RepositoryParent $Module
+    if (Test-Path (Join-Path $LocalModule "v.mod")) {
+        Write-Host "Using checked-out antono2.$Module module."
+    } else {
+        & v install "antono2.$Module"
+        if ($LASTEXITCODE -ne 0) { throw "Could not install the $Module V module." }
+    }
 }
 
 if (-not (Test-Path (Join-Path $DemoDirectory ".git"))) {
@@ -68,7 +76,7 @@ $env:GLFW_LIB = $LinkDirectory
 
 $Executable = Join-Path $RuntimeDirectory "v_imgui_demo.exe"
 $ModulePath = "$RepositoryParent|@vlib|@vmodules"
-& v -no-memory-limit -path $ModulePath -cc msvc -cflags /MT -o $Executable $DemoDirectory
+& v -no-memory-limit -path $ModulePath -cc msvc -o $Executable $DemoDirectory
 if ($LASTEXITCODE -ne 0) {
     throw "The demo did not compile. Update to the official vlang/v master branch and review the compiler output above."
 }
