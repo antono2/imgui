@@ -101,10 +101,11 @@ jobs:
           (cd "$RUNNER_TEMP" && zip -qr "$archive" "$(basename "$package")")
           unzip -t "$RUNNER_TEMP/$archive" >/dev/null
           sha256sum "$RUNNER_TEMP/$archive"
-      - uses: actions/upload-artifact@v7
+      - name: Upload Ubuntu demo package
+        uses: actions/upload-artifact@v7
         with:
-          name: v-imgui-demo-${{ steps.variant.outputs.name }}-ubuntu24-amd64
           path: ${{ runner.temp }}/v-imgui-demo-${{ steps.variant.outputs.name }}-ubuntu24-amd64.zip
+          archive: false
           retention-days: 7
           if-no-files-found: error
 
@@ -204,10 +205,11 @@ jobs:
             if (-not (Test-Path "$Extracted\$PackageName\$File")) { throw "Archive is missing: $File" }
           }
           Get-FileHash -Algorithm SHA256 $Archive
-      - uses: actions/upload-artifact@v7
+      - name: Upload Windows demo package
+        uses: actions/upload-artifact@v7
         with:
-          name: v-imgui-demo-${{ steps.variant.outputs.name }}-windows-x64
           path: ${{ runner.temp }}/v-imgui-demo-${{ steps.variant.outputs.name }}-windows-x64.zip
+          archive: false
           retention-days: 7
           if-no-files-found: error
 
