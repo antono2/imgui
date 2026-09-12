@@ -55,7 +55,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
       - name: Verify generated upstream variant
         working-directory: source/modules/antono2/imgui
-        run: ./scripts/check_upstream_variant.sh
+        run: |
+          v run setup.vsh --check
+          ./scripts/check_upstream_variant.sh
       - name: Select package variant
         id: variant
         working-directory: source/modules/antono2/imgui
@@ -176,6 +178,7 @@ jobs:
           if (-not $InstallPath) { throw 'Visual Studio C++ tools were not found' }
           Import-Module (Join-Path $InstallPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $InstallPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+          v -check-syntax ./source/modules/antono2/imgui/setup.vsh
           ./source/modules/antono2/imgui/scripts/run_demo_windows.ps1 -BuildOnly -DemoDirectory "$env:GITHUB_WORKSPACE\source\demo"
       - name: Package and verify
         shell: pwsh

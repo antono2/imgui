@@ -1,6 +1,7 @@
 # Quick start
 
-The generated V bindings are already committed. Most users only need to build
+The generated V bindings are already committed. Most users can prepare the
+checkout on Linux, macOS, or Windows with `v run setup.vsh`. They only need to build
 the native Dear ImGui/ImPlot library; LuaJIT and the binding generator are not
 required.
 

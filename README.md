@@ -7,6 +7,15 @@
 For a fresh-clone setup and a one-command GLFW/Vulkan demo, see
 [`QUICKSTART.md`](QUICKSTART.md).
 
+The cross-platform setup entry point installs prerequisites and builds the
+native library without regenerating bindings:
+
+```sh
+v run setup.vsh
+```
+
+Use `v run setup.vsh --check` for read-only diagnostics.
+
 This is an automated process to generate `imgui.v` and `implot.v`
  - generate C for imgui using [cimgui](https://github.com/cimgui/cimgui)
  - generate C for implot using [cimplot](https://github.com/cimgui/cimplot)
