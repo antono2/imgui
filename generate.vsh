@@ -40,8 +40,26 @@ fn copy_matching(pattern string, destination string) ! {
 }
 
 fn add_translation_fix(path string) ! {
-	program := r's/(struct\s[\w\d]+\s\{[^\}]+(?:union\s+\{[^\}]+\};[^\}]+)?\};\s)(typedef\s(?!struct|enum)[^\n]+)/$1\n\nstruct ____TRANSLATIONFIX____;\n$2/g'
-	run_at('perl -p -i -g -e ${os.quoted_path(program)} ${os.quoted_path(path)}', repo_dir)!
+	lines := os.read_lines(path)!
+	mut output := []string{cap: lines.len + 16}
+	mut previous_nonempty := ''
+	for line in lines {
+		trimmed := line.trim_space()
+		is_plain_typedef := trimmed.starts_with('typedef ')
+			&& !trimmed.starts_with('typedef struct ') && !trimmed.starts_with('typedef enum ')
+		closed_struct := previous_nonempty in ['};', '}']
+		if is_plain_typedef && closed_struct
+			&& (output.len == 0 || output.last().trim_space() != 'struct ____TRANSLATIONFIX____;') {
+			output << ''
+			output << ''
+			output << 'struct ____TRANSLATIONFIX____;'
+		}
+		output << line
+		if trimmed != '' {
+			previous_nonempty = trimmed
+		}
+	}
+	os.write_file(path, output.join('\n') + '\n')!
 }
 
 fn main() {
@@ -104,9 +122,9 @@ fn main() {
 	implot_binding := os.join_path(repo_dir, 'implot', 'implot.v')
 	os.mv(os.join_path(include_dir, 'cimgui.v'), imgui_binding)!
 	os.mv(os.join_path(include_dir, 'cimplot.v'), implot_binding)!
-	cleanup := os.join_path(repo_dir, 'cleanup_imgui_implot.perl')
-	run_at('perl ${os.quoted_path(cleanup)} ${os.quoted_path(imgui_binding)} ${os.quoted_path(imgui_binding)} imgui', repo_dir) or { panic(err) }
-	run_at('perl ${os.quoted_path(cleanup)} ${os.quoted_path(implot_binding)} ${os.quoted_path(implot_binding)} implot', repo_dir) or { panic(err) }
+	cleanup := os.join_path(repo_dir, 'cleanup_imgui_implot.vsh')
+	run_at('v run ${os.quoted_path(cleanup)} ${os.quoted_path(imgui_binding)} ${os.quoted_path(imgui_binding)} imgui', repo_dir) or { panic(err) }
+	run_at('v run ${os.quoted_path(cleanup)} ${os.quoted_path(implot_binding)} ${os.quoted_path(implot_binding)} implot', repo_dir) or { panic(err) }
 	run_at('v fmt -w ${os.quoted_path(imgui_binding)}', repo_dir) or { panic(err) }
 	// Do not format ImPlot: its C field/type pair `Marker Marker` is currently
 	// collapsed by vfmt into invalid V.
