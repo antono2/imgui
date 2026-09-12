@@ -132,15 +132,14 @@ developers; they do not need to multiply the end-user demo downloads.
 
 ```bash
 # Go to the installed antono2/imgui module
-./generate_v.sh
+v run generate.vsh
 ```
 
-`generate_v.sh` regenerates both V bindings from the generated C API committed
+`generate.vsh` regenerates both V bindings from the generated C API committed
 by the pinned cimgui/cimplot revisions, then builds `libvimgui`. It therefore
 does not require LuaJIT for a normal upstream refresh. Pass `--regenerate-c`
 only when intentionally rerunning the upstream Lua generators; that advanced
-mode requires LuaJIT. `v generate.vsh` is retained as a compatibility entry
-point and delegates to the same canonical script.
+mode requires LuaJIT.
 
 Maintainers can update either line reproducibly with:
 
@@ -151,9 +150,7 @@ Maintainers can update either line reproducibly with:
 ```
 
 To only rebuild the native library after a system upgrade or on an older Linux
-distribution, run `v run build_vimgui.vsh`. The Bash `build_vimgui.sh` helper
-remains available as a bootstrap fallback on Unix-like machines where V is not
-yet in `PATH`.
+distribution, run `v run build_vimgui.vsh`.
 
 ## Thanks
 Thank you [@ryoskzypu](https://github.com/ryoskzypu) - from  #regex on [libera.chat](https://libera.chat/) - for loving perl and helping people out.
