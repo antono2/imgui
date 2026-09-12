@@ -20,7 +20,7 @@ This is an automated process to generate `imgui.v` and `implot.v`
  - generate C for imgui using [cimgui](https://github.com/cimgui/cimgui)
  - generate C for implot using [cimplot](https://github.com/cimgui/cimplot)
  - `v translate` C to V
- - `cleanup_imgui.perl` and `cleanup_implot.perl` to fix some errors
+ - `cleanup_imgui_implot.perl` to normalize both generated bindings
 
 ## Upstream variants
 
