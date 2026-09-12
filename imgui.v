@@ -1,7 +1,7 @@
 module imgui
 
 /*
-cleanup_imgui_implot.perl non-regression notes
+cleanup_imgui_implot.vsh non-regression notes
 
 Keep this block current when changing cleanup rules. Do not hardcode one
 function, enum member, or struct member; derive facts from cimgui/cimgui.h or

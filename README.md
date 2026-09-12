@@ -20,7 +20,7 @@ This is an automated process to generate `imgui.v` and `implot.v`
  - generate C for imgui using [cimgui](https://github.com/cimgui/cimgui)
  - generate C for implot using [cimplot](https://github.com/cimgui/cimplot)
  - `v translate` C to V
- - `cleanup_imgui_implot.perl` to normalize both generated bindings
+ - the V-native `cleanup_imgui_implot.vsh` to normalize both generated bindings
 
 ## Upstream variants
 
@@ -137,9 +137,9 @@ v run generate.vsh
 
 `generate.vsh` regenerates both V bindings from the generated C API committed
 by the pinned cimgui/cimplot revisions, then builds `libvimgui`. It therefore
-does not require LuaJIT for a normal upstream refresh. Pass `--regenerate-c`
-only when intentionally rerunning the upstream Lua generators; that advanced
-mode requires LuaJIT.
+does not require Perl or LuaJIT for a normal upstream refresh. Pass
+`--regenerate-c` only when intentionally rerunning the upstream Lua generators;
+that advanced mode requires LuaJIT.
 
 Maintainers can update either line reproducibly with:
 
@@ -153,4 +153,6 @@ To only rebuild the native library after a system upgrade or on an older Linux
 distribution, run `v run build_vimgui.vsh`.
 
 ## Thanks
-Thank you [@ryoskzypu](https://github.com/ryoskzypu) - from  #regex on [libera.chat](https://libera.chat/) - for loving perl and helping people out.
+Thank you [@ryoskzypu](https://github.com/ryoskzypu) from #regex on
+[libera.chat](https://libera.chat/) for helping with the original cleanup rules
+that the current V-native generator preserves.

@@ -53,7 +53,7 @@ git -C cimplot switch --detach FETCH_HEAD
 git -C cimplot submodule update --init --recursive
 
 printf '%s\n' "$variant" > UPSTREAM_VARIANT
-./scripts/configure_variant.sh "$variant"
+v run scripts/configure_variant.vsh "$variant"
 v run generate.vsh "${regenerate_arg[@]}"
 
 printf 'Updated %s bindings: cimgui=%s cimplot=%s\n' \
