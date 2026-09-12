@@ -57,6 +57,7 @@ jobs:
         working-directory: source/modules/antono2/imgui
         run: |
           v run setup.vsh --check
+          v run generate.vsh --help
           ./scripts/check_upstream_variant.sh
       - name: Select package variant
         id: variant

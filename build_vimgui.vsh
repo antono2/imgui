@@ -29,20 +29,27 @@ fn run(parts []string) {
 }
 
 mut linkage := os.getenv('VIMGUI_LINKAGE')
+
 if linkage == '' {
 	linkage = 'shared'
 }
+
 mut glfw_provider := os.getenv('VIMGUI_GLFW_PROVIDER')
+
 if glfw_provider == '' {
 	glfw_provider = 'system'
 }
+
 mut glfw_version := os.getenv('VIMGUI_GLFW_VERSION')
+
 if glfw_version == '' {
 	glfw_version = '3.3'
 }
 
 args := os.args[1..]
+
 mut index := 0
+
 for index < args.len {
 	match args[index] {
 		'--linkage' {
@@ -73,6 +80,7 @@ if linkage !in ['shared', 'static'] {
 	eprintln('linkage must be shared or static')
 	exit(2)
 }
+
 if glfw_provider !in ['system', 'bundled'] {
 	eprintln('glfw provider must be system or bundled')
 	exit(2)
@@ -81,29 +89,35 @@ if glfw_provider !in ['system', 'bundled'] {
 if !os.is_file(os.join_path(repo_dir, 'CMakeLists.txt'))
 	|| !os.is_file(os.join_path(repo_dir, 'cimgui', 'cimgui.cpp'))
 	|| !os.is_file(os.join_path(repo_dir, 'cimplot', 'cimplot.cpp')) {
-	eprintln('Missing cimgui or cimplot sources. Run generate_v.sh first (or initialise the submodules).')
+	eprintln('Missing cimgui or cimplot sources. Run `v run generate.vsh` first (or initialise the submodules).')
 	exit(1)
 }
 
 static_build := if linkage == 'static' { 'ON' } else { 'OFF' }
+
 mut no_export := 'ON'
+
 $if windows {
 	// A Windows DLL needs cimgui/cimplot API exports and an import library.
 	no_export = 'OFF'
 }
+
 build_type := if os.getenv('CMAKE_BUILD_TYPE') == '' {
 	'Release'
 } else {
 	os.getenv('CMAKE_BUILD_TYPE')
 }
+
 safe_glfw_version := glfw_version.replace('..', '_').replace('/', '_').replace('\\', '_')
+
 build_dir := os.join_path(repo_dir, 'build', '${linkage}-${glfw_provider}-${safe_glfw_version}')
+
 output_dir := os.join_path(repo_dir, 'lib')
+
 os.mkdir_all(build_dir) or {
 	eprintln('Could not create build directory ${build_dir}: ${err}')
 	exit(1)
 }
-
 run([
 	'cmake',
 	'-S',
@@ -118,5 +132,4 @@ run([
 	'-DCIMGUI_NO_EXPORT=${no_export}',
 ])
 run(['cmake', '--build', build_dir, '--config', build_type, '--parallel'])
-
 println('Built vimgui in ${output_dir} (linkage: ${linkage}, GLFW: ${glfw_provider}, version: ${glfw_version})')
