@@ -17,12 +17,23 @@ $RuntimeDirectory = Join-Path $RepositoryDirectory "build\windows-demo"
 
 & (Join-Path $RepositoryDirectory "scripts\check_windows.ps1") -BundledGlfw
 
+# A Visual Studio developer shell can put V's .bin\v.bat wrapper ahead of the
+# compiler. Batch files reinterpret the pipe separators in V's -path argument,
+# so call the compiler executable behind that wrapper when it is available.
+$VCommand = (Get-Command v -CommandType Application -ErrorAction Stop).Source
+if ([IO.Path]::GetExtension($VCommand) -in @(".bat", ".cmd")) {
+    $CompilerCandidate = Join-Path (Split-Path -Parent (Split-Path -Parent $VCommand)) "v.exe"
+    if (Test-Path -LiteralPath $CompilerCandidate) {
+        $VCommand = $CompilerCandidate
+    }
+}
+
 if (Test-Path (Join-Path $RepositoryDirectory ".git")) {
     & git -C $RepositoryDirectory submodule update --init --recursive
     if ($LASTEXITCODE -ne 0) { throw "Could not initialise ImGui submodules." }
 }
 
-& v run (Join-Path $RepositoryDirectory "build_vimgui.vsh") --linkage shared --glfw bundled --glfw-version 3.4
+& $VCommand run (Join-Path $RepositoryDirectory "build_vimgui.vsh") --linkage shared --glfw bundled --glfw-version 3.4
 if ($LASTEXITCODE -ne 0) { throw "Could not build the native ImGui library." }
 
 if ($NativeOnly) {
@@ -35,7 +46,7 @@ foreach ($Module in @("vulkan", "glfw")) {
     if (Test-Path (Join-Path $LocalModule "v.mod")) {
         Write-Host "Using checked-out antono2.$Module module."
     } else {
-        & v install "antono2.$Module"
+        & $VCommand install "antono2.$Module"
         if ($LASTEXITCODE -ne 0) { throw "Could not install the $Module V module." }
     }
 }
@@ -78,8 +89,15 @@ $env:GLFW_INCLUDE = Split-Path -Parent (Split-Path -Parent $GlfwHeader.FullName)
 $env:GLFW_LIB = $LinkDirectory
 
 $Executable = Join-Path $RuntimeDirectory "v_imgui_demo.exe"
-$ModulePath = "$RepositoryParent|@vlib|@vmodules"
-& v -no-memory-limit -path $ModulePath -cc msvc -o $Executable $DemoDirectory
+$UsesOnlyCheckedOutModules = @("imgui", "vulkan", "glfw") | ForEach-Object {
+    Test-Path (Join-Path $RepositoryParent "$_\v.mod")
+} | Where-Object { -not $_ } | Measure-Object | Select-Object -ExpandProperty Count
+$ModulePath = if ($UsesOnlyCheckedOutModules -eq 0) {
+    "$RepositoryParent|$RepositoryDirectory\modules|@vlib"
+} else {
+    "$RepositoryParent|@vlib|@vmodules"
+}
+& $VCommand -no-memory-limit -path $ModulePath -cc msvc -o $Executable $DemoDirectory
 if ($LASTEXITCODE -ne 0) {
     throw "The demo did not compile. Update to the official vlang/v master branch and review the compiler output above."
 }
