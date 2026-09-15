@@ -51,6 +51,11 @@ jobs:
           repository: vlang/vc
           ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
           path: toolchain/v/vc
+      - uses: actions/checkout@v7
+        with:
+          repository: vlang/tccbin
+          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          path: toolchain/v/thirdparty/tcc
       - name: Build official V compiler
         working-directory: toolchain/v
         run: |
