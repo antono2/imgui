@@ -6,6 +6,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$UseExistingDemo = $PSBoundParameters.ContainsKey("DemoDirectory")
 $RepositoryDirectory = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 $RepositoryParent = Split-Path -Parent $RepositoryDirectory
 if (-not $DemoDirectory) {
@@ -43,10 +44,12 @@ if (-not (Test-Path (Join-Path $DemoDirectory ".git"))) {
     & git clone https://github.com/antono2/v_imgui_examples.git $DemoDirectory
     if ($LASTEXITCODE -ne 0) { throw "Could not clone v_imgui_examples." }
 }
-& git -C $DemoDirectory fetch --quiet origin $DemoRevision
-if ($LASTEXITCODE -ne 0) { throw "Could not fetch the tested demo revision." }
-& git -C $DemoDirectory checkout --quiet --detach $DemoRevision
-if ($LASTEXITCODE -ne 0) { throw "Could not check out the tested demo revision." }
+if (-not $UseExistingDemo) {
+    & git -C $DemoDirectory fetch --quiet origin $DemoRevision
+    if ($LASTEXITCODE -ne 0) { throw "Could not fetch the tested demo revision." }
+    & git -C $DemoDirectory checkout --quiet --detach $DemoRevision
+    if ($LASTEXITCODE -ne 0) { throw "Could not check out the tested demo revision." }
+}
 
 $GlfwHeader = Get-ChildItem $NativeBuildDirectory -Recurse -Filter "glfw3.h" |
     Where-Object { $_.FullName -match "glfw-src.*include.GLFW" } | Select-Object -First 1

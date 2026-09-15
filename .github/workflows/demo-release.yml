@@ -46,10 +46,15 @@ jobs:
           repository: vlang/v
           ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
           path: toolchain/v
+      - uses: actions/checkout@v7
+        with:
+          repository: vlang/vc
+          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          path: toolchain/v/vc
       - name: Build official V compiler
         working-directory: toolchain/v
         run: |
-          make
+          make local=1
           echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
@@ -143,13 +148,18 @@ jobs:
           path: toolchain/v
       - uses: actions/checkout@v7
         with:
+          repository: vlang/vc
+          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          path: toolchain/v/vc
+      - uses: actions/checkout@v7
+        with:
           repository: zeux/volk
           ref: 58689c063427f5bad4f133625049b1a3c5dd8287
           path: source/third_party/volk
       - name: Build official V compiler
         shell: cmd
         working-directory: toolchain/v
-        run: makev.bat
+        run: makev.bat -msvc --local
       - name: Add V compiler to PATH
         shell: pwsh
         run: |
