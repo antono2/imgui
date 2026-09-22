@@ -80,12 +80,6 @@ pub type BindingFixedArray7 = [6]bool
 
 pub type Va_list = imgui.Va_list
 
-@[typedef]
-pub struct C.DateTimeSpec_c {}
-
-@[typedef]
-pub struct C.Spec_c {}
-
 // External C type declarations (from headers)
 
 
@@ -3973,7 +3967,7 @@ pub struct C.Tm {}
 
 pub type Axis = Axis_c
 
-pub type DateTimeSpec = C.DateTimeSpec_c
+pub type DateTimeSpec = DateTimeSpec_c
 
 pub type Point = Point_c
 
@@ -3981,7 +3975,7 @@ pub type Range = Range_c
 
 pub type Rect = Rect_c
 
-pub type Spec = C.Spec_c
+pub type Spec = Spec_c
 
 pub type Tick = Tick_c
 
