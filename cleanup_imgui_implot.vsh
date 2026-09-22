@@ -1642,6 +1642,10 @@ fn name_c_fixed_array_fields(input string) string {
 	// sync with the corresponding definitions in cimplot.h.
 	output = replace_struct_block(output, 'ImPlotDateTimeSpec_c', 'pub struct C.ImPlotDateTimeSpec_c {\npub mut:\n\tDate DateFmt\n\tTime TimeFmt\n\tUseISO8601 bool\n\tUse24HourClock bool\n}')
 	output = replace_struct_block(output, 'ImPlotSpec_c', 'pub struct C.ImPlotSpec_c {\npub mut:\n\tLineColor ImVec4_c\n\tLineColors &u32\n\tLineWeight f32\n\tFillColor ImVec4_c\n\tFillColors &u32\n\tFillAlpha f32\n\tMarker i32\n\tMarkerSize f32\n\tMarkerSizes &f32\n\tMarkerLineColor ImVec4_c\n\tMarkerLineColors &u32\n\tMarkerFillColor ImVec4_c\n\tMarkerFillColors &u32\n\tSize f32\n\tOffset int\n\tStride int\n\tFlags ItemFlags\n}')
+	output = output.replace('pub type DateTimeSpec = C.DateTimeSpec_c', 'pub type DateTimeSpec = DateTimeSpec_c')
+	output = output.replace('pub type Spec = C.Spec_c', 'pub type Spec = Spec_c')
+	output = output.replace('@[typedef]\npub struct C.DateTimeSpec_c {}\n\n', '')
+	output = output.replace('@[typedef]\npub struct C.Spec_c {}\n\n', '')
 	return output
 }
 
@@ -1806,6 +1810,7 @@ fn self_test() {
 	assert name_c_fixed_array_fields('pub type ID = u32\npub struct C.Sample {\npub mut:\n\tID ID\n}\n') == 'pub type ID = u32\npub struct C.Sample {\npub mut:\n\tID u32\n}\n'
 	assert name_c_fixed_array_fields('pub struct C.ImVec1 {}\n').contains('x f32')
 	assert name_c_fixed_array_fields('pub struct C.ImPlotSpec_c {}\n').contains('Marker i32')
+	assert name_c_fixed_array_fields('pub type Spec = C.Spec_c\n') == 'pub type Spec = Spec_c\n'
 	assert postprocess_identifiers('value int, callback C.int(x), args va_list, c C.va_list') == 'value i32, callback (x), args Va_list, c C.va_list'
 	known := {
 		'first': i64(1 << 4)
