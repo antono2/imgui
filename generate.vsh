@@ -126,6 +126,11 @@ fn main() {
 	run_at('v run ${os.quoted_path(cleanup)} ${os.quoted_path(imgui_binding)} ${os.quoted_path(imgui_binding)} imgui', repo_dir) or { panic(err) }
 	run_at('v run ${os.quoted_path(cleanup)} ${os.quoted_path(implot_binding)} ${os.quoted_path(implot_binding)} implot', repo_dir) or { panic(err) }
 	run_at('v fmt -w ${os.quoted_path(imgui_binding)}', repo_dir) or { panic(err) }
+	// vfmt restores a space before fixed-array types. V3 currently treats that
+	// form as an embedded-struct attribute when the C field name is uppercase.
+	run_at('v run ${os.quoted_path(cleanup)} --v3-fixed-arrays ${os.quoted_path(imgui_binding)}', repo_dir) or {
+		panic(err)
+	}
 	// Do not format ImPlot: its C field/type pair `Marker Marker` is currently
 	// collapsed by vfmt into invalid V.
 	run_at('v run ${os.quoted_path(os.join_path(repo_dir, 'build_vimgui.vsh'))}', repo_dir) or {

@@ -5,6 +5,7 @@ import antono2.vulkan as vk
 import antono2.imgui
 
 #flag -I @VMODROOT/include/imgui/backends
+#flag -I @VMODROOT/include
 
 #define IMGUI_DISABLE
 
@@ -12,13 +13,19 @@ import antono2.imgui
 
 //#define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
 #define IMGUI_IMPL_VULKAN_USE_LOADER
+#define CIMGUI_USE_VULKAN
 
-#include "imgui_impl_vulkan.h"
+#include "cimgui_impl.h"
 
 pub type PFN_LoaderFunc = fn (function_name &char, user_data voidptr) voidptr
 
-@[c: 'ImGui_ImplVulkan_LoadFunctions']
-pub fn load_functions(api_version u32, loader_func PFN_LoaderFunc, user_data voidptr) bool
+@[keep_args_alive]
+fn C.ImGui_ImplVulkan_LoadFunctions(api_version u32, loader_func PFN_LoaderFunc, user_data voidptr) bool
+
+@[inline]
+pub fn load_functions(api_version u32, loader_func PFN_LoaderFunc, user_data voidptr) bool {
+	return C.ImGui_ImplVulkan_LoadFunctions(api_version, loader_func, user_data)
+}
 
 pub type PFN_CheckVkResult = fn (err vk.Result)
 
@@ -66,14 +73,29 @@ pub mut:
 	custom_shader_frag_create_info vk.ShaderModuleCreateInfo
 }
 
-@[c: 'ImGui_ImplVulkan_Init']
-pub fn vkinit(init &InitInfo) bool
+@[keep_args_alive]
+fn C.ImGui_ImplVulkan_Init(init &InitInfo) bool
 
-@[c: 'ImGui_ImplVulkan_NewFrame']
-pub fn new_frame()
+@[inline]
+pub fn vkinit(init &InitInfo) bool {
+	return C.ImGui_ImplVulkan_Init(init)
+}
 
-@[c: 'ImGui_ImplVulkan_RenderDrawData']
-pub fn render_draw_data(draw_data &imgui.ImDrawData, command_buffer vk.CommandBuffer, pipeline vk.Pipeline)
+@[keep_args_alive]
+fn C.ImGui_ImplVulkan_NewFrame()
+
+@[inline]
+pub fn new_frame() {
+	C.ImGui_ImplVulkan_NewFrame()
+}
+
+@[keep_args_alive]
+fn C.ImGui_ImplVulkan_RenderDrawData(draw_data &imgui.ImDrawData, command_buffer vk.CommandBuffer, pipeline vk.Pipeline)
+
+@[inline]
+pub fn render_draw_data(draw_data &imgui.ImDrawData, command_buffer vk.CommandBuffer, pipeline vk.Pipeline) {
+	C.ImGui_ImplVulkan_RenderDrawData(draw_data, command_buffer, pipeline)
+}
 
 // Helper structure to hold the data needed by one rendering frame
 // (Used by example. Used by multi-viewport features. Probably NOT used by your own engine/app.)
@@ -182,31 +204,61 @@ pub mut:
 	frame_semaphores      []FrameSemaphores
 }
 
-@[c: 'ImGui_ImplVulkanH_SelectPhysicalDevice']
-pub fn select_physical_device(instance vk.Instance) vk.PhysicalDevice
+@[keep_args_alive]
+fn C.ImGui_ImplVulkanH_SelectPhysicalDevice(instance vk.Instance) vk.PhysicalDevice
 
-@[c: 'ImGui_ImplVulkanH_SelectQueueFamilyIndex']
-pub fn select_queue_family_index(physical_device vk.PhysicalDevice) u32
+@[inline]
+pub fn select_physical_device(instance vk.Instance) vk.PhysicalDevice {
+	return C.ImGui_ImplVulkanH_SelectPhysicalDevice(instance)
+}
 
-@[c: 'ImGui_ImplVulkanH_SelectSurfaceFormat']
-pub fn select_surface_format(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_formats &vk.Format, request_formats_count i32, request_color_space vk.ColorSpaceKHR) vk.SurfaceFormatKHR
+@[keep_args_alive]
+fn C.ImGui_ImplVulkanH_SelectQueueFamilyIndex(physical_device vk.PhysicalDevice) u32
 
-@[c: 'ImGui_ImplVulkanH_SelectPresentMode']
-pub fn select_present_mode(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_modes &vk.PresentModeKHR, request_modes_count i32) vk.PresentModeKHR
+@[inline]
+pub fn select_queue_family_index(physical_device vk.PhysicalDevice) u32 {
+	return C.ImGui_ImplVulkanH_SelectQueueFamilyIndex(physical_device)
+}
 
-@[c: 'ImGui_ImplVulkan_SetMinImageCount']
-pub fn set_min_image_count(min_image_count u32)
+@[keep_args_alive]
+fn C.ImGui_ImplVulkanH_SelectSurfaceFormat(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_formats &vk.Format, request_formats_count i32, request_color_space vk.ColorSpaceKHR) vk.SurfaceFormatKHR
 
-@[c: 'ImGui_ImplVulkan_Shutdown']
-pub fn shutdown()
+@[inline]
+pub fn select_surface_format(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_formats &vk.Format, request_formats_count i32, request_color_space vk.ColorSpaceKHR) vk.SurfaceFormatKHR {
+	return C.ImGui_ImplVulkanH_SelectSurfaceFormat(physical_device, surface, const_request_formats, request_formats_count, request_color_space)
+}
 
-pub fn create_or_resize_window(instance vk.Instance, physical_device vk.PhysicalDevice, device vk.Device, wd &Window, queue_family u32, allocator &vk.AllocationCallbacks, width i32, height i32, min_image_count u32) {
+@[keep_args_alive]
+fn C.ImGui_ImplVulkanH_SelectPresentMode(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_modes &vk.PresentModeKHR, request_modes_count i32) vk.PresentModeKHR
+
+@[inline]
+pub fn select_present_mode(physical_device vk.PhysicalDevice, surface vk.SurfaceKHR, const_request_modes &vk.PresentModeKHR, request_modes_count i32) vk.PresentModeKHR {
+	return C.ImGui_ImplVulkanH_SelectPresentMode(physical_device, surface, const_request_modes, request_modes_count)
+}
+
+@[keep_args_alive]
+fn C.ImGui_ImplVulkan_SetMinImageCount(min_image_count u32)
+
+@[inline]
+pub fn set_min_image_count(min_image_count u32) {
+	C.ImGui_ImplVulkan_SetMinImageCount(min_image_count)
+}
+
+@[keep_args_alive]
+fn C.ImGui_ImplVulkan_Shutdown()
+
+@[inline]
+pub fn shutdown() {
+	C.ImGui_ImplVulkan_Shutdown()
+}
+
+pub fn create_or_resize_window(instance vk.Instance, physical_device vk.PhysicalDevice, device vk.Device, mut wd Window, queue_family u32, allocator &vk.AllocationCallbacks, width i32, height i32, min_image_count u32) {
 	create_window_swap_chain(physical_device, device, mut wd, allocator, width, height, min_image_count)
 	create_window_command_buffers(physical_device, device, wd, queue_family, allocator)
 }
 
 // ImGui_ImplVulkanH_DestroyFrame
-pub fn destroy_frame(device vk.Device, fd &Frame, const_allocator &vk.AllocationCallbacks) {
+pub fn destroy_frame(device vk.Device, mut fd Frame, const_allocator &vk.AllocationCallbacks) {
 	vk.destroy_fence(device, fd.fence, const_allocator)
 	vk.free_command_buffers(device, fd.command_pool, 1, &fd.command_buffer)
 	vk.destroy_command_pool(device, fd.command_pool, const_allocator)
@@ -218,7 +270,7 @@ pub fn destroy_frame(device vk.Device, fd &Frame, const_allocator &vk.Allocation
 }
 
 // ImGui_ImplVulkanH_DestroyFrameSemaphores
-pub fn destroy_frame_semaphores(device vk.Device, fsd &FrameSemaphores, const_allocator &vk.AllocationCallbacks) {
+pub fn destroy_frame_semaphores(device vk.Device, mut fsd FrameSemaphores, const_allocator &vk.AllocationCallbacks) {
 	vk.destroy_semaphore(device, fsd.image_acquired_semaphore, const_allocator)
 	vk.destroy_semaphore(device, fsd.render_complete_semaphore, const_allocator)
 	fsd.image_acquired_semaphore = unsafe { nil }
@@ -231,7 +283,7 @@ pub fn get_min_image_count_from_present_mode(present_mode vk.PresentModeKHR) u32
 		.mailbox {
 			return 3
 		}
-		.fifo || .fifo_relaxed {
+		.fifo, .fifo_relaxed {
 			return 2
 		}
 		.immediate {
@@ -246,8 +298,9 @@ pub fn get_min_image_count_from_present_mode(present_mode vk.PresentModeKHR) u32
 
 // Also destroy old swap chain and in-flight frames data, if any.
 // ImGui_ImplVulkanH_CreateWindowSwapChain
-pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Device, mut wd &Window, const_allocator &vk.AllocationCallbacks, w i32, h i32, min_image_count u32) {
+pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Device, mut wd Window, const_allocator &vk.AllocationCallbacks, w i32, h i32, min_image_count u32) {
 	mut res := vk.Result.error_unknown
+	mut min_images := min_image_count
 	old_swapchain := wd.swapchain
 	wd.swapchain = unsafe { nil }
 	res = vk.device_wait_idle(device)
@@ -255,10 +308,10 @@ pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Dev
 	// We don't use ImGui_ImplVulkanH_DestroyWindow() because we want to preserve the old swapchain to create the new one.
 	// Destroy old Framebuffer
 	for i in 0 .. wd.image_count {
-		destroy_frame(device, &wd.frames[i], const_allocator)
+		destroy_frame(device, mut wd.frames[i], const_allocator)
 	}
 	for i in 0 .. wd.semaphore_count {
-		destroy_frame_semaphores(device, &wd.frame_semaphores[i], const_allocator)
+		destroy_frame_semaphores(device, mut wd.frame_semaphores[i], const_allocator)
 	}
 	// Clears the array without deallocating the allocated data. It does it by setting the array length to 0.
 	// C++ clear() does destroy the elements as well.
@@ -270,8 +323,8 @@ pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Dev
 	}
 
 	// If min image count was not specified, request different count of images dependent on selected present mode
-	if min_image_count == 0 {
-		min_image_count = get_min_image_count_from_present_mode(wd.present_mode)
+	if min_images == 0 {
+		min_images = get_min_image_count_from_present_mode(wd.present_mode)
 	}
 
 	// Create Swapchain
@@ -281,7 +334,7 @@ pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Dev
 
 	mut swapchain_ci := vk.SwapchainCreateInfoKHR{}
 	swapchain_ci.surface = wd.surface
-	swapchain_ci.minImageCount = min_image_count
+	swapchain_ci.minImageCount = min_images
 	swapchain_ci.imageFormat = wd.surface_format.format
 	swapchain_ci.imageColorSpace = wd.surface_format.colorSpace
 	swapchain_ci.imageArrayLayers = 1
@@ -319,7 +372,7 @@ pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Dev
 	res = vk.get_swapchain_images_khr(device, wd.swapchain, &wd.image_count, unsafe { nil })
 	assert res == vk.Result.success
 	mut backbuffers := []vk.Image{len: int(wd.image_count + 1), init: unsafe { nil }}
-	assert wd.image_count >= min_image_count
+	assert wd.image_count >= min_images
 	res = vk.get_swapchain_images_khr(device, wd.swapchain, &wd.image_count, backbuffers.data)
 	assert res == vk.Result.success
 
@@ -337,7 +390,7 @@ pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Dev
 	if wd.use_dynamic_rendering == false {
 		mut description_att := vk.AttachmentDescription{}
 		description_att.format = wd.surface_format.format
-		description_att.samples = vk.SampleCountFlags(vk.SampleCountFlagBits._1)
+		description_att.samples = vk.SampleCountFlagBits._1
 		if wd.clear_enable {
 			description_att.loadOp = vk.AttachmentLoadOp.clear
 		} else {
@@ -457,10 +510,10 @@ pub fn destroy_window(instance vk.Instance, device vk.Device, mut wd Window, con
 	// vk.queue_wait_idle(wd.queue)
 
 	for i in 0 .. wd.image_count {
-		destroy_frame(device, &wd.frames[i], const_allocator)
+		destroy_frame(device, mut wd.frames[i], const_allocator)
 	}
 	for i in 0 .. wd.semaphore_count {
-		destroy_frame_semaphores(device, &wd.frame_semaphores[i], const_allocator)
+		destroy_frame_semaphores(device, mut wd.frame_semaphores[i], const_allocator)
 	}
 	wd.frames.clear()
 	wd.frame_semaphores.clear()

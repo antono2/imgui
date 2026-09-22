@@ -24,34 +24,36 @@ jobs:
       GLFW_INCLUDE: /usr/include
       GLFW_LIB: /usr/lib/x86_64-linux-gnu
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
+          ref: v2.0.0
           path: source/modules/antono2/vulkan
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/glfw
+          ref: e9a367938577919b4a5140a477c1250112978d8e
           path: source/modules/antono2/glfw
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: c2b5083d42f052cfe73952542e86e4163c64ce79
+          ref: 1e444971dd4f70a6edf281ce648e136c01d08ab6
           path: source/demo
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
           ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
           path: toolchain/v
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
           ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
           path: toolchain/v/vc
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/tccbin
           ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
@@ -116,7 +118,7 @@ jobs:
           unzip -t "$RUNNER_TEMP/$archive" >/dev/null
           sha256sum "$RUNNER_TEMP/$archive"
       - name: Upload Ubuntu demo package
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           path: ${{ runner.temp }}/v-imgui-demo-${{ steps.variant.outputs.name }}-ubuntu24-amd64.zip
           archive: false
@@ -127,36 +129,36 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
-          ref: d9ad9fc5151aa19f58cd2fed1b6bcda9b210f098
+          ref: v2.0.0
           path: source/modules/antono2/vulkan
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/glfw
           ref: 3d7c1ddacb7215a7bbeb5fef0d7a68c90ba392ed
           path: source/modules/antono2/glfw
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: c2b5083d42f052cfe73952542e86e4163c64ce79
+          ref: 1e444971dd4f70a6edf281ce648e136c01d08ab6
           path: source/demo
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
           ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
           path: toolchain/v
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
           ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
           path: toolchain/v/vc
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: zeux/volk
           ref: 58689c063427f5bad4f133625049b1a3c5dd8287
@@ -226,22 +228,131 @@ jobs:
           }
           Get-FileHash -Algorithm SHA256 $Archive
       - name: Upload Windows demo package
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           path: ${{ runner.temp }}/v-imgui-demo-${{ steps.variant.outputs.name }}-windows-x64.zip
           archive: false
           retention-days: 7
           if-no-files-found: error
 
+  strict-v3-frontend:
+    name: Required pinned V3 frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      VMODULES: ${{ github.workspace }}/source/modules
+      VULKAN_SDK: /usr
+      GLFW_INCLUDE: /usr/include
+      GLFW_LIB: /usr/lib/x86_64-linux-gnu
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: source/modules/antono2/imgui
+          submodules: recursive
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: antono2/vulkan
+          ref: v2.0.0
+          path: source/modules/antono2/vulkan
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: antono2/glfw
+          ref: e9a367938577919b4a5140a477c1250112978d8e
+          path: source/modules/antono2/glfw
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: antono2/v_imgui_examples
+          ref: 1e444971dd4f70a6edf281ce648e136c01d08ab6
+          path: source/demo
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/v
+          ref: f59b886d2564e37d8626d715236fdfa928e13dda
+          path: toolchain/v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/vc
+          ref: 4598bc7e4894c154b27391e4442005fff2fbbd68
+          path: toolchain/v/vc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/tccbin
+          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          path: toolchain/v/thirdparty/tcc
+      - name: Build pinned V3 compiler
+        run: |
+          make -C toolchain/v local=1
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Check generated bindings and demo
+        run: |
+          v -new-compiler -check-syntax source/modules/antono2/imgui/imgui.v
+          v -new-compiler -check-syntax source/modules/antono2/imgui/implot/implot.v
+          v -new-compiler -check -path "$VMODULES/antono2|@vlib|@vmodules" source/demo
+
+  linux-v-master:
+    name: Advisory current V master and dependency masters
+    continue-on-error: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      VMODULES: ${{ github.workspace }}/source/modules
+      VULKAN_SDK: /usr
+      GLFW_INCLUDE: /usr/include
+      GLFW_LIB: /usr/lib/x86_64-linux-gnu
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: source/modules/antono2/imgui
+          submodules: recursive
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: antono2/vulkan
+          ref: master
+          path: source/modules/antono2/vulkan
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: antono2/glfw
+          ref: master
+          path: source/modules/antono2/glfw
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: antono2/v_imgui_examples
+          ref: 1e444971dd4f70a6edf281ce648e136c01d08ab6
+          path: source/demo
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/v
+          ref: master
+          path: toolchain/v
+      - name: Build current V master
+        run: |
+          make -C toolchain/v
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev pkg-config
+      - name: Check generated bindings with V3
+        working-directory: source/modules/antono2/imgui
+        run: |
+          v -check-syntax imgui.v
+          v -check-syntax implot/implot.v
+      - name: Build and compile demo with V3
+        run: |
+          cd source/modules/antono2/imgui
+          v run build_vimgui.vsh --linkage shared --glfw system
+          cd "$GITHUB_WORKSPACE"
+          v -no-memory-limit -path "$VMODULES/antono2|@vlib|@vmodules" -cc gcc -o "$RUNNER_TEMP/v_imgui_demo" source/demo
+
   required-checks:
     if: always()
-    needs: [ubuntu24, windows-native]
+    needs: [ubuntu24, windows-native, strict-v3-frontend]
     runs-on: ubuntu-24.04
     steps:
       - name: Verify required jobs
         env:
           UBUNTU_RESULT: ${{ needs.ubuntu24.result }}
           WINDOWS_RESULT: ${{ needs.windows-native.result }}
+          V3_RESULT: ${{ needs.strict-v3-frontend.result }}
         run: |
           test "$UBUNTU_RESULT" = success
           test "$WINDOWS_RESULT" = success
+          test "$V3_RESULT" = success

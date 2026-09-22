@@ -70,6 +70,14 @@ SOFTWARE.
 pub const version = '1.1 WIP'
 pub const version_num = 10100
 
+pub type BindingFixedArray1 = [16]ImVec4_c
+pub type BindingFixedArray2 = [16]i8
+pub type BindingFixedArray3 = [6]Axis_c
+pub type BindingFixedArray4 = [2]f32
+pub type BindingFixedArray5 = [6]Cond
+pub type BindingFixedArray6 = [6]Range_c
+pub type BindingFixedArray7 = [6]bool
+
 pub type Va_list = imgui.Va_list
 
 @[typedef]
@@ -4627,7 +4635,7 @@ pub mut:
 	FitPadding ImVec2_c
 	DigitalPadding f32
 	DigitalSpacing f32
-	Colors [16]ImVec4_c
+	Colors BindingFixedArray1
 	Colormap Colormap
 	UseLocalTime bool
 	UseISO8601 bool
@@ -4887,7 +4895,7 @@ pub mut:
 	Ticker Ticker
 	Formatter Formatter
 	FormatterData voidptr
-	FormatSpec [16]i8
+	FormatSpec BindingFixedArray2
 	Locator Locator
 	LinkedMin &f64
 	LinkedMax &f64
@@ -5013,7 +5021,7 @@ pub mut:
 	PreviousFlags Flags
 	MouseTextLocation Location
 	MouseTextFlags MouseTextFlags
-	Axes [6]Axis_c
+	Axes BindingFixedArray3
 	TextBuffer imgui.TextBuffer
 	Items ItemGroup
 	CurrentX ImAxis
@@ -5077,7 +5085,7 @@ pub mut:
 	ColRatios ImVector_float
 	RowLinkData ImVector_Range
 	ColLinkData ImVector_Range
-	TempSizes [2]f32
+	TempSizes BindingFixedArray4
 	FrameHovered bool
 	HasTitle bool
 }
@@ -5087,12 +5095,12 @@ pub type NextPlotData = C.ImPlotNextPlotData
 @[typedef]
 pub struct C.ImPlotNextPlotData {
 pub mut:
-	RangeCond [6]Cond
-	Range [6]Range_c
-	HasRange [6]bool
-	Fit [6]bool
-	LinkedMin [6]&f64
-	LinkedMax [6]&f64
+	RangeCond BindingFixedArray5
+	Range BindingFixedArray6
+	HasRange BindingFixedArray7
+	Fit BindingFixedArray7
+	LinkedMin[6]&f64
+	LinkedMax[6]&f64
 }
 
 
