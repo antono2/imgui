@@ -357,7 +357,7 @@ jobs:
           cd source/modules/antono2/imgui
           v run build_vimgui.vsh --linkage shared --glfw system
           cd "$GITHUB_WORKSPACE"
-          v -no-retry-compilation -no-memory-limit -path "$VMODULES/antono2|@vlib|@vmodules" -cc gcc -o "$RUNNER_TEMP/v_imgui_demo" source/demo
+          v -new-compiler -no-memory-limit -path "$VMODULES/antono2|@vlib|@vmodules" -cc gcc -o "$RUNNER_TEMP/v_imgui_demo" source/demo
 
   required-checks:
     if: always()
