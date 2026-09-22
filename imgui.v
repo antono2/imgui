@@ -1214,8 +1214,8 @@ pub type IO = C.ImGuiIO
 @[typedef]
 pub struct C.ImGuiIO {
 pub mut:
-	ConfigFlags                                   ConfigFlags
-	BackendFlags                                  BackendFlags
+	ConfigFlags                                   i32
+	BackendFlags                                  i32
 	DisplaySize                                   ImVec2_c
 	DisplayFramebufferScale                       ImVec2_c
 	DeltaTime                                     f32
@@ -1341,7 +1341,7 @@ pub mut:
 	EventFlag      InputTextFlags
 	Flags          InputTextFlags
 	UserData       voidptr
-	ID             ID
+	ID             u32
 	EventKey       Key
 	EventChar      ImWchar
 	EventActivated bool
@@ -2143,7 +2143,7 @@ pub type Viewport = C.ImGuiViewport
 @[typedef]
 pub struct C.ImGuiViewport {
 pub mut:
-	ID                    ID
+	ID                    u32
 	Flags                 ViewportFlags
 	Pos                   ImVec2_c
 	Size                  ImVec2_c
@@ -2320,7 +2320,10 @@ pub type ImFileHandle = &C.FILE
 pub type ImVec1 = C.ImVec1
 
 @[typedef]
-pub struct C.ImVec1 {}
+pub struct C.ImVec1 {
+pub mut:
+	x f32
+}
 
 pub type ImVec2i_c = C.ImVec2i_c
 
@@ -2439,7 +2442,7 @@ pub type StyleVarInfo = C.ImGuiStyleVarInfo
 pub struct C.ImGuiStyleVarInfo {
 pub mut:
 	Count    ImU32
-	DataType DataType
+	DataType i32
 	Offset   ImU32
 }
 
@@ -2448,7 +2451,7 @@ pub type ColorMod = C.ImGuiColorMod
 @[typedef]
 pub struct C.ImGuiColorMod {
 pub mut:
-	Col         Col
+	Col         i32
 	BackupValue ImVec4_c
 }
 
@@ -2675,7 +2678,7 @@ pub type InputTextDeactivatedState = C.ImGuiInputTextDeactivatedState
 @[typedef]
 pub struct C.ImGuiInputTextDeactivatedState {
 pub mut:
-	ID          ID
+	ID          u32
 	ElapseFrame i32
 	TextA       ImVector_char
 }
@@ -2693,7 +2696,7 @@ pub mut:
 	Ctx                  &Context
 	Stb                  &ImStbTexteditState
 	Flags                InputTextFlags
-	ID                   ID
+	ID                   u32
 	TextLen              i32
 	TextSrc              &char
 	TextA                ImVector_char
@@ -2760,8 +2763,8 @@ pub mut:
 	SizeVal              ImVec2_c
 	ContentSizeVal       ImVec2_c
 	ScrollVal            ImVec2_c
-	WindowFlags          WindowFlags
-	ChildFlags           ChildFlags
+	WindowFlags          i32
+	ChildFlags           i32
 	PosUndock            bool
 	CollapsedVal         bool
 	SizeConstraintRect   ImRect_c
@@ -2793,7 +2796,7 @@ pub mut:
 	HasFlags          NextItemDataFlags
 	ItemFlagsSet      ItemFlags
 	FocusScopeId      ID
-	SelectionUserData SelectionUserData
+	SelectionUserData i64
 	Width             f32
 	Shortcut          KeyChord
 	ShortcutFlags     InputFlags
@@ -2809,8 +2812,8 @@ pub type LastItemData = C.ImGuiLastItemData
 @[typedef]
 pub struct C.ImGuiLastItemData {
 pub mut:
-	ID          ID
-	ItemFlags   ItemFlags
+	ID          u32
+	ItemFlags   i32
 	StatusFlags ItemStatusFlags
 	Rect        ImRect_c
 	NavRect     ImRect_c
@@ -2824,9 +2827,9 @@ pub type TreeNodeStackData = C.ImGuiTreeNodeStackData
 @[typedef]
 pub struct C.ImGuiTreeNodeStackData {
 pub mut:
-	ID                   ID
+	ID                   u32
 	TreeFlags            TreeNodeFlags
-	ItemFlags            ItemFlags
+	ItemFlags            i32
 	NavRect              ImRect_c
 	DrawLinesX1          f32
 	DrawLinesToNodesY2   f32
@@ -2887,7 +2890,7 @@ pub type DeactivatedItemData = C.ImGuiDeactivatedItemData
 @[typedef]
 pub struct C.ImGuiDeactivatedItemData {
 pub mut:
-	ID                  ID
+	ID                  u32
 	ElapseFrame         i32
 	HasBeenEditedBefore bool
 	IsAlive             bool
@@ -3188,14 +3191,14 @@ pub type NavItemData = C.ImGuiNavItemData
 pub struct C.ImGuiNavItemData {
 pub mut:
 	Window            &Window
-	ID                ID
+	ID                u32
 	FocusScopeId      ID
 	RectRel           ImRect_c
-	ItemFlags         ItemFlags
+	ItemFlags         i32
 	DistBox           f32
 	DistCenter        f32
 	DistAxial         f32
-	SelectionUserData SelectionUserData
+	SelectionUserData i64
 }
 
 pub type FocusScopeData = C.ImGuiFocusScopeData
@@ -3203,7 +3206,7 @@ pub type FocusScopeData = C.ImGuiFocusScopeData
 @[typedef]
 pub struct C.ImGuiFocusScopeData {
 pub mut:
-	ID       ID
+	ID       u32
 	WindowID ID
 }
 
@@ -3274,7 +3277,7 @@ pub type OldColumns = C.ImGuiOldColumns
 @[typedef]
 pub struct C.ImGuiOldColumns {
 pub mut:
-	ID                       ID
+	ID                       u32
 	Flags                    OldColumnFlags
 	IsFirstFrame             bool
 	IsBeingResized           bool
@@ -3298,7 +3301,7 @@ pub type BoxSelectState = C.ImGuiBoxSelectState
 @[typedef]
 pub struct C.ImGuiBoxSelectState {
 pub mut:
-	ID                    ID
+	ID                    u32
 	IsActive              bool
 	IsStarting            bool
 	IsStartedFromVoid     bool
@@ -3345,7 +3348,7 @@ pub type MultiSelectState = C.ImGuiMultiSelectState
 pub struct C.ImGuiMultiSelectState {
 pub mut:
 	Window            &Window
-	ID                ID
+	ID                u32
 	LastFrameActive   i32
 	LastSelectionSize i32
 	RangeSelected     ImS8
@@ -3403,7 +3406,7 @@ pub type DockNode = C.ImGuiDockNode
 @[typedef]
 pub struct C.ImGuiDockNode {
 pub mut:
-	ID                     ID
+	ID                     u32
 	SharedFlags            DockNodeFlags
 	LocalFlags             DockNodeFlags
 	LocalFlagsInWindows    DockNodeFlags
@@ -3534,7 +3537,7 @@ pub type WindowSettings = C.ImGuiWindowSettings
 @[typedef]
 pub struct C.ImGuiWindowSettings {
 pub mut:
-	ID           ID
+	ID           u32
 	Pos          ImVec2ih
 	Size         ImVec2ih
 	ViewportPos  ImVec2ih
@@ -3680,7 +3683,7 @@ pub type StackLevelInfo = C.ImGuiStackLevelInfo
 @[typedef]
 pub struct C.ImGuiStackLevelInfo {
 pub mut:
-	ID              ID
+	ID              u32
 	QueryFrameCount ImS8
 	QuerySuccess    bool
 	DataType        ImS8
@@ -4196,7 +4199,7 @@ pub mut:
 	NavMoveSubmitted                   bool
 	NavMoveScoringItems                bool
 	NavMoveForwardToNextFrame          bool
-	NavMoveFlags                       NavMoveFlags
+	NavMoveFlags                       i32
 	NavMoveScrollFlags                 ScrollFlags
 	NavMoveKeyMods                     KeyChord
 	NavMoveDir                         Dir
@@ -4276,7 +4279,7 @@ pub mut:
 	HoverItemDelayClearTimer           f32
 	HoverItemUnlockedStationaryId      ID
 	HoverWindowUnlockedStationaryId    ID
-	MouseCursor                        MouseCursor
+	MouseCursor                        i32
 	MouseStationaryTimer               f32
 	MouseLastValidPos                  ImVec2_c
 	InputTextState                     InputTextState
@@ -4331,7 +4334,7 @@ pub mut:
 	LocalizationTable[15]&char
 	LogEnabled                         bool
 	LogLineFirstItem                   bool
-	LogFlags                           LogFlags
+	LogFlags                           i32
 	LogWindow                          &Window
 	LogFile                            ImFileHandle
 	LogBuffer                          TextBuffer
@@ -4349,7 +4352,7 @@ pub mut:
 	StackSizesInNewFrame               ErrorRecoveryState
 	StackSizesInBeginForCurrentWindow  &ErrorRecoveryState
 	DebugDrawIdConflictsCount          i32
-	DebugLogFlags                      DebugLogFlags
+	DebugLogFlags                      i32
 	DebugLogBuf                        TextBuffer
 	DebugLogIndex                      TextIndex
 	DebugLogSkippedErrors              i32
@@ -4416,7 +4419,7 @@ pub mut:
 	StateStorage                  &Storage
 	CurrentColumns                &OldColumns
 	CurrentTableIdx               i32
-	LayoutType                    LayoutType
+	LayoutType                    i32
 	ParentLayoutType              LayoutType
 	ModalDimBgColor               ImU32
 	WindowItemStatusFlags         ItemStatusFlags
@@ -4447,10 +4450,10 @@ pub struct C.ImGuiWindow {
 pub mut:
 	Ctx                                &Context
 	Name                               &char
-	ID                                 ID
+	ID                                 u32
 	Flags                              WindowFlags
 	FlagsPreviousFrame                 WindowFlags
-	ChildFlags                         ChildFlags
+	ChildFlags                         i32
 	WindowClass                        WindowClass
 	Viewport                           &ViewportP
 	ViewportId                         ID
@@ -4591,7 +4594,7 @@ pub type TabItem = C.ImGuiTabItem
 @[typedef]
 pub struct C.ImGuiTabItem {
 pub mut:
-	ID                ID
+	ID                u32
 	Flags             TabItemFlags
 	Window            &Window
 	LastFrameVisible  i32
@@ -4624,7 +4627,7 @@ pub mut:
 	Window                          &Window
 	Tabs                            ImVector_TabItem
 	Flags                           TabBarFlags
-	ID                              ID
+	ID                              u32
 	SelectedTabId                   ID
 	NextSelectedTabId               ID
 	NextScrollToTabId               ID
@@ -4675,7 +4678,7 @@ pub mut:
 	StretchWeight            f32
 	InitStretchWeightOrWidth f32
 	ClipRect                 ImRect_c
-	ID                       ID
+	ID                       u32
 	UserData                 ID
 	WorkMinX                 f32
 	WorkMaxX                 f32
@@ -4719,7 +4722,7 @@ pub type TableReconcileColumnData = C.ImGuiTableReconcileColumnData
 @[typedef]
 pub struct C.ImGuiTableReconcileColumnData {
 pub mut:
-	ID                ID
+	ID                u32
 	NameOffset        ImS16
 	Flags             TableColumnFlags
 	InitWidthOrWeight f32
@@ -4814,7 +4817,7 @@ pub type Table = C.ImGuiTable
 @[typedef]
 pub struct C.ImGuiTable {
 pub mut:
-	ID                         ID
+	ID                         u32
 	Flags                      TableFlags
 	RawData                    voidptr
 	TempData                   &TableTempData
@@ -4984,7 +4987,7 @@ pub type TableColumnSettings = C.ImGuiTableColumnSettings
 pub struct C.ImGuiTableColumnSettings {
 pub mut:
 	WidthOrWeight f32
-	ID            ID
+	ID            u32
 	Index         TableColumnIdx
 	DisplayOrder  TableColumnIdx
 	SortOrder     TableColumnIdx
@@ -4999,7 +5002,7 @@ pub type TableSettings = C.ImGuiTableSettings
 @[typedef]
 pub struct C.ImGuiTableSettings {
 pub mut:
-	ID              ID
+	ID              u32
 	SaveFlags       TableFlags
 	RefScale        f32
 	ColumnsCount    TableColumnIdx
