@@ -1582,6 +1582,14 @@ fn insert_after_version(input string, addition string) string {
 // its layout, and compatibility with both V compilers.
 fn name_c_fixed_array_fields(input string) string {
 	mut aliases := map[string]string{}
+	mut scalar_aliases := map[string]string{}
+	for line in input.split_into_lines() {
+		if name, rhs := type_alias(line) {
+			if rhs in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'f32', 'f64'] {
+				scalar_aliases[name] = rhs
+			}
+		}
+	}
 	mut declarations := []string{}
 	mut lines := []string{}
 	mut in_c_struct := false
@@ -1594,6 +1602,16 @@ fn name_c_fixed_array_fields(input string) string {
 		}
 		if in_c_struct {
 			if field, typ := field_decl(line) {
+				// V3 treats `ID ID` as an embedded ID. The scalar backing
+				// type has the same ABI and disambiguates the C field.
+				if field == typ && field in scalar_aliases {
+					lines << line[..line.last_index(typ) or { 0 }] + scalar_aliases[field]
+					continue
+				}
+				if field == 'ID' && typ == 'imgui.ID' {
+					lines << line[..line.last_index(typ) or { 0 }] + 'u32'
+					continue
+				}
 				if starts_upper(field) && typ.starts_with('[') {
 					if typ.contains('&') {
 						// Keeping pointer arrays direct avoids a V2 cgen dependency
@@ -1618,6 +1636,12 @@ fn name_c_fixed_array_fields(input string) string {
 	if declarations.len > 0 {
 		output = insert_after_version(output, declarations.join('\n') + '\n\n')
 	}
+	// ImVec1 is a by-value C struct, so its binding needs its actual field.
+	output = replace_struct_block(output, 'ImVec1', 'pub struct C.ImVec1 {\npub mut:\n\tx f32\n}')
+	// These ImPlot structs are stored by value. Keep their declarations in
+	// sync with the corresponding definitions in cimplot.h.
+	output = replace_struct_block(output, 'ImPlotDateTimeSpec_c', 'pub struct C.ImPlotDateTimeSpec_c {\npub mut:\n\tDate DateFmt\n\tTime TimeFmt\n\tUseISO8601 bool\n\tUse24HourClock bool\n}')
+	output = replace_struct_block(output, 'ImPlotSpec_c', 'pub struct C.ImPlotSpec_c {\npub mut:\n\tLineColor ImVec4_c\n\tLineColors &u32\n\tLineWeight f32\n\tFillColor ImVec4_c\n\tFillColors &u32\n\tFillAlpha f32\n\tMarker i32\n\tMarkerSize f32\n\tMarkerSizes &f32\n\tMarkerLineColor ImVec4_c\n\tMarkerLineColors &u32\n\tMarkerFillColor ImVec4_c\n\tMarkerFillColors &u32\n\tSize f32\n\tOffset int\n\tStride int\n\tFlags ItemFlags\n}')
 	return output
 }
 
@@ -1779,6 +1803,9 @@ fn self_test() {
 	assert clean_type_expr('implot', '&ImGuiContext') == '&imgui.Context'
 	assert name_c_fixed_array_fields('pub const version_num = 1\n\npub struct C.Sample {\npub mut:\n\tColors [3]f32\n}\n') == 'pub const version_num = 1\n\npub type BindingFixedArray1 = [3]f32\n\npub struct C.Sample {\npub mut:\n\tColors BindingFixedArray1\n}\n'
 	assert name_c_fixed_array_fields('pub struct C.Node {\npub mut:\n\tChildren [2]&Node\n}\n') == 'pub struct C.Node {\npub mut:\n\tChildren[2]&Node\n}\n'
+	assert name_c_fixed_array_fields('pub type ID = u32\npub struct C.Sample {\npub mut:\n\tID ID\n}\n') == 'pub type ID = u32\npub struct C.Sample {\npub mut:\n\tID u32\n}\n'
+	assert name_c_fixed_array_fields('pub struct C.ImVec1 {}\n').contains('x f32')
+	assert name_c_fixed_array_fields('pub struct C.ImPlotSpec_c {}\n').contains('Marker i32')
 	assert postprocess_identifiers('value int, callback C.int(x), args va_list, c C.va_list') == 'value i32, callback (x), args Va_list, c C.va_list'
 	known := {
 		'first': i64(1 << 4)

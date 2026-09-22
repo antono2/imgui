@@ -91,12 +91,37 @@ pub struct C.Spec_c {}
 
 pub type DateTimeSpec_c = C.ImPlotDateTimeSpec_c
 @[typedef]
-pub struct C.ImPlotDateTimeSpec_c {}
+pub struct C.ImPlotDateTimeSpec_c {
+pub mut:
+	Date DateFmt
+	Time TimeFmt
+	UseISO8601 bool
+	Use24HourClock bool
+}
 
 
 pub type Spec_c = C.ImPlotSpec_c
 @[typedef]
-pub struct C.ImPlotSpec_c {}
+pub struct C.ImPlotSpec_c {
+pub mut:
+	LineColor ImVec4_c
+	LineColors &u32
+	LineWeight f32
+	FillColor ImVec4_c
+	FillColors &u32
+	FillAlpha f32
+	Marker i32
+	MarkerSize f32
+	MarkerSizes &f32
+	MarkerLineColor ImVec4_c
+	MarkerLineColors &u32
+	MarkerFillColor ImVec4_c
+	MarkerFillColors &u32
+	Size f32
+	Offset int
+	Stride int
+	Flags ItemFlags
+}
 
 pub type ImVec2_c = imgui.ImVec2
 
@@ -4469,7 +4494,7 @@ pub mut:
 	FillColor ImVec4_c
 	FillColors &u32
 	FillAlpha f32
-	Marker Marker
+	Marker i32
 	MarkerSize f32
 	MarkerSizes &f32
 	MarkerLineColor ImVec4_c
@@ -4526,7 +4551,7 @@ pub mut:
 	DigitalPadding f32
 	DigitalSpacing f32
 	Colors BindingFixedArray1
-	Colormap Colormap
+	Colormap i32
 	UseLocalTime bool
 	UseISO8601 bool
 	Use24HourClock bool
@@ -4772,12 +4797,12 @@ pub type Axis_c = C.ImPlotAxis_c
 @[typedef]
 pub struct C.ImPlotAxis_c {
 pub mut:
-	ID imgui.ID
+	ID u32
 	Flags AxisFlags
 	PreviousFlags AxisFlags
 	Range Range_c
 	RangeCond Cond
-	Scale Scale
+	Scale i32
 	FitExtents Range_c
 	OrthoAxis &Axis_c
 	ConstraintRange Range_c
@@ -4839,9 +4864,9 @@ pub type Item = C.ImPlotItem
 @[typedef]
 pub struct C.ImPlotItem {
 pub mut:
-	ID imgui.ID
+	ID u32
 	Color u32
-	Marker Marker
+	Marker i32
 	LegendHoverRect ImRect_c
 	NameOffset i32
 	Show bool
@@ -4856,7 +4881,7 @@ pub struct C.ImPlotLegend {
 pub mut:
 	Flags LegendFlags
 	PreviousFlags LegendFlags
-	Location Location
+	Location i32
 	PreviousLocation Location
 	Scroll ImVec2_c
 	Indices ImVector_int
@@ -4894,7 +4919,7 @@ pub type ItemGroup = C.ImPlotItemGroup
 @[typedef]
 pub struct C.ImPlotItemGroup {
 pub mut:
-	ID imgui.ID
+	ID u32
 	Legend Legend
 	ItemPool ImPool_Item
 	ColormapIdx i32
@@ -4906,11 +4931,11 @@ pub type Plot = C.ImPlotPlot
 @[typedef]
 pub struct C.ImPlotPlot {
 pub mut:
-	ID imgui.ID
-	Flags Flags
+	ID u32
+	Flags i32
 	PreviousFlags Flags
 	MouseTextLocation Location
-	MouseTextFlags MouseTextFlags
+	MouseTextFlags i32
 	Axes BindingFixedArray3
 	TextBuffer imgui.TextBuffer
 	Items ItemGroup
@@ -4959,7 +4984,7 @@ pub type Subplot = C.ImPlotSubplot
 @[typedef]
 pub struct C.ImPlotSubplot {
 pub mut:
-	ID imgui.ID
+	ID u32
 	Flags SubplotFlags
 	PreviousFlags SubplotFlags
 	Items ItemGroup
