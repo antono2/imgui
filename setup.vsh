@@ -17,7 +17,7 @@ fn run(command string) ! {
 
 fn setup_vulkan(mode string) ! {
 	if mode == '--install' {
-		run('v install antono2.vulkan')!
+		run('v install antono2.vulkan@v2.0.0')!
 	}
 	setup := os.join_path(os.vmodules_dir(), 'antono2', 'vulkan', 'setup.vsh')
 	if !os.is_file(setup) {

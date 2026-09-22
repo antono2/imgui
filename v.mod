@@ -2,8 +2,8 @@ Module {
   name: 'antono2.imgui'
   description: 'Dear ImGui bindings for V. https://github.com/ocornut/imgui'
   version: '1.0.0'
-  autho: 'Anton Oreskin'
+  author: 'Anton Oreskin'
   license: 'MIT'
   repo_url: 'https://github.com/antono2/imgui'
-  dependencies: ['antono2.vulkan', 'antono2.glfw']
+  dependencies: ['antono2.vulkan@v2.0.0', 'antono2.glfw']
 }
