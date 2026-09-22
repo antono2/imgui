@@ -36,6 +36,7 @@ mut:
 fn usage() {
 	eprintln('Usage: v run cleanup_imgui_implot.vsh input.v output.v imgui|implot')
 	eprintln('       v run cleanup_imgui_implot.vsh --self-test')
+	eprintln('       v run cleanup_imgui_implot.vsh --v3-fixed-arrays binding.v')
 }
 
 fn config_for(kind string) !Config {
@@ -1576,6 +1577,50 @@ fn insert_after_version(input string, addition string) string {
 	return input[..after] + addition + input[after..]
 }
 
+// V3 interprets an uppercase C field followed by `[N]Type` as an embedded
+// struct with attributes. A named fixed-array type preserves the C field name,
+// its layout, and compatibility with both V compilers.
+fn name_c_fixed_array_fields(input string) string {
+	mut aliases := map[string]string{}
+	mut declarations := []string{}
+	mut lines := []string{}
+	mut in_c_struct := false
+	for line in input.split_into_lines() {
+		trimmed := line.trim_space()
+		if trimmed.starts_with('pub struct C.') && trimmed.ends_with('{') {
+			in_c_struct = true
+		} else if in_c_struct && trimmed == '}' {
+			in_c_struct = false
+		}
+		if in_c_struct {
+			if field, typ := field_decl(line) {
+				if starts_upper(field) && typ.starts_with('[') {
+					if typ.contains('&') {
+						// Keeping pointer arrays direct avoids a V2 cgen dependency
+						// cycle for self-referential structs such as DockNode.
+						lines << '\t${field}${typ}'
+						continue
+					}
+					mut alias := aliases[typ]
+					if alias == '' {
+						alias = 'BindingFixedArray${aliases.len + 1}'
+						aliases[typ] = alias
+						declarations << 'pub type ${alias} = ${typ}'
+					}
+					lines << '\t${field} ${alias}'
+					continue
+				}
+			}
+		}
+		lines << line
+	}
+	mut output := lines.join('\n') + '\n'
+	if declarations.len > 0 {
+		output = insert_after_version(output, declarations.join('\n') + '\n\n')
+	}
+	return output
+}
+
 fn clean_one(kind string, input_path string, output_path string) ! {
 	cfg := config_for(kind)!
 	source := os.read_file(input_path)!
@@ -1716,6 +1761,7 @@ fn clean_one(kind string, input_path string, output_path string) ! {
 	final = insert_after_version(final, header_alias_decls(ctx, final))
 	final = insert_after_version(final, missing_c_alias_target_decls(final, imported_structs))
 	final = final_sanitize(kind, final)
+	final = name_c_fixed_array_fields(final)
 	os.write_file(output_path, final)!
 	println('cleaned ${kind}: ${input_path} -> ${output_path}')
 }
@@ -1731,6 +1777,8 @@ fn self_test() {
 	assert clean_type_expr('imgui', '&ImGuiContext') == '&Context'
 	assert clean_type_expr('implot', 'C.ImPlotSpec_c') == 'C.Spec_c'
 	assert clean_type_expr('implot', '&ImGuiContext') == '&imgui.Context'
+	assert name_c_fixed_array_fields('pub const version_num = 1\n\npub struct C.Sample {\npub mut:\n\tColors [3]f32\n}\n') == 'pub const version_num = 1\n\npub type BindingFixedArray1 = [3]f32\n\npub struct C.Sample {\npub mut:\n\tColors BindingFixedArray1\n}\n'
+	assert name_c_fixed_array_fields('pub struct C.Node {\npub mut:\n\tChildren [2]&Node\n}\n') == 'pub struct C.Node {\npub mut:\n\tChildren[2]&Node\n}\n'
 	assert postprocess_identifiers('value int, callback C.int(x), args va_list, c C.va_list') == 'value i32, callback (x), args Va_list, c C.va_list'
 	known := {
 		'first': i64(1 << 4)
@@ -1742,6 +1790,12 @@ fn self_test() {
 fn main() {
 	if os.args.len == 2 && os.args[1] == '--self-test' {
 		self_test()
+		return
+	}
+	if os.args.len == 3 && os.args[1] == '--v3-fixed-arrays' {
+		path := os.args[2]
+		content := os.read_file(path) or { panic(err) }
+		os.write_file(path, name_c_fixed_array_fields(content)) or { panic(err) }
 		return
 	}
 	if os.args.len != 4 {
