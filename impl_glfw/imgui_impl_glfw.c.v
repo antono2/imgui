@@ -2,6 +2,8 @@ module impl_glfw
 
 import antono2.glfw
 
+#flag -DCIMGUI_USE_GLFW
+
 #define CIMGUI_USE_GLFW
 #define IMGUI_IMPL_VULKAN
 
