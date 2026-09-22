@@ -65,6 +65,39 @@ SOFTWARE.
 pub const version = '1.92.9b'
 pub const version_num = 19291
 
+pub type BindingFixedArray1 = [63]ImVec4_c
+pub type BindingFixedArray2 = [5]bool
+pub type BindingFixedArray3 = [155]KeyData
+pub type BindingFixedArray4 = [5]ImVec2_c
+pub type BindingFixedArray5 = [5]f64
+pub type BindingFixedArray6 = [5]ImU16
+pub type BindingFixedArray7 = [5]f32
+pub type BindingFixedArray8 = [33]i8
+pub type BindingFixedArray9 = [40]i8
+pub type BindingFixedArray10 = [33]ImVec4_c
+pub type BindingFixedArray11 = [1]ImU8
+pub type BindingFixedArray12 = [48]ImVec2_c
+pub type BindingFixedArray13 = [64]ImU8
+pub type BindingFixedArray14 = [8]ImU8
+pub type BindingFixedArray15 = [4]ImU16
+pub type BindingFixedArray16 = [5]ImU32
+pub type BindingFixedArray17 = [155]KeyRoutingIndex
+pub type BindingFixedArray18 = [64]i8
+pub type BindingFixedArray19 = [2]ImRect_c
+pub type BindingFixedArray20 = [9]ImU32
+pub type BindingFixedArray21 = [2]f32
+pub type BindingFixedArray22 = [6]DebugAllocEntry
+pub type BindingFixedArray23 = [16]i8
+pub type BindingFixedArray24 = [155]KeyOwnerData
+pub type BindingFixedArray25 = [16]u8
+pub type BindingFixedArray26 = [60]f32
+pub type BindingFixedArray27 = [2]ID
+pub type BindingFixedArray28 = [2]ImVec2_c
+pub type BindingFixedArray29 = [2]ImU32
+pub type BindingFixedArray30 = [80]i8
+pub type BindingFixedArray31 = [99]StbUndoRecord
+pub type BindingFixedArray32 = [999]i8
+
 pub type ImWchar = u32
 
 pub type InputTextCallback = fn (&InputTextCallbackData) i32
@@ -1145,7 +1178,7 @@ pub mut:
 	AntiAliasedFill                  bool
 	CurveTessellationTol             f32
 	CircleTessellationMaxError       f32
-	Colors                           [63]ImVec4_c
+	Colors BindingFixedArray1
 	HoverStationaryDelay             f32
 	HoverDelayShort                  f32
 	HoverDelayNormal                 f32
@@ -1263,7 +1296,7 @@ pub mut:
 	MouseDelta                                    ImVec2_c
 	Ctx                                           &Context
 	MousePos                                      ImVec2_c
-	MouseDown                                     [5]bool
+	MouseDown BindingFixedArray2
 	MouseWheel                                    f32
 	MouseWheelH                                   f32
 	MouseSource                                   MouseSource
@@ -1273,25 +1306,25 @@ pub mut:
 	KeyAlt                                        bool
 	KeySuper                                      bool
 	KeyMods                                       KeyChord
-	KeysData                                      [155]KeyData
+	KeysData BindingFixedArray3
 	WantCaptureMouseUnlessPopupClose              bool
 	MousePosPrev                                  ImVec2_c
-	MouseClickedPos                               [5]ImVec2_c
-	MouseClickedTime                              [5]f64
-	MouseClicked                                  [5]bool
-	MouseDoubleClicked                            [5]bool
-	MouseClickedCount                             [5]ImU16
-	MouseClickedLastCount                         [5]ImU16
-	MouseReleased                                 [5]bool
-	MouseReleasedTime                             [5]f64
-	MouseDownOwned                                [5]bool
-	MouseDownOwnedUnlessPopupClose                [5]bool
+	MouseClickedPos BindingFixedArray4
+	MouseClickedTime BindingFixedArray5
+	MouseClicked BindingFixedArray2
+	MouseDoubleClicked BindingFixedArray2
+	MouseClickedCount BindingFixedArray6
+	MouseClickedLastCount BindingFixedArray6
+	MouseReleased BindingFixedArray2
+	MouseReleasedTime BindingFixedArray5
+	MouseDownOwned BindingFixedArray2
+	MouseDownOwnedUnlessPopupClose BindingFixedArray2
 	MouseWheelRequestAxisSwap                     bool
 	MouseCtrlLeftAsRightClick                     bool
-	MouseDownDuration                             [5]f32
-	MouseDownDurationPrev                         [5]f32
-	MouseDragMaxDistanceAbs                       [5]ImVec2_c
-	MouseDragMaxDistanceSqr                       [5]f32
+	MouseDownDuration BindingFixedArray7
+	MouseDownDurationPrev BindingFixedArray7
+	MouseDragMaxDistanceAbs BindingFixedArray4
+	MouseDragMaxDistanceSqr BindingFixedArray7
 	PenPressure                                   f32
 	AppFocusLost                                  bool
 	AppAcceptingEvents                            bool
@@ -1359,7 +1392,7 @@ pub mut:
 	SourceId       ID
 	SourceParentId ID
 	DataFrameCount i32
-	DataType       [33]i8
+	DataType BindingFixedArray8
 	Preview        bool
 	Delivery       bool
 }
@@ -1841,7 +1874,7 @@ pub type ImFontConfig = C.ImFontConfig
 @[typedef]
 pub struct C.ImFontConfig {
 pub mut:
-	Name                 [40]i8
+	Name BindingFixedArray9
 	FontData             voidptr
 	FontDataSize         i32
 	FontDataOwnedByAtlas bool
@@ -1983,7 +2016,7 @@ pub mut:
 	TexUvWhitePixel     ImVec2_c
 	Fonts               ImVector_ImFontPtr
 	Sources             ImVector_ImFontConfig
-	TexUvLines          [33]ImVec4_c
+	TexUvLines BindingFixedArray10
 	TexNextUniqueID     i32
 	FontNextUniqueID    i32
 	DrawListSharedDatas ImVector_ImDrawListSharedDataPtr
@@ -2082,7 +2115,7 @@ pub mut:
 	Sources                  ImVector_ImFontConfigPtr
 	EllipsisChar             ImWchar
 	FallbackChar             ImWchar
-	Used8kPagesMap           [1]ImU8
+	Used8kPagesMap BindingFixedArray11
 	EllipsisAutoBake         bool
 	RemapPairs               Storage
 }
@@ -2376,9 +2409,9 @@ pub mut:
 	TempBuffer                 ImVector_ImVec2
 	DrawLists                  ImVector_ImDrawListPtr
 	Context                    &Context
-	ArcFastVtx                 [48]ImVec2_c
+	ArcFastVtx BindingFixedArray12
 	ArcFastRadiusCutoff        f32
-	CircleSegmentCounts        [64]ImU8
+	CircleSegmentCounts BindingFixedArray13
 }
 
 pub type ImDrawDataBuilder = C.ImDrawDataBuilder
@@ -2386,7 +2419,7 @@ pub type ImDrawDataBuilder = C.ImDrawDataBuilder
 @[typedef]
 pub struct C.ImDrawDataBuilder {
 pub mut:
-	Layers     [2]&ImVector_ImDrawListPtr
+	Layers[2]&ImVector_ImDrawListPtr
 	LayerData1 ImVector_ImDrawListPtr
 }
 
@@ -2432,7 +2465,7 @@ pub type DataTypeStorage = C.ImGuiDataTypeStorage
 @[typedef]
 pub struct C.ImGuiDataTypeStorage {
 pub mut:
-	Data [8]ImU8
+	Data BindingFixedArray14
 }
 
 pub type DataTypeInfo = C.ImGuiDataTypeInfo
@@ -2634,7 +2667,7 @@ pub mut:
 	OffsetLabel    ImU16
 	OffsetShortcut ImU16
 	OffsetMark     ImU16
-	Widths         [4]ImU16
+	Widths BindingFixedArray15
 }
 
 pub type InputTextDeactivatedState = C.ImGuiInputTextDeactivatedState
@@ -2886,7 +2919,7 @@ pub type ImBitArray_Key_NamedKey_COUNT__lessKey_NamedKey_BEGIN = C.ImBitArray_Im
 @[typedef]
 pub struct C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN {
 pub mut:
-	Data [5]ImU32
+	Data BindingFixedArray16
 }
 
 pub type ImBitArrayForNamedKeys = C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN
@@ -3016,7 +3049,7 @@ pub type KeyRoutingTable = C.ImGuiKeyRoutingTable
 @[typedef]
 pub struct C.ImGuiKeyRoutingTable {
 pub mut:
-	Index       [155]KeyRoutingIndex
+	Index BindingFixedArray17
 	Entries     ImVector_KeyRoutingData
 	EntriesNext ImVector_KeyRoutingData
 }
@@ -3199,7 +3232,7 @@ pub type TypingSelectState = C.ImGuiTypingSelectState
 pub struct C.ImGuiTypingSelectState {
 pub mut:
 	Request            TypingSelectRequest
-	SearchBuffer       [64]i8
+	SearchBuffer BindingFixedArray18
 	FocusScope         ID
 	LastRequestFrame   i32
 	LastRequestTime    f32
@@ -3278,7 +3311,7 @@ pub mut:
 	Window                &Window
 	UnclipMode            bool
 	UnclipRect            ImRect_c
-	UnclipRects           [2]ImRect_c
+	UnclipRects BindingFixedArray19
 	BoxSelectRectPrev     ImRect_c
 	BoxSelectRectCurr     ImRect_c
 }
@@ -3377,7 +3410,7 @@ pub mut:
 	MergedFlags            DockNodeFlags
 	State                  DockNodeState
 	ParentNode             &DockNode
-	ChildNodes             [2]&DockNode
+	ChildNodes[2]&DockNode
 	Windows                ImVector_WindowPtr
 	TabBar                 &TabBar
 	Pos                    ImVec2_c
@@ -3432,7 +3465,7 @@ pub type WindowDockStyle = C.ImGuiWindowDockStyle
 @[typedef]
 pub struct C.ImGuiWindowDockStyle {
 pub mut:
-	Colors [9]ImU32
+	Colors BindingFixedArray20
 }
 
 pub type ImVector_DockRequest = C.ImVector_ImGuiDockRequest
@@ -3483,8 +3516,8 @@ pub mut:
 	LastAlpha                   f32
 	LastFocusedHadNavWindow     bool
 	PlatformMonitor             i16
-	BgFgDrawListsLastTimeActive [2]f32
-	BgFgDrawLists               [2]&ImDrawList
+	BgFgDrawListsLastTimeActive BindingFixedArray21
+	BgFgDrawLists[2]&ImDrawList
 	DrawDataP                   ImDrawData
 	DrawDataBuilder             ImDrawDataBuilder
 	LastPlatformPos             ImVec2_c
@@ -3615,7 +3648,7 @@ pub mut:
 	TotalAllocCount i32
 	TotalFreeCount  i32
 	LastEntriesIdx  ImS16
-	LastEntriesBuf  [6]DebugAllocEntry
+	LastEntriesBuf BindingFixedArray22
 }
 
 pub type MetricsConfig = C.ImGuiMetricsConfig
@@ -4019,7 +4052,7 @@ pub mut:
 	FrameCountPlatformEnded            i32
 	FrameCountRendered                 i32
 	Time                               f64
-	ContextName                        [16]i8
+	ContextName BindingFixedArray23
 	IO                                 IO
 	PlatformIO                         PlatformIO
 	Style                              Style
@@ -4100,7 +4133,7 @@ pub mut:
 	LastKeyModsChangeFromNoneTime      f64
 	LastKeyboardKeyPressTime           f64
 	KeysMayBeCharInput                 ImBitArrayForNamedKeys
-	KeysOwnerData                      [155]KeyOwnerData
+	KeysOwnerData BindingFixedArray24
 	KeysRoutingTable                   KeyRoutingTable
 	ActiveIdUsingNavDirMask            ImU32
 	ActiveIdUsingAllKeyboardKeys       bool
@@ -4218,7 +4251,7 @@ pub mut:
 	DragDropAcceptFrameCount           i32
 	DragDropHoldJustPressedId          ID
 	DragDropPayloadBufHeap             ImVector_unsigned_char
-	DragDropPayloadBufLocal            [16]u8
+	DragDropPayloadBufLocal BindingFixedArray25
 	ClipperTempDataStacked             i32
 	ClipperTempData                    ImVector_ListClipperData
 	CurrentTable                       &Table
@@ -4295,7 +4328,7 @@ pub mut:
 	Hooks                              ImVector_ContextHook
 	HookIdNext                         ID
 	DemoMarkerCallback                 DemoMarkerCallback
-	LocalizationTable                  [15]&char
+	LocalizationTable[15]&char
 	LogEnabled                         bool
 	LogLineFirstItem                   bool
 	LogFlags                           LogFlags
@@ -4336,7 +4369,7 @@ pub mut:
 	DebugIDStackTool                   IDStackTool
 	DebugAllocInfo                     DebugAllocInfo
 	DebugHoveredDockNode               &DockNode
-	FramerateSecPerFrame               [60]f32
+	FramerateSecPerFrame BindingFixedArray26
 	FramerateSecPerFrameIdx            i32
 	FramerateSecPerFrameCount          i32
 	FramerateSecPerFrameAccum          f32
@@ -4344,7 +4377,7 @@ pub mut:
 	WantCaptureKeyboardNextFrame       i32
 	WantTextInputNextFrame             i32
 	TempBuffer                         ImVector_char
-	TempKeychordName                   [64]i8
+	TempKeychordName BindingFixedArray18
 }
 
 pub type WindowTempData = C.ImGuiWindowTempData
@@ -4521,9 +4554,9 @@ pub mut:
 	RootWindowForNav                   &Window
 	ParentWindowForFocusRoute          &Window
 	NavLastChildNavWindow              &Window
-	NavLastIds                         [2]ID
-	NavRectRel                         [2]ImRect_c
-	NavPreferredScoringPosRel          [2]ImVec2_c
+	NavLastIds BindingFixedArray27
+	NavRectRel BindingFixedArray19
+	NavPreferredScoringPosRel BindingFixedArray28
 	NavRootFocusScopeId                ID
 	MemoryDrawListIdxCapacity          i32
 	MemoryDrawListVtxCapacity          i32
@@ -4808,7 +4841,7 @@ pub mut:
 	RowFlags                   TableRowFlags
 	LastRowFlags               TableRowFlags
 	RowBgColorCounter          i32
-	RowBgColor                 [2]ImU32
+	RowBgColor BindingFixedArray29
 	BorderColorStrong          ImU32
 	BorderColorLight           ImU32
 	BorderX1                   f32
@@ -5026,7 +5059,7 @@ pub type Stbrp_context_opaque = C.stbrp_context_opaque
 @[typedef]
 pub struct C.stbrp_context_opaque {
 pub mut:
-	Data [80]i8
+	Data BindingFixedArray30
 }
 
 pub type ImVector_stbrp_node_im = C.ImVector_stbrp_node_im
@@ -5112,8 +5145,8 @@ pub type StbUndoState = C.StbUndoState
 @[typedef]
 pub struct C.StbUndoState {
 pub mut:
-	Undo_rec        [99]StbUndoRecord
-	Undo_char       [999]i8
+	Undo_rec BindingFixedArray31
+	Undo_char BindingFixedArray32
 	Undo_point      i16
 	Redo_point      i16
 	Undo_char_point i32
