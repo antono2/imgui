@@ -2,7 +2,7 @@ param(
     [switch]$BuildOnly,
     [switch]$NativeOnly,
     [string]$DemoDirectory,
-    [string]$DemoRevision = "c2b5083d42f052cfe73952542e86e4163c64ce79"
+    [string]$DemoRevision = "1e444971dd4f70a6edf281ce648e136c01d08ab6"
 )
 
 $ErrorActionPreference = "Stop"
