@@ -5,5 +5,5 @@ Module {
   author: 'Anton Oreskin'
   license: 'MIT'
   repo_url: 'https://github.com/antono2/imgui'
-  dependencies: ['antono2.vulkan@v2.0.0', 'antono2.glfw']
+  dependencies: ['antono2.vulkan@v3.2.0', 'antono2.glfw']
 }
