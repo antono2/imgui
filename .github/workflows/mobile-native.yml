@@ -112,6 +112,7 @@ jobs:
             -DIMGUI_FREETYPE=ON \
             -DVIMGUI_FREETYPE_PROVIDER=bundled \
             -DVIMGUI_BUILD_SMOKE_TESTS=ON \
+            -DVIMGUI_BUILD_ANDROID_DEMO=ON \
             -DSTATIC_BUILD=OFF \
             -DCMAKE_BUILD_TYPE=Release
       - name: Compile and link Android ELF smoke test
@@ -122,6 +123,7 @@ jobs:
           test -f build/ci-android/libvimgui_android_link_smoke.so
           test -f build/ci-android/vimgui_android_device_probe
           test -f build/ci-android/vimgui_vulkan_offscreen_probe
+          test -f build/ci-android/libvimgui_android_demo.so
           "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_init
           "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep Java_io_antono2_imgui_ImGuiInputView_nativeCommitText
       - name: Cross-link a V Android app
@@ -136,6 +138,16 @@ jobs:
             -o "$RUNNER_TEMP/vimgui-v-android-smoke" \
             tests/android/v_api_link_smoke.v
           file "$RUNNER_TEMP/vimgui-v-android-smoke" | grep 'ELF 32-bit.*ARM'
+      - name: Package Android NativeActivity APK
+        if: matrix.abi == 'armeabi-v7a'
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
+          export ANDROID_ABI=armeabi-v7a
+          export VIMGUI_ANDROID_BUILD_DIR="$GITHUB_WORKSPACE/build/ci-android"
+          scripts/run_android_demo.sh --build-only
+          test -f build/ci-android/vimgui-demo-armeabi-v7a.apk
+          unzip -l build/ci-android/vimgui-demo-armeabi-v7a.apk | grep classes.dex
+          unzip -l build/ci-android/vimgui-demo-armeabi-v7a.apk | grep lib/armeabi-v7a/libvimgui_android_demo.so
 
   apple:
     name: ${{ matrix.sdk }} / ${{ matrix.arch }} Metal

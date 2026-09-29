@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ndk_dir="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}"
+sdk_dir="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+mode="${1:-run}"
+if [[ "$mode" != run && "$mode" != --build-only ]]; then
+  echo 'Usage: scripts/run_android_demo.sh [--build-only]' >&2
+  exit 2
+fi
+if [[ -z "$ndk_dir" || ! -f "$ndk_dir/build/cmake/android.toolchain.cmake" ]]; then
+  echo 'Set ANDROID_NDK_HOME to an installed NDK.' >&2
+  exit 2
+fi
+if [[ -z "$sdk_dir" || ! -d "$sdk_dir/build-tools" ]]; then
+  echo 'Set ANDROID_SDK_ROOT to an installed Android SDK.' >&2
+  exit 2
+fi
+
+adb_args=()
+if [[ -n "${ANDROID_SERIAL:-}" ]]; then adb_args=(-s "$ANDROID_SERIAL"); fi
+abi="${ANDROID_ABI:-}"
+if [[ -z "$abi" && "$mode" == run ]]; then
+  abi="$(adb "${adb_args[@]}" shell getprop ro.product.cpu.abi | tr -d '\r')"
+fi
+case "$abi" in
+  armeabi-v7a|arm64-v8a|x86_64) ;;
+  *) echo "Set ANDROID_ABI to a supported ABI or connect a tablet (got '$abi')." >&2; exit 2 ;;
+esac
+
+build_dir="${VIMGUI_ANDROID_BUILD_DIR:-$repo_dir/build/android-onscreen-$abi}"
+cmake -S "$repo_dir" -B "$build_dir" -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE="$ndk_dir/build/cmake/android.toolchain.cmake" \
+  -DANDROID_ABI="$abi" -DANDROID_PLATFORM=android-24 -DANDROID_STL=c++_static \
+  -DVIMGUI_PROFILE=android-vulkan -DIMGUI_FREETYPE=ON \
+  -DVIMGUI_FREETYPE_PROVIDER=bundled -DVIMGUI_BUILD_ANDROID_DEMO=ON \
+  -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build "$build_dir" --target vimgui_android_demo --parallel 4
+
+build_tools="$(find "$sdk_dir/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+android_jar="$(find "$sdk_dir/platforms" -mindepth 2 -maxdepth 2 -name android.jar | sort -V | tail -1)"
+if [[ -z "$build_tools" || -z "$android_jar" ]]; then
+  echo 'The Android SDK needs build-tools and a platform android.jar.' >&2
+  exit 2
+fi
+
+package_dir="$build_dir/package"
+mkdir -p "$package_dir/lib/$abi" "$package_dir/assets" "$package_dir/classes" "$package_dir/dex"
+cp "$build_dir/lib/libvimgui.so" "$package_dir/lib/$abi/libvimgui.so"
+cp "$build_dir/libvimgui_android_demo.so" "$package_dir/lib/$abi/libvimgui_android_demo.so"
+cp "$repo_dir/cimgui/imgui/misc/fonts/Roboto-Medium.ttf" "$package_dir/assets/Roboto-Medium.ttf"
+javac_bin="${JAVAC:-javac}"
+"$javac_bin" -source 8 -target 8 -Xlint:-options -cp "$android_jar" -d "$package_dir/classes" \
+  "$repo_dir/android/java/io/antono2/imgui/ImGuiInputView.java" \
+  "$repo_dir/examples/android_vulkan/java/io/antono2/vimgui/demo/ImGuiActivity.java"
+mapfile -d '' class_files < <(find "$package_dir/classes" -name '*.class' -print0)
+"$build_tools/d8" --min-api 24 --lib "$android_jar" \
+  --output "$package_dir/dex" "${class_files[@]}"
+cp "$package_dir/dex/classes.dex" "$package_dir/classes.dex"
+unsigned_apk="$build_dir/vimgui-demo-unsigned.apk"
+aligned_apk="$build_dir/vimgui-demo-aligned.apk"
+signed_apk="$build_dir/vimgui-demo-$abi.apk"
+"$build_tools/aapt" package -f \
+  -M "$repo_dir/examples/android_vulkan/AndroidManifest.xml" \
+  -I "$android_jar" -A "$package_dir/assets" -F "$unsigned_apk"
+(
+  cd "$package_dir"
+  "$build_tools/aapt" add "$unsigned_apk" \
+    "lib/$abi/libvimgui.so" "lib/$abi/libvimgui_android_demo.so" classes.dex
+)
+"$build_tools/zipalign" -f 4 "$unsigned_apk" "$aligned_apk"
+keystore="$build_dir/debug.keystore"
+if [[ ! -f "$keystore" ]]; then
+  keytool -genkeypair -keystore "$keystore" -storepass android -keypass android \
+    -alias androiddebugkey -dname 'CN=Android Debug,O=Android,C=US' \
+    -validity 3650 -keyalg RSA -keysize 2048 -noprompt
+fi
+"$build_tools/apksigner" sign --ks "$keystore" --ks-pass pass:android \
+  --key-pass pass:android --out "$signed_apk" "$aligned_apk"
+"$build_tools/apksigner" verify "$signed_apk"
+echo "APK: $signed_apk"
+
+if [[ "$mode" == run ]]; then
+  adb "${adb_args[@]}" install -r "$signed_apk"
+  adb "${adb_args[@]}" shell am start -n io.antono2.vimgui.demo/.ImGuiActivity
+  echo 'Use adb logcat -s vimgui-android-demo:I to inspect lifecycle/taps.'
+fi

@@ -260,6 +260,24 @@ if(VIMGUI_BUILD_SMOKE_TESTS AND VIMGUI_PROFILE STREQUAL "android-vulkan")
 	target_link_libraries(vimgui_vulkan_offscreen_probe PRIVATE ${NAME} vulkan)
 	target_link_options(vimgui_vulkan_offscreen_probe PRIVATE -Wl,--no-undefined)
 endif()
+option(VIMGUI_BUILD_ANDROID_DEMO "Build the on-screen Android NativeActivity Vulkan sample" OFF)
+if(VIMGUI_BUILD_ANDROID_DEMO)
+	if(NOT VIMGUI_PROFILE STREQUAL "android-vulkan" OR STATIC_BUILD)
+		message(FATAL_ERROR "The Android demo requires the shared android-vulkan profile")
+	endif()
+	if(NOT DEFINED ANDROID_NDK OR NOT EXISTS "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+		message(FATAL_ERROR "The Android demo requires the NDK native_app_glue source")
+	endif()
+	add_library(vimgui_android_demo SHARED
+		examples/android_vulkan/main.cpp
+		"${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+	target_include_directories(vimgui_android_demo PRIVATE
+		native/android
+		"${ANDROID_NDK}/sources/android/native_app_glue")
+	target_compile_definitions(vimgui_android_demo PRIVATE VK_USE_PLATFORM_ANDROID_KHR)
+	target_link_libraries(vimgui_android_demo PRIVATE ${NAME} vulkan android log)
+	target_link_options(vimgui_android_demo PRIVATE -Wl,--no-undefined)
+endif()
 if(VIMGUI_BUILD_SMOKE_TESTS AND VIMGUI_PROFILE STREQUAL "desktop" AND UNIX AND NOT APPLE)
 	add_executable(vimgui_vulkan_offscreen_probe
 		tests/vulkan/offscreen_probe.cpp

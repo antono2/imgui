@@ -91,6 +91,34 @@ the existing `imgui.impl_vulkan` renderer remains unchanged.
 Do not drive the soft keyboard with `igIsItemActive()`; the relevant intent is
 `ImGuiIO.WantTextInput`, which is exposed as `wants_text_input()`.
 
+### Installable Android Vulkan sample
+
+`examples/android_vulkan` is a small NativeActivity host for integration
+testing. It owns the Vulkan surface/swapchain and forwards input to the same
+Android wrapper exposed to V. The renderer remains upstream's Vulkan backend;
+this C++ host is not an alternative V API. The app includes the Java
+`ImGuiInputView` and a tiny `NativeActivity` subclass that switches keyboard
+visibility on the UI thread. It loads the vendored Roboto TTF asset, uses the
+FreeType profile, and has a UI zoom slider that scales fonts and widget sizes
+together. It demonstrates committed text and basic editing, not inline
+underlined IME composition.
+
+With the Android SDK (including build-tools and a platform), NDK, JDK, and a
+connected Vulkan-capable tablet:
+
+```sh
+export ANDROID_SDK_ROOT=/path/to/android-sdk
+export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
+scripts/run_android_demo.sh
+```
+
+The script selects the device ABI, builds, packages, debug-signs, installs, and
+launches `io.antono2.vimgui.demo`. Set `ANDROID_SERIAL` if multiple devices are
+connected. For CI/offline packaging, set `ANDROID_ABI` and pass `--build-only`.
+Tap the button, enter committed text, change UI zoom, rotate the tablet, and
+background/resume the app. `adb logcat -s vimgui-android-demo:I` reports
+initialization, swapchain recreation, tap counts, and keyboard visibility.
+
 ## iOS and macOS Metal lifecycle
 
 `imgui.impl_metal` accepts borrowed opaque Objective-C pointers so V does not
@@ -127,24 +155,27 @@ ARC. Android never compiles them; Apple never compiles the Android backend.
 The macOS build also compiles upstream `imgui_impl_osx.mm`. The iOS build does
 not pull in AppKit/Cocoa.
 
-This first pass does not include a complete on-screen Android or iOS sample
-application. Android uses upstream's platform backend, which does not supply
-clipboard or gamepad integration; the Java bridge adds committed IME text and
-basic editing keys only. The iOS layer handles one primary touch and delegates
-keyboard visibility and committed text collection to the host UIKit app.
+The Android sample is an integration host, not a reusable application shell or
+a V-written app. Android uses upstream's platform backend, which does not
+supply clipboard or gamepad integration; the Java bridge adds committed IME
+text and basic editing keys only. There is no on-screen iOS sample yet. The
+iOS layer handles one primary touch and delegates keyboard visibility and
+committed text collection to the host UIKit app.
 
 ## Validation boundaries
 
 `mobile-native.yml` renders an offscreen ImGui frame through Lavapipe on Ubuntu,
-then builds and link-tests the Android native backend and IME Java class for
-three ABIs and cross-links a small V app for `armeabi-v7a`. It builds and
+then builds and link-tests the Android native backend, on-screen host, and IME
+Java class for three ABIs, cross-links a small V app, and packages a debug APK
+for `armeabi-v7a`. It builds and
 link-tests Metal/FreeType on GitHub-hosted macOS for
 macOS, both iOS Simulator architectures, and arm64 iPhoneOS. No signing or
 attached Apple hardware is required for those jobs. On a connected Android
 device, `vimgui_android_device_probe` tests context/scaling and physical-device
 discovery; `vimgui_vulkan_offscreen_probe` submits a real ImGui frame to the GPU.
-Neither probe opens an on-screen window. Emulator UI testing and real Apple GPU
-tests remain separate optional integration work.
+The installable sample additionally exercises an on-screen Vulkan swapchain,
+touch, rotation, background/resume, and committed IME input on Android hardware.
+Emulator UI testing and real Apple GPU tests remain separate optional work.
 
 For the connected-device checks, set `ANDROID_NDK_HOME` and run
 `scripts/run_android_probes.sh`. It builds the device's reported ABI, stages only
