@@ -1,6 +1,7 @@
 module main
 
 import antono2.imgui
+import antono2.imgui.impl_android
 
 struct TextSelection {
 mut:
@@ -10,6 +11,7 @@ mut:
 }
 
 fn observe_text_selection(mut data imgui.InputTextCallbackData) i32 {
+	impl_android.apply_text_edit(mut data)
 	unsafe {
 		selection := &TextSelection(data.UserData)
 		selection.cursor = data.CursorPos

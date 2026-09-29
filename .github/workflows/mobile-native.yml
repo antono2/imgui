@@ -41,6 +41,7 @@ jobs:
           if [ ! -f "$VK_ICD_FILENAMES" ]; then export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json; fi
           build/ci-linux/vimgui_vulkan_offscreen_probe
           build/ci-linux/vimgui_touch_tracker_test
+          build/ci-linux/vimgui_text_offsets_test
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
@@ -154,6 +155,7 @@ jobs:
           test -f build/ci-android/vimgui_vulkan_offscreen_probe
           test -f build/ci-android/libvimgui_android_demo.so
           "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_init
+          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_apply_text_edit
           "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep Java_io_antono2_imgui_ImGuiInputView_nativeCommitText
       - name: Cross-link a V Android app
         if: matrix.abi == 'armeabi-v7a'

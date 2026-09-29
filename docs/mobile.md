@@ -82,11 +82,18 @@ the existing `imgui.impl_vulkan` renderer remains unchanged.
 5. If `impl_android.wants_text_input()` changes, call
    `ImGuiInputView.setKeyboardVisible(...)` on Android's UI thread. Include
    `android/java/io/antono2/imgui/ImGuiInputView.java` in the app and attach it
-   to the Activity's view hierarchy. It sends committed UTF-16 text and basic
-   editing keys through a thread-safe JNI queue; `impl_android.new_frame()`
-   drains the queue on the render thread. Applications with their own
-   `InputConnection` may instead call `impl_android.text_utf8(...)` on the
-   render thread. Inline underlined IME preedit is not implemented.
+   to the Activity's view hierarchy. For selection-aware editing, give each
+   `InputText` widget the `callback_always` flag and call
+   `impl_android.apply_text_edit(mut data)` from its V callback. This opts in
+   to a stateful Java `InputConnection`: the Java side keeps text and selection
+   in UTF-16; the callback applies the latest edit and publishes ImGui's text
+   and UTF-8-byte selection back to Java. Changes made with ImGui's pointer or
+   hardware keys become visible to the IME. The helper returns whether it
+   applied a pending Java edit. Without the callback, the Java view retains
+   the earlier committed-text and basic-key fallback. Applications with their
+   own `InputConnection` may instead call `impl_android.text_utf8(...)` on the
+   render thread. Preedit is displayed as plain text; inline underlining,
+   candidate geometry, and rich marked-text ranges are not implemented.
 6. Wait for in-flight Vulkan work, then shut down the Vulkan renderer, call
    `impl_android.shutdown()`, and destroy the ImGui context. Reinitialize the
    Android backend if the native window is replaced.
@@ -106,11 +113,10 @@ the C++ lifecycle host is not an alternative V API. The app includes the Java
 `ImGuiInputView` and a tiny `NativeActivity` subclass that switches keyboard
 visibility on the UI thread. It loads the vendored Roboto TTF asset, uses the
 FreeType profile, and has a UI zoom slider that scales fonts and widget sizes
-together. It demonstrates committed text and basic editing, not inline
-underlined IME composition. The Text field also displays the active ImGui
-cursor and selection offsets from a V `InputText` callback. Those offsets are
-UTF-8 bytes, and are diagnostic only: the Android `InputConnection` does not
-yet synchronize selection or marked-text state with ImGui.
+together. Its Text field uses the selection-aware callback and displays active
+ImGui cursor and selection offsets in UTF-8 bytes. The Android
+`InputConnection` synchronizes text and selection; composing text appears
+without underline or marked-range styling.
 
 With the Android SDK (including build-tools and a platform), NDK, JDK, and a
 connected Vulkan-capable tablet:
