@@ -2,6 +2,23 @@ module main
 
 import antono2.imgui
 
+struct TextSelection {
+mut:
+	cursor int
+	start  int
+	end    int
+}
+
+fn observe_text_selection(mut data imgui.InputTextCallbackData) i32 {
+	unsafe {
+		selection := &TextSelection(data.UserData)
+		selection.cursor = data.CursorPos
+		selection.start = data.SelectionStart
+		selection.end = data.SelectionEnd
+	}
+	return 0
+}
+
 // The native Android host owns the Vulkan swapchain and ImGui frame. This
 // exported function keeps the example's actual widget construction in V.
 // Its arguments are borrowed for this call and stay owned by the host.
@@ -18,10 +35,15 @@ fn draw_ui(zoom &f32, tap_count &int, text &char, text_capacity int, display_wid
 	count_label := 'count = ${unsafe { *tap_count }}'
 	imgui.text_unformatted(count_label.str, unsafe { nil })
 	unsafe { count_label.free() }
-	imgui.input_text(c'Text', text, usize(text_capacity), 0, unsafe { nil }, unsafe { nil })
+	mut selection := TextSelection{}
+	imgui.input_text(c'Text', text, usize(text_capacity), imgui.InputTextFlags(imgui.InputTextFlags_.callback_always),
+		observe_text_selection, voidptr(&selection))
 	imgui.text_unformatted(c'Committed:', unsafe { nil })
 	imgui.same_line(0, -1)
 	imgui.text_unformatted(text, unsafe { nil })
+	selection_label := 'UTF-8 cursor ${selection.cursor}, selection ${selection.start}..${selection.end}'
+	imgui.text_unformatted(selection_label.str, unsafe { nil })
+	unsafe { selection_label.free() }
 	changed := imgui.slider_float(c'UI zoom', zoom, 0.75, 2.0, c'%.3f', 0)
 	size_label := 'Display ${int(display_width)} x ${int(display_height)}'
 	imgui.text_unformatted(size_label.str, unsafe { nil })

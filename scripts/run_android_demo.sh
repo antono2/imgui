@@ -56,8 +56,7 @@ ln -sfn "$repo_dir" "$build_dir/vmodules/antono2/imgui"
 cp "$build_dir/lib/libvimgui.so" "$repo_dir/lib/android-vulkan/$abi/freetype/libvimgui.so"
 "$v_bin" -path "$build_dir/vmodules|@vlib|@vmodules" \
   -os android -arch "$v_arch" -cc "$ndk_prebuilt/bin/$clang_target" \
-  -d use_freetype -gc none -no-memory-limit \
-  -cflags '-Wno-incompatible-function-pointer-types' -shared \
+  -d use_freetype -gc none -no-memory-limit -shared \
   -o "$build_dir/libvimgui_android_ui.so" "$repo_dir/examples/android_vulkan/ui.v"
 test -f "$build_dir/libvimgui_android_ui.so"
 

@@ -32,7 +32,7 @@ jobs:
             -DIMGUI_FREETYPE=ON \
             -DVIMGUI_FREETYPE_PROVIDER=system \
             -DVIMGUI_BUILD_SMOKE_TESTS=ON \
-            -DSTATIC_BUILD=ON \
+            -DSTATIC_BUILD=OFF \
             -DCMAKE_BUILD_TYPE=Release
           cmake --build build/ci-linux --parallel 4
       - name: Render an offscreen ImGui frame with Lavapipe
@@ -40,6 +40,34 @@ jobs:
           export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
           if [ ! -f "$VK_ICD_FILENAMES" ]; then export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json; fi
           build/ci-linux/vimgui_vulkan_offscreen_probe
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/v
+          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          path: toolchain/v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/vc
+          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          path: toolchain/v/vc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/tccbin
+          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          path: toolchain/v/thirdparty/tcc
+      - name: Build V compiler
+        working-directory: toolchain/v
+        run: |
+          make local=1
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Run V InputText selection callback smoke test
+        run: |
+          mkdir -p "$RUNNER_TEMP/vmodules/antono2" lib/freetype
+          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
+          cp build/ci-linux/lib/libvimgui.so lib/freetype/libvimgui.so
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -d use_freetype \
+            -o "$RUNNER_TEMP/vimgui-input-text-callback" tests/input_text_callback.v
+          "$RUNNER_TEMP/vimgui-input-text-callback"
 
   android:
     name: Android Vulkan / ${{ matrix.abi }}

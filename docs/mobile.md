@@ -104,7 +104,10 @@ the C++ lifecycle host is not an alternative V API. The app includes the Java
 visibility on the UI thread. It loads the vendored Roboto TTF asset, uses the
 FreeType profile, and has a UI zoom slider that scales fonts and widget sizes
 together. It demonstrates committed text and basic editing, not inline
-underlined IME composition.
+underlined IME composition. The Text field also displays the active ImGui
+cursor and selection offsets from a V `InputText` callback. Those offsets are
+UTF-8 bytes, and are diagnostic only: the Android `InputConnection` does not
+yet synchronize selection or marked-text state with ImGui.
 
 With the Android SDK (including build-tools and a platform), NDK, JDK, and a
 connected Vulkan-capable tablet:
