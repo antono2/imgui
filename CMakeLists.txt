@@ -292,3 +292,21 @@ if(VIMGUI_BUILD_SMOKE_TESTS AND VIMGUI_PROFILE STREQUAL "apple-metal")
 		target_compile_definitions(vimgui_apple_link_smoke PRIVATE VIMGUI_TEST_IOS=1)
 	endif()
 endif()
+
+option(VIMGUI_BUILD_IOS_DEMO "Build a minimal UIKit/Metal iOS app bundle" OFF)
+if(VIMGUI_BUILD_IOS_DEMO)
+	if(NOT VIMGUI_PROFILE STREQUAL "apple-metal" OR NOT CMAKE_SYSTEM_NAME STREQUAL "iOS" OR STATIC_BUILD)
+		message(FATAL_ERROR "The iOS demo requires the shared apple-metal iOS profile")
+	endif()
+	add_executable(vimgui_ios_demo MACOSX_BUNDLE examples/ios_metal/main.mm)
+	target_compile_options(vimgui_ios_demo PRIVATE -fobjc-arc)
+	target_link_libraries(vimgui_ios_demo PRIVATE ${NAME} "-framework UIKit" "-framework MetalKit")
+	set_target_properties(vimgui_ios_demo PROPERTIES
+		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/examples/ios_metal/Info.plist"
+		BUILD_RPATH "@executable_path/Frameworks"
+		INSTALL_RPATH "@executable_path/Frameworks")
+	add_custom_command(TARGET vimgui_ios_demo POST_BUILD
+		COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_BUNDLE_DIR:vimgui_ios_demo>/Frameworks"
+		COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:vimgui>"
+			"$<TARGET_BUNDLE_DIR:vimgui_ios_demo>/Frameworks/libvimgui.dylib")
+endif()

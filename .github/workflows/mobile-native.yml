@@ -225,11 +225,14 @@ jobs:
       - name: Configure Apple native bindings
         run: |
           system_arg=()
+          demo_arg=()
           if [ '${{ matrix.sdk }}' != macosx ]; then
             system_arg=(-DCMAKE_SYSTEM_NAME=iOS)
+            demo_arg=(-DVIMGUI_BUILD_IOS_DEMO=ON)
           fi
           cmake -S . -B build/ci-apple -G Ninja \
             "${system_arg[@]}" \
+            "${demo_arg[@]}" \
             -DCMAKE_OSX_SYSROOT='${{ matrix.sdk }}' \
             -DCMAKE_OSX_ARCHITECTURES='${{ matrix.arch }}' \
             -DCMAKE_OSX_DEPLOYMENT_TARGET="$(if [ '${{ matrix.sdk }}' = macosx ]; then echo 11.0; else echo 13.0; fi)" \
@@ -247,3 +250,12 @@ jobs:
           test -f build/ci-apple/libvimgui_apple_link_smoke.dylib
           xcrun lipo -info build/ci-apple/lib/libvimgui.dylib | grep '${{ matrix.arch }}'
           xcrun nm -gU build/ci-apple/lib/libvimgui.dylib | grep _vimgui_metal_init
+          if [ '${{ matrix.sdk }}' != macosx ]; then
+            test -f build/ci-apple/vimgui_ios_demo.app/vimgui_ios_demo
+            test -f build/ci-apple/vimgui_ios_demo.app/Frameworks/libvimgui.dylib
+            xcrun lipo -info build/ci-apple/vimgui_ios_demo.app/vimgui_ios_demo | grep '${{ matrix.arch }}'
+          fi
+      - name: Attempt an iOS Simulator Metal frame
+        if: matrix.sdk == 'iphonesimulator' && ((matrix.arch == 'x86_64' && runner.arch == 'X64') || (matrix.arch == 'arm64' && runner.arch == 'ARM64'))
+        continue-on-error: true
+        run: scripts/run_ios_simulator_smoke.sh build/ci-apple/vimgui_ios_demo.app

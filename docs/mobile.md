@@ -160,6 +160,15 @@ ARC. Android never compiles them; Apple never compiles the Android backend.
 The macOS build also compiles upstream `imgui_impl_osx.mm`. The iOS build does
 not pull in AppKit/Cocoa.
 
+`examples/ios_metal` is a minimal UIKit/`MTKView` host. It creates the Metal
+device, render pass, command buffer, and encoder, and uses the same iOS/Metal
+wrappers exposed to V. The bundled app is built unsigned for both simulator
+architectures and iPhoneOS in CI; the matching GitHub-hosted simulator job also
+attempts to launch it and submit one Metal frame. That runtime step is
+advisory because a hosted runner may lack a usable simulator Metal device.
+The app deliberately does not claim complete iOS text-input handling; a
+production host still needs its own UIKit keyboard/text view.
+
 The Android sample is an integration host, not a reusable application shell;
 the Vulkan/NativeActivity host remains C++ while the ImGui widgets are written
 in V. Android uses upstream's platform backend, which does not
@@ -175,8 +184,10 @@ then builds and link-tests the Android native backend, on-screen host, V UI,
 and IME Java class for three ABIs, cross-links a small V app, and packages a
 debug APK for each ABI. It builds and
 link-tests Metal/FreeType on GitHub-hosted macOS for
-macOS, both iOS Simulator architectures, and arm64 iPhoneOS. No signing or
-attached Apple hardware is required for those jobs. On a connected Android
+macOS, both iOS Simulator architectures, and arm64 iPhoneOS. The iOS jobs
+also link a UIKit/Metal app; the host-architecture simulator job makes an
+advisory runtime frame attempt. No developer signing or attached Apple
+hardware is required for the compile/link jobs. On a connected Android
 device, `vimgui_android_device_probe` tests context/scaling and physical-device
 discovery; `vimgui_vulkan_offscreen_probe` submits a real ImGui frame to the GPU.
 The installable sample additionally exercises an on-screen Vulkan swapchain,
