@@ -35,7 +35,7 @@ for _ in $(seq 1 30); do
   if [[ -f "$status_file" ]]; then
     status="$(<"$status_file")"
     echo "iOS Simulator Metal status: $status"
-    if [[ "$status" == frame_submitted ]]; then exit 0; fi
+    if [[ "$status" == frame_completed ]]; then exit 0; fi
     exit 1
   fi
   sleep 1

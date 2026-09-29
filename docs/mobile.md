@@ -164,7 +164,7 @@ not pull in AppKit/Cocoa.
 device, render pass, command buffer, and encoder, and uses the same iOS/Metal
 wrappers exposed to V. The bundled app is built unsigned for both simulator
 architectures and iPhoneOS in CI; the matching GitHub-hosted simulator job also
-attempts to launch it and submit one Metal frame. That runtime step is
+attempts to launch it and complete one Metal command buffer. That runtime step is
 advisory because a hosted runner may lack a usable simulator Metal device.
 The app deliberately does not claim complete iOS text-input handling; a
 production host still needs its own UIKit keyboard/text view.

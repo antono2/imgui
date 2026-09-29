@@ -258,4 +258,5 @@ jobs:
       - name: Attempt an iOS Simulator Metal frame
         if: matrix.sdk == 'iphonesimulator' && ((matrix.arch == 'x86_64' && runner.arch == 'X64') || (matrix.arch == 'arm64' && runner.arch == 'ARM64'))
         continue-on-error: true
+        timeout-minutes: 15
         run: scripts/run_ios_simulator_smoke.sh build/ci-apple/vimgui_ios_demo.app

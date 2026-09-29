@@ -127,12 +127,15 @@ static void write_status(NSString* status)
     vimgui_metal_render_draw_data(ImGui::GetDrawData(), (__bridge void*)buffer, (__bridge void*)encoder);
     [encoder endEncoding];
     [buffer presentDrawable:drawable];
-    [buffer commit];
     if (!_reportedFrame)
     {
         _reportedFrame = YES;
-        write_status(@"frame_submitted");
+        [buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
+            write_status(completed.status == MTLCommandBufferStatusCompleted
+                             ? @"frame_completed" : @"frame_failed");
+        }];
     }
+    [buffer commit];
 }
 
 - (void)dealloc
