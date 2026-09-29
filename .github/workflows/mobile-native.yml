@@ -86,6 +86,8 @@ jobs:
           v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os android -arch "$arch" -shared -check impl_android
           v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os android -arch "$arch" -shared -check impl_mobile
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Install pinned Android NDK and API
         run: sdkmanager --install 'ndk;27.3.13750724' 'platforms;android-36'
       - uses: actions/setup-java@v4
@@ -165,15 +167,10 @@ jobs:
           repository: vlang/vc
           ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
           path: toolchain/v/vc
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          repository: vlang/tccbin
-          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
-          path: toolchain/v/thirdparty/tcc
       - name: Build V compiler
         working-directory: toolchain/v
         run: |
-          make local=1
+          make local=1 VFLAGS='-cc clang'
           echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
       - name: Check V Apple APIs
         run: |
