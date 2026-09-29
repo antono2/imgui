@@ -132,7 +132,7 @@ jobs:
           v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" \
             -os android -arch arm \
             -cc "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi24-clang" \
-            -d use_freetype -no-memory-limit \
+            -d use_freetype -gc none -no-memory-limit \
             -o "$RUNNER_TEMP/vimgui-v-android-smoke" \
             tests/android/v_api_link_smoke.v
           file "$RUNNER_TEMP/vimgui-v-android-smoke" | grep 'ELF 32-bit.*ARM'
