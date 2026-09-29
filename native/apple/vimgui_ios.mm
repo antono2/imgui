@@ -1,14 +1,29 @@
 #include "vimgui_ios.h"
 
 #include "../../cimgui/imgui/imgui.h"
+#include "../mobile/vimgui_touch_tracker.h"
 #import <UIKit/UIKit.h>
 
 #include <string>
 #include <cfloat>
 
 static std::string g_clipboard_text;
-static uint64_t g_primary_touch = 0;
-static bool g_touch_active = false;
+static vimgui::TouchTracker g_touches;
+
+static void vimgui_ios_emit_touch(const vimgui::TouchSignals& signals)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    for (size_t index = 0; index < signals.count; ++index)
+    {
+        const vimgui::TouchSignal& signal = signals.items[index];
+        io.AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
+        if (signal.kind == vimgui::TouchSignal::Position)
+            io.AddMousePosEvent(signal.position_valid ? signal.x : -FLT_MAX,
+                                signal.position_valid ? signal.y : -FLT_MAX);
+        else
+            io.AddMouseButtonEvent(0, signal.down);
+    }
+}
 
 static const char* vimgui_ios_get_clipboard(ImGuiContext*)
 {
@@ -31,8 +46,7 @@ extern "C" bool vimgui_ios_init(void)
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
     platform_io.Platform_GetClipboardTextFn = vimgui_ios_get_clipboard;
     platform_io.Platform_SetClipboardTextFn = vimgui_ios_set_clipboard;
-    g_primary_touch = 0;
-    g_touch_active = false;
+    g_touches.reset();
     return true;
 }
 
@@ -46,23 +60,7 @@ extern "C" void vimgui_ios_new_frame(float width, float height, float framebuffe
 
 extern "C" void vimgui_ios_touch(uint64_t touch_id, float x, float y, bool down)
 {
-    ImGuiIO& io = ImGui::GetIO();
-    if (down && !g_touch_active)
-    {
-        g_primary_touch = touch_id;
-        g_touch_active = true;
-    }
-    if (!g_touch_active || touch_id != g_primary_touch)
-        return;
-    io.AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
-    io.AddMousePosEvent(x, y);
-    io.AddMouseButtonEvent(0, down);
-    if (!down)
-    {
-        io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
-        g_primary_touch = 0;
-        g_touch_active = false;
-    }
+    vimgui_ios_emit_touch(down ? g_touches.down(touch_id, x, y) : g_touches.up(touch_id));
 }
 
 extern "C" void vimgui_ios_key(int32_t imgui_key, bool down)
@@ -90,6 +88,5 @@ extern "C" void vimgui_ios_shutdown(void)
     platform_io.Platform_SetClipboardTextFn = nullptr;
     ImGui::GetIO().BackendPlatformName = nullptr;
     g_clipboard_text.clear();
-    g_touch_active = false;
-    g_primary_touch = 0;
+    vimgui_ios_emit_touch(g_touches.reset());
 }

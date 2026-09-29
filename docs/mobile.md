@@ -70,7 +70,10 @@ the existing `imgui.impl_vulkan` renderer remains unchanged.
    backend function, then `impl_vulkan.vkinit(...)` with the application's
    Vulkan objects and render-pass configuration.
 3. Send each `AInputEvent` to `impl_android.handle_input_event(event)`. The
-   upstream backend maps touch, mouse, pen, keyboard, and wheel events.
+   upstream backend maps mouse, pen, keyboard, and wheel events. This wrapper
+   tracks touchscreen pointer IDs and maps a stable primary finger to ImGui's
+   single mouse pointer; it promotes another active finger if the primary
+   lifts. It does not expose independent simultaneous ImGui pointers.
 4. Each drawable frame: call `impl_vulkan.new_frame()`,
    `impl_android.new_frame()`, `imgui.new_frame()`, build UI,
    `imgui.render()`, and `impl_vulkan.render_draw_data(imgui.get_draw_data(),
@@ -148,7 +151,8 @@ upstream's Cocoa backend.
    render_command_encoder)`, end encoding, present the drawable, and commit.
 4. On iOS, forward UITouch identity and position in points to
    `impl_ios.touch(id, x, y, down)`. The first active touch is mapped to
-   ImGui's primary pointer. Forward hardware keys through `impl_ios.key(...)`
+   ImGui's primary pointer, with another active touch promoted when it ends.
+   Forward hardware keys through `impl_ios.key(...)`
    and committed UTF-8 text through `impl_ios.text_utf8(...)`. Use
    `impl_ios.wants_text_input()` to show or hide an app-owned UIKit text view.
    Clipboard reads and writes use `UIPasteboard` and should occur on the main

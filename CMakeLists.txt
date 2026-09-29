@@ -279,6 +279,7 @@ if(VIMGUI_BUILD_ANDROID_DEMO)
 	target_link_options(vimgui_android_demo PRIVATE -Wl,--no-undefined)
 endif()
 if(VIMGUI_BUILD_SMOKE_TESTS AND VIMGUI_PROFILE STREQUAL "desktop" AND UNIX AND NOT APPLE)
+	add_executable(vimgui_touch_tracker_test tests/mobile/touch_tracker.cpp)
 	add_executable(vimgui_vulkan_offscreen_probe
 		tests/vulkan/offscreen_probe.cpp
 		native/mobile/vimgui_scale.cpp)

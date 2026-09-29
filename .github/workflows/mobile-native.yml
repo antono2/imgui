@@ -40,6 +40,7 @@ jobs:
           export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
           if [ ! -f "$VK_ICD_FILENAMES" ]; then export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json; fi
           build/ci-linux/vimgui_vulkan_offscreen_probe
+          build/ci-linux/vimgui_touch_tracker_test
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
