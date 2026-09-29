@@ -38,6 +38,29 @@ cmake -S "$repo_dir" -B "$build_dir" -G Ninja \
   -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release
 cmake --build "$build_dir" --target vimgui_android_demo --parallel 4
 
+# The host deliberately only owns Vulkan and Android lifecycle. The widgets
+# are compiled from V into a separate DSO, then loaded by the host at runtime.
+case "$abi" in
+  armeabi-v7a) v_arch=arm; clang_target=armv7a-linux-androideabi24-clang ;;
+  arm64-v8a) v_arch=arm64; clang_target=aarch64-linux-android24-clang ;;
+  x86_64) v_arch=amd64; clang_target=x86_64-linux-android24-clang ;;
+esac
+ndk_prebuilt="$(find "$ndk_dir/toolchains/llvm/prebuilt" -mindepth 1 -maxdepth 1 -type d | head -1)"
+if [[ -z "$ndk_prebuilt" || ! -x "$ndk_prebuilt/bin/$clang_target" ]]; then
+  echo "Cannot find the NDK Clang target for $abi." >&2
+  exit 2
+fi
+v_bin="${V_BIN:-v}"
+mkdir -p "$build_dir/vmodules/antono2" "$repo_dir/lib/android-vulkan/$abi/freetype"
+ln -sfn "$repo_dir" "$build_dir/vmodules/antono2/imgui"
+cp "$build_dir/lib/libvimgui.so" "$repo_dir/lib/android-vulkan/$abi/freetype/libvimgui.so"
+"$v_bin" -path "$build_dir/vmodules|@vlib|@vmodules" \
+  -os android -arch "$v_arch" -cc "$ndk_prebuilt/bin/$clang_target" \
+  -d use_freetype -gc none -no-memory-limit \
+  -cflags '-Wno-incompatible-function-pointer-types' -shared \
+  -o "$build_dir/libvimgui_android_ui.so" "$repo_dir/examples/android_vulkan/ui.v"
+test -f "$build_dir/libvimgui_android_ui.so"
+
 build_tools="$(find "$sdk_dir/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
 android_jar="$(find "$sdk_dir/platforms" -mindepth 2 -maxdepth 2 -name android.jar | sort -V | tail -1)"
 if [[ -z "$build_tools" || -z "$android_jar" ]]; then
@@ -49,6 +72,7 @@ package_dir="$build_dir/package"
 mkdir -p "$package_dir/lib/$abi" "$package_dir/assets" "$package_dir/classes" "$package_dir/dex"
 cp "$build_dir/lib/libvimgui.so" "$package_dir/lib/$abi/libvimgui.so"
 cp "$build_dir/libvimgui_android_demo.so" "$package_dir/lib/$abi/libvimgui_android_demo.so"
+cp "$build_dir/libvimgui_android_ui.so" "$package_dir/lib/$abi/libvimgui_android_ui.so"
 cp "$repo_dir/cimgui/imgui/misc/fonts/Roboto-Medium.ttf" "$package_dir/assets/Roboto-Medium.ttf"
 javac_bin="${JAVAC:-javac}"
 "$javac_bin" -source 8 -target 8 -Xlint:-options -cp "$android_jar" -d "$package_dir/classes" \
@@ -67,7 +91,8 @@ signed_apk="$build_dir/vimgui-demo-$abi.apk"
 (
   cd "$package_dir"
   "$build_tools/aapt" add "$unsigned_apk" \
-    "lib/$abi/libvimgui.so" "lib/$abi/libvimgui_android_demo.so" classes.dex
+    "lib/$abi/libvimgui.so" "lib/$abi/libvimgui_android_demo.so" \
+    "lib/$abi/libvimgui_android_ui.so" classes.dex
 )
 "$build_tools/zipalign" -f 4 "$unsigned_apk" "$aligned_apk"
 keystore="$build_dir/debug.keystore"

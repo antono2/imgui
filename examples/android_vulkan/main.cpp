@@ -11,6 +11,7 @@
 #include <android/log.h>
 #include <android/native_window.h>
 #include <android_native_app_glue.h>
+#include <dlfcn.h>
 #include <jni.h>
 #include <vulkan/vulkan.h>
 
@@ -46,6 +47,30 @@ struct DemoState {
 };
 
 DemoState g;
+using DrawUiFn = bool (*)(float*, int*, char*, int, float, float);
+void* ui_library = nullptr;
+DrawUiFn draw_ui = nullptr;
+
+bool load_v_ui()
+{
+    if (draw_ui != nullptr)
+        return true;
+    ui_library = dlopen("libvimgui_android_ui.so", RTLD_NOW | RTLD_LOCAL);
+    if (ui_library == nullptr)
+    {
+        __android_log_print(ANDROID_LOG_ERROR, kLogTag, "V UI load failed: %s", dlerror());
+        return false;
+    }
+    draw_ui = reinterpret_cast<DrawUiFn>(dlsym(ui_library, "vimgui_android_demo_draw_ui"));
+    if (draw_ui == nullptr)
+    {
+        __android_log_print(ANDROID_LOG_ERROR, kLogTag, "V UI symbol missing: %s", dlerror());
+        dlclose(ui_library);
+        ui_library = nullptr;
+        return false;
+    }
+    return true;
+}
 
 void set_keyboard_visible(bool visible)
 {
@@ -182,6 +207,8 @@ bool initialize(android_app* app)
 {
     if (app->window == nullptr)
         return false;
+    if (!load_v_ui())
+        return false;
     g.app = app;
     g.native_window = app->window;
     ANativeWindow_acquire(g.native_window);
@@ -296,23 +323,11 @@ bool draw_frame()
     ImGui_ImplVulkan_NewFrame();
     vimgui_android_new_frame();
     ImGui::NewFrame();
-    ImGui::SetNextWindowPos(ImVec2(24.0f, 24.0f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(700.0f, 420.0f), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Android Vulkan + FreeType");
-    ImGui::TextWrapped("Tap the button; rotate or background the app.");
-    if (ImGui::Button("Tap here"))
-    {
-        ++g.tap_count;
-        __android_log_print(ANDROID_LOG_INFO, kLogTag, "Tap count: %d", g.tap_count);
-    }
-    ImGui::SameLine();
-    ImGui::Text("count = %d", g.tap_count);
-    ImGui::InputText("Text", g.text, sizeof(g.text));
-    ImGui::Text("Committed: %s", g.text);
-    const bool zoom_changed = ImGui::SliderFloat("UI zoom", &g.zoom, 0.75f, 2.0f);
-    ImGui::Text("Display %.0f x %.0f, %.1f FPS", ImGui::GetIO().DisplaySize.x,
-                ImGui::GetIO().DisplaySize.y, ImGui::GetIO().Framerate);
-    ImGui::End();
+    const int previous_tap_count = g.tap_count;
+    const bool zoom_changed = draw_ui(&g.zoom, &g.tap_count, g.text, sizeof(g.text),
+                                      ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y);
+    if (g.tap_count != previous_tap_count)
+        __android_log_print(ANDROID_LOG_INFO, kLogTag, "V UI tap count: %d", g.tap_count);
     ImGui::Render();
     if (zoom_changed)
         vimgui_mobile_set_ui_scale(g.density_scale * g.zoom);

@@ -94,9 +94,12 @@ Do not drive the soft keyboard with `igIsItemActive()`; the relevant intent is
 ### Installable Android Vulkan sample
 
 `examples/android_vulkan` is a small NativeActivity host for integration
-testing. It owns the Vulkan surface/swapchain and forwards input to the same
-Android wrapper exposed to V. The renderer remains upstream's Vulkan backend;
-this C++ host is not an alternative V API. The app includes the Java
+testing. Its C++ part owns the Vulkan surface/swapchain and forwards input to
+the same Android wrapper exposed to V; `examples/android_vulkan/ui.v` builds
+the widgets through this repository's public V bindings. The V UI is compiled
+as `libvimgui_android_ui.so` and loaded by the host, so the sample exercises
+the actual V API on screen. The renderer remains upstream's Vulkan backend;
+the C++ lifecycle host is not an alternative V API. The app includes the Java
 `ImGuiInputView` and a tiny `NativeActivity` subclass that switches keyboard
 visibility on the UI thread. It loads the vendored Roboto TTF asset, uses the
 FreeType profile, and has a UI zoom slider that scales fonts and widget sizes
@@ -112,9 +115,11 @@ export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
 scripts/run_android_demo.sh
 ```
 
-The script selects the device ABI, builds, packages, debug-signs, installs, and
-launches `io.antono2.vimgui.demo`. Set `ANDROID_SERIAL` if multiple devices are
-connected. For CI/offline packaging, set `ANDROID_ABI` and pass `--build-only`.
+The script selects the device ABI, builds the native host and V UI, packages,
+debug-signs, installs, and launches `io.antono2.vimgui.demo`. It requires `v`
+on `PATH` (or `V_BIN` pointing to it). Set `ANDROID_SERIAL` if multiple devices
+are connected. For CI/offline packaging, set `ANDROID_ABI` and pass
+`--build-only`.
 Tap the button, enter committed text, change UI zoom, rotate the tablet, and
 background/resume the app. `adb logcat -s vimgui-android-demo:I` reports
 initialization, swapchain recreation, tap counts, and keyboard visibility.
@@ -155,8 +160,9 @@ ARC. Android never compiles them; Apple never compiles the Android backend.
 The macOS build also compiles upstream `imgui_impl_osx.mm`. The iOS build does
 not pull in AppKit/Cocoa.
 
-The Android sample is an integration host, not a reusable application shell or
-a V-written app. Android uses upstream's platform backend, which does not
+The Android sample is an integration host, not a reusable application shell;
+the Vulkan/NativeActivity host remains C++ while the ImGui widgets are written
+in V. Android uses upstream's platform backend, which does not
 supply clipboard or gamepad integration; the Java bridge adds committed IME
 text and basic editing keys only. There is no on-screen iOS sample yet. The
 iOS layer handles one primary touch and delegates keyboard visibility and
@@ -165,9 +171,9 @@ committed text collection to the host UIKit app.
 ## Validation boundaries
 
 `mobile-native.yml` renders an offscreen ImGui frame through Lavapipe on Ubuntu,
-then builds and link-tests the Android native backend, on-screen host, and IME
-Java class for three ABIs, cross-links a small V app, and packages a debug APK
-for `armeabi-v7a`. It builds and
+then builds and link-tests the Android native backend, on-screen host, V UI,
+and IME Java class for three ABIs, cross-links a small V app, and packages a
+debug APK for each ABI. It builds and
 link-tests Metal/FreeType on GitHub-hosted macOS for
 macOS, both iOS Simulator architectures, and arm64 iPhoneOS. No signing or
 attached Apple hardware is required for those jobs. On a connected Android

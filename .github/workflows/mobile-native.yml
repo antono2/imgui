@@ -138,16 +138,18 @@ jobs:
             -o "$RUNNER_TEMP/vimgui-v-android-smoke" \
             tests/android/v_api_link_smoke.v
           file "$RUNNER_TEMP/vimgui-v-android-smoke" | grep 'ELF 32-bit.*ARM'
-      - name: Package Android NativeActivity APK
-        if: matrix.abi == 'armeabi-v7a'
+      - name: Cross-build V UI and package Android NativeActivity APK
         run: |
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
-          export ANDROID_ABI=armeabi-v7a
+          export ANDROID_ABI='${{ matrix.abi }}'
           export VIMGUI_ANDROID_BUILD_DIR="$GITHUB_WORKSPACE/build/ci-android"
           scripts/run_android_demo.sh --build-only
-          test -f build/ci-android/vimgui-demo-armeabi-v7a.apk
-          unzip -l build/ci-android/vimgui-demo-armeabi-v7a.apk | grep classes.dex
-          unzip -l build/ci-android/vimgui-demo-armeabi-v7a.apk | grep lib/armeabi-v7a/libvimgui_android_demo.so
+          test -f "build/ci-android/vimgui-demo-$ANDROID_ABI.apk"
+          unzip -l "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" | grep classes.dex
+          unzip -l "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" | grep "lib/$ANDROID_ABI/libvimgui_android_demo.so"
+          unzip -l "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" | grep "lib/$ANDROID_ABI/libvimgui_android_ui.so"
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D \
+            build/ci-android/libvimgui_android_ui.so | grep vimgui_android_demo_draw_ui
 
   apple:
     name: ${{ matrix.sdk }} / ${{ matrix.arch }} Metal
