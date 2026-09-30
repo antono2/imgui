@@ -98,6 +98,7 @@ jobs:
         if: steps.upstream.outputs.changed == 'true'
         run: |
           set -euo pipefail
+          v run generate.vsh --self-test
           scripts/update_upstream.sh "$VARIANT"
           v run scripts/check_upstream_variant.vsh
           v run scripts/configure_variant.vsh --self-test

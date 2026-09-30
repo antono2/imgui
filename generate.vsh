@@ -8,7 +8,7 @@ const repo_dir = @DIR
 const c2v_flags = '-DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS=ON -DIMGUI_STATIC=OFF -DCIMGUI_NO_EXPORT=ON -DCIMGUI_USE_GLFW=ON'
 
 fn usage() {
-	println('Usage: v run generate.vsh [--regenerate-c]')
+	println('Usage: v run generate.vsh [--regenerate-c|--self-test]')
 	println('By default, translate the generated C API committed by cimgui/cimplot.')
 }
 
@@ -29,14 +29,44 @@ fn remove_file(path string) ! {
 	}
 }
 
-fn copy_matching(pattern string, destination string) ! {
-	files := os.glob(pattern) or { return error('could not expand ${pattern}: ${err}') }
-	if files.len == 0 {
-		return error('no files matched ${pattern}')
+fn copy_sources(source_dir string, suffix string, destination string) ! {
+	os.mkdir_all(destination)!
+	mut names := os.ls(source_dir)!
+	names.sort()
+	mut copied := 0
+	for name in names {
+		source := os.join_path(source_dir, name)
+		if !name.ends_with(suffix) || !os.is_file(source) {
+			continue
+		}
+		target := os.join_path(destination, name)
+		os.cp(source, target) or { return error('copy ${source} -> ${target}: ${err}') }
+		copied++
 	}
-	for source in files {
-		os.cp(source, os.join_path(destination, os.file_name(source)))!
+	if copied == 0 {
+		return error('no ${suffix} files in ${source_dir}')
 	}
+}
+
+fn copy_sources_self_test() ! {
+	root := os.join_path(os.temp_dir(), 'imgui-generator-copy-${os.getpid()}')
+	source_dir := os.join_path(root, 'imgui', 'imgui', 'source')
+	destination := os.join_path(root, 'imgui', 'imgui', 'include')
+	os.mkdir_all(source_dir)!
+	defer {
+		os.rmdir_all(root) or {}
+	}
+	os.write_file(os.join_path(source_dir, 'api.h'), 'header')!
+	os.write_file(os.join_path(source_dir, 'backend.cpp'), 'source')!
+	os.write_file(os.join_path(source_dir, 'ignored.txt'), 'ignore')!
+	os.mkdir_all(os.join_path(source_dir, 'nested.h'))!
+	copy_sources(source_dir, '.h', destination)!
+	copy_sources(source_dir, '.cpp', destination)!
+	assert os.read_file(os.join_path(destination, 'api.h'))! == 'header'
+	assert os.read_file(os.join_path(destination, 'backend.cpp'))! == 'source'
+	assert !os.exists(os.join_path(destination, 'ignored.txt'))
+	assert !os.exists(os.join_path(destination, 'nested.h'))
+	println('Generator source-copy self-test passed.')
 }
 
 fn add_translation_fix(path string) ! {
@@ -69,6 +99,10 @@ fn main() {
 			'--regenerate-c' {
 				regenerate_c = true
 			}
+			'--self-test' {
+				copy_sources_self_test() or { panic(err) }
+				return
+			}
 			'-h', '--help' {
 				usage()
 				return
@@ -92,8 +126,8 @@ fn main() {
 		println('Using the generated cimgui API committed by the pinned revision.')
 	}
 	include_dir := os.join_path(repo_dir, 'include')
-	copy_matching(os.join_path(repo_dir, 'cimgui', '*.h'), include_dir) or { panic(err) }
-	copy_matching(os.join_path(repo_dir, 'cimgui', '*.cpp'), include_dir) or { panic(err) }
+	copy_sources(os.join_path(repo_dir, 'cimgui'), '.h', include_dir) or { panic(err) }
+	copy_sources(os.join_path(repo_dir, 'cimgui'), '.cpp', include_dir) or { panic(err) }
 	add_translation_fix(os.join_path(include_dir, 'cimgui.h')) or { panic(err) }
 
 	if regenerate_c {
@@ -101,8 +135,8 @@ fn main() {
 	} else {
 		println('Using the generated cimplot API committed by the pinned revision.')
 	}
-	copy_matching(os.join_path(repo_dir, 'cimplot', '*.h'), include_dir) or { panic(err) }
-	copy_matching(os.join_path(repo_dir, 'cimplot', '*.cpp'), include_dir) or { panic(err) }
+	copy_sources(os.join_path(repo_dir, 'cimplot'), '.h', include_dir) or { panic(err) }
+	copy_sources(os.join_path(repo_dir, 'cimplot'), '.cpp', include_dir) or { panic(err) }
 	add_translation_fix(os.join_path(include_dir, 'cimplot.h')) or { panic(err) }
 
 	imgui_include := os.join_path(include_dir, 'imgui') + os.path_separator
