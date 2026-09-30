@@ -226,7 +226,7 @@ static int text_callback(ImGuiInputTextCallbackData* data)
     if (_richText != nullptr && !_richFailed)
     {
         const bool wants_keyboard = vimgui_ios_wants_text_input();
-        if (!vimgui_ios_text_view_set_visible(_richText, wants_keyboard) && wants_keyboard)
+        if (!vimgui_ios_text_view_set_visible(_richText, wants_keyboard))
         {
             _richError = vimgui_ios_text_view_error(_richText);
             _richFailed = YES;

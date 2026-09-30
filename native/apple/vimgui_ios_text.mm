@@ -12,11 +12,13 @@
 // and visible (but transparent) so it can remain first responder and present
 // the system keyboard/candidates. All state is confined to the UIKit thread.
 @interface VImGuiTextView : UITextView <UITextViewDelegate>
+{
 @public
     bool pending;
     bool syncing;
     int32_t error;
     ImGuiID widget_id;
+}
 @end
 
 @implementation VImGuiTextView
