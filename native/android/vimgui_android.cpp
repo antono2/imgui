@@ -48,6 +48,141 @@ bool g_trigger_keys[2] = {};
 float g_trigger_axes[2] = {};
 float g_hat_x = 0.0f;
 float g_hat_y = 0.0f;
+JavaVM* g_clipboard_vm = nullptr;
+jobject g_clipboard_context = nullptr;
+jobject g_clipboard_manager = nullptr;
+std::string g_clipboard_text;
+
+struct ScopedJNIEnv {
+    JavaVM* vm;
+    JNIEnv* env = nullptr;
+    bool attached = false;
+
+    explicit ScopedJNIEnv(JavaVM* value) : vm(value)
+    {
+        if (vm == nullptr)
+            return;
+        const jint status = vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+        if (status == JNI_EDETACHED && vm->AttachCurrentThread(&env, nullptr) == JNI_OK)
+            attached = true;
+        else if (status != JNI_OK)
+            env = nullptr;
+    }
+
+    ~ScopedJNIEnv()
+    {
+        if (attached)
+            vm->DetachCurrentThread();
+    }
+};
+
+void clear_jni_exception(JNIEnv* env)
+{
+    if (env->ExceptionCheck())
+        env->ExceptionClear();
+}
+
+const char* get_clipboard_text(ImGuiContext*)
+{
+    g_clipboard_text.clear();
+    ScopedJNIEnv jni(g_clipboard_vm);
+    JNIEnv* env = jni.env;
+    if (env == nullptr || g_clipboard_manager == nullptr || env->PushLocalFrame(16) != JNI_OK)
+        return g_clipboard_text.c_str();
+    do
+    {
+        jclass manager_class = env->GetObjectClass(g_clipboard_manager);
+        if (manager_class == nullptr) break;
+        jmethodID get_clip = env->GetMethodID(manager_class, "getPrimaryClip", "()Landroid/content/ClipData;");
+        if (get_clip == nullptr) break;
+        jobject clip = env->CallObjectMethod(g_clipboard_manager, get_clip);
+        if (env->ExceptionCheck() || clip == nullptr) break;
+        jclass clip_class = env->GetObjectClass(clip);
+        if (clip_class == nullptr) break;
+        jmethodID count = env->GetMethodID(clip_class, "getItemCount", "()I");
+        jmethodID item_at = env->GetMethodID(clip_class, "getItemAt", "(I)Landroid/content/ClipData$Item;");
+        if (count == nullptr || item_at == nullptr || env->CallIntMethod(clip, count) < 1 || env->ExceptionCheck()) break;
+        jobject item = env->CallObjectMethod(clip, item_at, 0);
+        if (env->ExceptionCheck() || item == nullptr) break;
+        jclass item_class = env->GetObjectClass(item);
+        if (item_class == nullptr) break;
+        jmethodID coerce = env->GetMethodID(item_class, "coerceToText", "(Landroid/content/Context;)Ljava/lang/CharSequence;");
+        if (coerce == nullptr) break;
+        jobject chars = env->CallObjectMethod(item, coerce, g_clipboard_context);
+        if (env->ExceptionCheck() || chars == nullptr) break;
+        jclass chars_class = env->FindClass("java/lang/CharSequence");
+        if (chars_class == nullptr) break;
+        jmethodID to_string = env->GetMethodID(chars_class, "toString", "()Ljava/lang/String;");
+        if (to_string == nullptr) break;
+        jstring value = static_cast<jstring>(env->CallObjectMethod(chars, to_string));
+        if (env->ExceptionCheck() || value == nullptr) break;
+        // JNI's GetStringUTFChars uses modified UTF-8. Convert UTF-16 instead
+        // so emoji and embedded U+0000 reach Dear ImGui as ordinary UTF-8.
+        const jchar* units = env->GetStringChars(value, nullptr);
+        if (units == nullptr) break;
+        const jsize length = env->GetStringLength(value);
+        g_clipboard_text = vimgui::utf16_to_utf8(
+            std::u16string(reinterpret_cast<const char16_t*>(units), size_t(length)));
+        env->ReleaseStringChars(value, units);
+    } while (false);
+    clear_jni_exception(env);
+    env->PopLocalFrame(nullptr);
+    return g_clipboard_text.c_str();
+}
+
+void set_clipboard_text(ImGuiContext*, const char* text)
+{
+    ScopedJNIEnv jni(g_clipboard_vm);
+    JNIEnv* env = jni.env;
+    if (env == nullptr || g_clipboard_manager == nullptr || env->PushLocalFrame(12) != JNI_OK)
+        return;
+    do
+    {
+        const std::u16string utf16 = vimgui::utf8_to_utf16(text != nullptr ? text : "",
+                                                           text != nullptr ? int(std::strlen(text)) : 0);
+        jstring label = env->NewStringUTF("");
+        jstring value = env->NewString(reinterpret_cast<const jchar*>(utf16.data()), jsize(utf16.size()));
+        if (label == nullptr || value == nullptr) break;
+        jclass clip_class = env->FindClass("android/content/ClipData");
+        if (clip_class == nullptr) break;
+        jmethodID plain_text = env->GetStaticMethodID(clip_class, "newPlainText",
+            "(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Landroid/content/ClipData;");
+        if (plain_text == nullptr) break;
+        jobject clip = env->CallStaticObjectMethod(clip_class, plain_text, label, value);
+        if (env->ExceptionCheck() || clip == nullptr) break;
+        jclass manager_class = env->GetObjectClass(g_clipboard_manager);
+        if (manager_class == nullptr) break;
+        jmethodID set_clip = env->GetMethodID(manager_class, "setPrimaryClip", "(Landroid/content/ClipData;)V");
+        if (set_clip == nullptr) break;
+        env->CallVoidMethod(g_clipboard_manager, set_clip, clip);
+    } while (false);
+    clear_jni_exception(env);
+    env->PopLocalFrame(nullptr);
+}
+
+void clear_clipboard_context()
+{
+    if (ImGui::GetCurrentContext() != nullptr)
+    {
+        ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+        if (platform_io.Platform_GetClipboardTextFn == get_clipboard_text)
+            platform_io.Platform_GetClipboardTextFn = nullptr;
+        if (platform_io.Platform_SetClipboardTextFn == set_clipboard_text)
+            platform_io.Platform_SetClipboardTextFn = nullptr;
+    }
+    ScopedJNIEnv jni(g_clipboard_vm);
+    if (jni.env != nullptr)
+    {
+        if (g_clipboard_manager != nullptr)
+            jni.env->DeleteGlobalRef(g_clipboard_manager);
+        if (g_clipboard_context != nullptr)
+            jni.env->DeleteGlobalRef(g_clipboard_context);
+    }
+    g_clipboard_manager = nullptr;
+    g_clipboard_context = nullptr;
+    g_clipboard_vm = nullptr;
+    g_clipboard_text.clear();
+}
 
 void emit_dpad()
 {
@@ -272,6 +407,49 @@ extern "C" bool vimgui_android_init(void* native_window)
     return native_window != nullptr && ImGui_ImplAndroid_Init(static_cast<ANativeWindow*>(native_window));
 }
 
+extern "C" bool vimgui_android_set_clipboard_context(void* java_vm, void* context)
+{
+    if (ImGui::GetCurrentContext() == nullptr || java_vm == nullptr || context == nullptr)
+        return false;
+    clear_clipboard_context();
+    JavaVM* vm = static_cast<JavaVM*>(java_vm);
+    ScopedJNIEnv jni(vm);
+    JNIEnv* env = jni.env;
+    if (env == nullptr || env->PushLocalFrame(8) != JNI_OK)
+        return false;
+    jobject global_context = nullptr;
+    jobject global_manager = nullptr;
+    do
+    {
+        jclass context_class = env->GetObjectClass(static_cast<jobject>(context));
+        if (context_class == nullptr) break;
+        jmethodID get_service = env->GetMethodID(context_class, "getSystemService",
+                                                  "(Ljava/lang/String;)Ljava/lang/Object;");
+        if (get_service == nullptr) break;
+        jstring clipboard = env->NewStringUTF("clipboard");
+        if (clipboard == nullptr) break;
+        jobject manager = env->CallObjectMethod(static_cast<jobject>(context), get_service, clipboard);
+        if (env->ExceptionCheck() || manager == nullptr) break;
+        global_context = env->NewGlobalRef(static_cast<jobject>(context));
+        global_manager = env->NewGlobalRef(manager);
+    } while (false);
+    clear_jni_exception(env);
+    env->PopLocalFrame(nullptr);
+    if (global_context == nullptr || global_manager == nullptr)
+    {
+        if (global_context != nullptr) env->DeleteGlobalRef(global_context);
+        if (global_manager != nullptr) env->DeleteGlobalRef(global_manager);
+        return false;
+    }
+    g_clipboard_vm = vm;
+    g_clipboard_context = global_context;
+    g_clipboard_manager = global_manager;
+    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+    platform_io.Platform_GetClipboardTextFn = get_clipboard_text;
+    platform_io.Platform_SetClipboardTextFn = set_clipboard_text;
+    return true;
+}
+
 extern "C" int32_t vimgui_android_handle_input_event(const void* input_event)
 {
     if (handle_gamepad(static_cast<const AInputEvent*>(input_event)))
@@ -379,6 +557,7 @@ extern "C" void vimgui_android_gamepad_disconnected(int32_t device_id)
 
 extern "C" void vimgui_android_shutdown(void)
 {
+    clear_clipboard_context();
     clear_gamepad();
     {
         std::lock_guard<std::mutex> lock(g_gamepad_mutex);

@@ -6,6 +6,7 @@ import antono2.imgui
 #include "vimgui_android.h"
 
 fn C.vimgui_android_init(native_window voidptr) bool
+fn C.vimgui_android_set_clipboard_context(java_vm voidptr, context voidptr) bool
 fn C.vimgui_android_handle_input_event(input_event voidptr) int
 fn C.vimgui_android_new_frame()
 fn C.vimgui_android_text_utf8(committed_text &char)
@@ -18,6 +19,13 @@ fn C.vimgui_android_shutdown()
 // init connects Dear ImGui to an Android ANativeWindow.
 pub fn init(native_window voidptr) bool {
 	return C.vimgui_android_init(native_window)
+}
+
+// set_clipboard_context enables Android clipboard copy/paste. Pass the
+// JavaVM and Activity/Context jobject (NativeActivity.vm and .clazz).
+// Call after init on the ImGui thread; shutdown releases the JNI references.
+pub fn set_clipboard_context(java_vm voidptr, context voidptr) bool {
+	return C.vimgui_android_set_clipboard_context(java_vm, context)
 }
 
 // handle_input_event forwards an AInputEvent from the application's input loop.

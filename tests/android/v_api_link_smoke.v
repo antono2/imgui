@@ -11,6 +11,7 @@ fn main() {
 	}
 	assert impl_mobile.set_ui_scale(1.5)
 	_ = impl_android.wants_text_input()
+	assert !impl_android.set_clipboard_context(unsafe { nil }, unsafe { nil })
 	imgui.destroy_context(context)
 	println('V Android bindings linked')
 }
