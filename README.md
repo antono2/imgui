@@ -1,6 +1,6 @@
 
 
-# [V](https://vlang.io) binding generator for [Dear ImGui](https://github.com/ocornut/imgui)
+# [V](https://vlang.io) bindings for [Dear ImGui](https://github.com/ocornut/imgui) and ImPlot
 
 [Project portfolio](https://oreskin.de/projects_en.php)
 
@@ -18,21 +18,17 @@ v run setup.vsh
 
 Use `v run setup.vsh --check` for read-only diagnostics.
 
-This is an automated process to generate `imgui.v` and `implot.v`
- - generate C for imgui using [cimgui](https://github.com/cimgui/cimgui)
- - generate C for implot using [cimplot](https://github.com/cimgui/cimplot)
- - `v translate` C to V
- - the V-native `cleanup_imgui_implot.vsh` to normalize both generated bindings
+The V bindings are already generated and committed. Installing the module does
+not require the binding generators; see [Maintaining](MAINTAINING.md) if you
+are updating the upstream API.
 
 ## Upstream variants
 
 This repository supports both official Dear ImGui lines:
 
-- `master` is the default **docking** build, generated from cimgui's
-  `docking_inter` branch. It includes docking and multi-viewport support while
-  retaining the normal Dear ImGui API.
-- The `standard` branch is generated from cimgui's `master` branch for users
-  who want to track Dear ImGui's smaller standard line exactly.
+- `master` is the default **docking** build. It includes docking and
+  multi-viewport support while retaining the normal Dear ImGui API.
+- The `standard` branch tracks Dear ImGui's smaller standard line.
 
 Both currently track Dear ImGui `1.92.9b`. The `b` is an upstream patch-level
 suffix shared by the release; it does not identify the docking variant. Check
@@ -122,59 +118,15 @@ platform viewports, while `v-imgui-demo-standard-ubuntu24-amd64.zip` retains
 normal independent floating windows. Each archive also contains `VARIANT.txt`.
 
 Compiling the generated ImGui and ImPlot V bindings can currently require about
-11 GiB of memory and therefore uses V's `-no-memory-limit` option.
-`scripts/run_demo.sh` remains the normal source/developer path; prebuilding the
-demo is not a requirement for every later release.
+11 GiB of memory. Use `scripts/run_demo.sh` to build and run the demo from source.
 
 Release binaries are built for Ubuntu 24.04 x86_64 and Windows 10/11 x64.
 Native-library linkage and the GLFW provider remain build-time choices for
 developers; they do not need to multiply the end-user demo downloads.
 
-## Generate
-
-```bash
-# Go to the installed antono2/imgui module
-v run generate.vsh
-```
-
-`generate.vsh` regenerates both V bindings from the generated C API committed
-by the pinned cimgui/cimplot revisions, then builds `libvimgui`. It therefore
-does not require Perl or LuaJIT for a normal upstream refresh. Pass
-`--regenerate-c` only when intentionally rerunning the upstream Lua generators;
-that advanced mode requires LuaJIT. Set `C2V_BIN` to an already-built C2V
-executable to bypass `v translate`'s automatic translator installation.
-
-Maintainers can update either line reproducibly with:
-
-```bash
-./scripts/update_upstream.sh docking
-# On the standard branch:
-./scripts/update_upstream.sh standard
-```
-
-The [upstream update workflow](.github/workflows/update-upstream.yml) checks
-both lines weekly and can also be started manually. When either cimgui or
-cimplot moves, it regenerates that line with pinned V and C2V revisions, builds the
-native library, verifies the variant and V syntax, and opens or updates a draft
-pull request. It never merges generated changes. A failed generator, build, or
-binding check stops the proposal for review. `--check-only` reports `changed=true` or
-`changed=false` without changing the checkout.
-Pull requests also regenerate both bindings with the pinned toolchain and
-compare them with the committed files, so translator and cleanup changes cannot
-silently alter the public API.
-
-For the workflow to open pull requests with `GITHUB_TOKEN`, a repository admin
-must enable **Settings → Actions → General → Workflow permissions → Allow GitHub
-Actions to create and approve pull requests**. The workflow requests only
-`contents: write` and `pull-requests: write` for its proposal job. An optional
-`UPSTREAM_UPDATE_TOKEN` repository secret containing a GitHub App installation
-token or fine-grained PAT with those permissions can be used instead. Because
-GitHub may hold PR checks triggered by `GITHUB_TOKEN` for approval, the optional
-token is preferable for fully unattended CI; no token or setting permits
-automatic merging.
-
-To only rebuild the native library after a system upgrade or on an older Linux
-distribution, run `v run build_vimgui.vsh`.
+For binding regeneration, upstream updates, and CI/release procedures, see
+[Maintaining](MAINTAINING.md). To rebuild only the native library after a
+system upgrade, run `v run build_vimgui.vsh`.
 
 ## Thanks
 Thank you [@ryoskzypu](https://github.com/ryoskzypu) from #regex on
