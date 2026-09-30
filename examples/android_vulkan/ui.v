@@ -50,6 +50,13 @@ fn draw_ui(zoom &f32, tap_count &int, text &char, text_capacity int, display_wid
 	size_label := 'Display ${int(display_width)} x ${int(display_height)}'
 	imgui.text_unformatted(size_label.str, unsafe { nil })
 	unsafe { size_label.free() }
+	io := imgui.get_io_nil()
+	controller := if (io.BackendFlags & int(imgui.BackendFlags_.has_gamepad)) != 0 {
+		'Gamepad connected; use D-pad/stick and A to navigate'
+	} else {
+		'Gamepad waiting for controller input'
+	}
+	imgui.text_unformatted(controller.str, unsafe { nil })
 	imgui.end()
 	return changed
 }
