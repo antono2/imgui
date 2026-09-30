@@ -4,9 +4,11 @@
 #include "../../cimgui/imgui/imgui.h"
 #include "../mobile/vimgui_text_offsets.h"
 #include "../mobile/vimgui_touch_tracker.h"
+#include "../mobile/vimgui_gamepad_values.h"
 
 #include <jni.h>
 #include <android/input.h>
+#include <android/keycodes.h>
 #include <algorithm>
 #include <cfloat>
 #include <cstring>
@@ -37,6 +39,150 @@ bool g_stateful_text = false;
 int g_text_generation = 1;
 int g_text_revision = 1;
 vimgui::TouchTracker g_touches;
+int g_gamepad_device = -1;
+std::mutex g_gamepad_mutex;
+std::vector<int32_t> g_disconnected_gamepads;
+bool g_gamepad_keys[4] = {};
+bool g_trigger_keys[2] = {};
+float g_trigger_axes[2] = {};
+float g_hat_x = 0.0f;
+float g_hat_y = 0.0f;
+
+void emit_dpad()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    io.AddKeyEvent(ImGuiKey_GamepadDpadLeft, vimgui::gamepad_dpad(g_gamepad_keys[0], g_hat_x, false));
+    io.AddKeyEvent(ImGuiKey_GamepadDpadRight, vimgui::gamepad_dpad(g_gamepad_keys[1], g_hat_x, true));
+    io.AddKeyEvent(ImGuiKey_GamepadDpadUp, vimgui::gamepad_dpad(g_gamepad_keys[2], g_hat_y, false));
+    io.AddKeyEvent(ImGuiKey_GamepadDpadDown, vimgui::gamepad_dpad(g_gamepad_keys[3], g_hat_y, true));
+}
+
+void emit_triggers()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    const float left = g_trigger_keys[0] ? 1.0f : g_trigger_axes[0];
+    const float right = g_trigger_keys[1] ? 1.0f : g_trigger_axes[1];
+    io.AddKeyAnalogEvent(ImGuiKey_GamepadL2, left > 0.10f, left);
+    io.AddKeyAnalogEvent(ImGuiKey_GamepadR2, right > 0.10f, right);
+}
+
+void clear_gamepad()
+{
+    if (g_gamepad_device == -1)
+        return;
+    ImGuiIO& io = ImGui::GetIO();
+    for (int key = ImGuiKey_GamepadStart; key <= ImGuiKey_GamepadRStickDown; ++key)
+        io.AddKeyAnalogEvent(static_cast<ImGuiKey>(key), false, 0.0f);
+    io.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
+    g_gamepad_device = -1;
+    std::fill_n(g_gamepad_keys, 4, false);
+    std::fill_n(g_trigger_keys, 2, false);
+    std::fill_n(g_trigger_axes, 2, 0.0f);
+    g_hat_x = g_hat_y = 0.0f;
+}
+
+ImGuiKey gamepad_key(int32_t code)
+{
+    switch (code)
+    {
+        case AKEYCODE_BUTTON_START: return ImGuiKey_GamepadStart;
+        case AKEYCODE_BUTTON_SELECT: return ImGuiKey_GamepadBack;
+        case AKEYCODE_BUTTON_X: return ImGuiKey_GamepadFaceLeft;
+        case AKEYCODE_BUTTON_B: return ImGuiKey_GamepadFaceRight;
+        case AKEYCODE_BUTTON_Y: return ImGuiKey_GamepadFaceUp;
+        case AKEYCODE_BUTTON_A: return ImGuiKey_GamepadFaceDown;
+        case AKEYCODE_DPAD_CENTER: return ImGuiKey_GamepadFaceDown;
+        case AKEYCODE_BUTTON_L1: return ImGuiKey_GamepadL1;
+        case AKEYCODE_BUTTON_R1: return ImGuiKey_GamepadR1;
+        case AKEYCODE_BUTTON_L2: return ImGuiKey_GamepadL2;
+        case AKEYCODE_BUTTON_R2: return ImGuiKey_GamepadR2;
+        case AKEYCODE_BUTTON_THUMBL: return ImGuiKey_GamepadL3;
+        case AKEYCODE_BUTTON_THUMBR: return ImGuiKey_GamepadR3;
+        default: return ImGuiKey_None;
+    }
+}
+
+void emit_stick(ImGuiKey negative, ImGuiKey positive, float axis)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    const float neg = vimgui::gamepad_direction(axis, false);
+    const float pos = vimgui::gamepad_direction(axis, true);
+    io.AddKeyAnalogEvent(negative, neg > 0.0f, neg);
+    io.AddKeyAnalogEvent(positive, pos > 0.0f, pos);
+}
+
+bool handle_gamepad(const AInputEvent* event)
+{
+    const int32_t source = AInputEvent_getSource(event);
+    const bool controller = (source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD ||
+                            (source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK;
+    if (!controller)
+        return false;
+    const int32_t type = AInputEvent_getType(event);
+    if (type != AINPUT_EVENT_TYPE_KEY && type != AINPUT_EVENT_TYPE_MOTION)
+        return false;
+    const int32_t device = AInputEvent_getDeviceId(event);
+    if (g_gamepad_device != -1 && device != g_gamepad_device)
+        return false; // Dear ImGui exposes one navigation controller.
+    if (type == AINPUT_EVENT_TYPE_KEY)
+    {
+        const int32_t code = AKeyEvent_getKeyCode(event);
+        const ImGuiKey key = gamepad_key(code);
+        int dpad = -1;
+        if (code == AKEYCODE_DPAD_LEFT) dpad = 0;
+        if (code == AKEYCODE_DPAD_RIGHT) dpad = 1;
+        if (code == AKEYCODE_DPAD_UP) dpad = 2;
+        if (code == AKEYCODE_DPAD_DOWN) dpad = 3;
+        if (key == ImGuiKey_None && dpad == -1)
+            return false;
+        const int32_t action = AKeyEvent_getAction(event);
+        if (action != AKEY_EVENT_ACTION_DOWN && action != AKEY_EVENT_ACTION_UP)
+            return true;
+        g_gamepad_device = device;
+        ImGuiIO& io = ImGui::GetIO();
+        io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
+        const bool down = action == AKEY_EVENT_ACTION_DOWN;
+        if (dpad >= 0)
+        {
+            g_gamepad_keys[dpad] = down;
+            emit_dpad();
+        }
+        else if (key == ImGuiKey_GamepadL2 || key == ImGuiKey_GamepadR2)
+        {
+            g_trigger_keys[key == ImGuiKey_GamepadL2 ? 0 : 1] = down;
+            emit_triggers();
+        }
+        else
+            io.AddKeyEvent(key, down);
+        return true;
+    }
+    const int32_t action = AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
+    if ((source & AINPUT_SOURCE_JOYSTICK) != AINPUT_SOURCE_JOYSTICK ||
+        action != AMOTION_EVENT_ACTION_MOVE)
+        return false;
+    g_gamepad_device = device;
+    ImGuiIO& io = ImGui::GetIO();
+    io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
+    emit_stick(ImGuiKey_GamepadLStickLeft, ImGuiKey_GamepadLStickRight,
+               AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, 0));
+    emit_stick(ImGuiKey_GamepadLStickUp, ImGuiKey_GamepadLStickDown,
+               AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Y, 0));
+    emit_stick(ImGuiKey_GamepadRStickLeft, ImGuiKey_GamepadRStickRight,
+               AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Z, 0));
+    emit_stick(ImGuiKey_GamepadRStickUp, ImGuiKey_GamepadRStickDown,
+               AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RZ, 0));
+    g_trigger_axes[0] = vimgui::gamepad_trigger(std::max(
+        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_LTRIGGER, 0),
+        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_BRAKE, 0)));
+    g_trigger_axes[1] = vimgui::gamepad_trigger(std::max(
+        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RTRIGGER, 0),
+        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_GAS, 0)));
+    emit_triggers();
+    g_hat_x = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0);
+    g_hat_y = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0);
+    emit_dpad();
+    return true;
+}
 
 std::u16string jstring_to_utf16(JNIEnv* env, jstring value)
 {
@@ -112,11 +258,18 @@ bool handle_touch(const AInputEvent* event)
 extern "C" bool vimgui_android_init(void* native_window)
 {
     g_touches.reset();
+    g_gamepad_device = -1;
+    {
+        std::lock_guard<std::mutex> lock(g_gamepad_mutex);
+        g_disconnected_gamepads.clear();
+    }
     return native_window != nullptr && ImGui_ImplAndroid_Init(static_cast<ANativeWindow*>(native_window));
 }
 
 extern "C" int32_t vimgui_android_handle_input_event(const void* input_event)
 {
+    if (handle_gamepad(static_cast<const AInputEvent*>(input_event)))
+        return 1;
     if (handle_touch(static_cast<const AInputEvent*>(input_event)))
         return 1;
     return ImGui_ImplAndroid_HandleInputEvent(static_cast<const AInputEvent*>(input_event));
@@ -124,6 +277,13 @@ extern "C" int32_t vimgui_android_handle_input_event(const void* input_event)
 
 extern "C" void vimgui_android_new_frame(void)
 {
+    std::vector<int32_t> disconnected;
+    {
+        std::lock_guard<std::mutex> lock(g_gamepad_mutex);
+        disconnected.swap(g_disconnected_gamepads);
+    }
+    if (std::find(disconnected.begin(), disconnected.end(), g_gamepad_device) != disconnected.end())
+        clear_gamepad();
     std::vector<QueuedInput> pending;
     {
         std::lock_guard<std::mutex> lock(g_input_mutex);
@@ -199,8 +359,24 @@ extern "C" bool vimgui_android_wants_text_input(void)
     return ImGui::GetIO().WantTextInput;
 }
 
+extern "C" void vimgui_android_clear_gamepad(void)
+{
+    clear_gamepad();
+}
+
+extern "C" void vimgui_android_gamepad_disconnected(int32_t device_id)
+{
+    std::lock_guard<std::mutex> lock(g_gamepad_mutex);
+    g_disconnected_gamepads.push_back(device_id);
+}
+
 extern "C" void vimgui_android_shutdown(void)
 {
+    clear_gamepad();
+    {
+        std::lock_guard<std::mutex> lock(g_gamepad_mutex);
+        g_disconnected_gamepads.clear();
+    }
     emit_touch(g_touches.reset());
     ImGui_ImplAndroid_Shutdown();
     std::lock_guard<std::mutex> lock(g_input_mutex);

@@ -73,7 +73,14 @@ the existing `imgui.impl_vulkan` renderer remains unchanged.
    upstream backend maps mouse, pen, keyboard, and wheel events. This wrapper
    tracks touchscreen pointer IDs and maps a stable primary finger to ImGui's
    single mouse pointer; it promotes another active finger if the primary
-   lifts. It does not expose independent simultaneous ImGui pointers.
+   lifts. It does not expose independent simultaneous ImGui pointers. The
+   wrapper also maps the first Android gamepad's face/shoulder/menu buttons,
+   D-pad, sticks, and triggers to ImGui navigation input. Set
+   `ImGuiConfigFlags_NavEnableGamepad` in the application if desired. Call
+   `impl_android.clear_gamepad()` when focus is lost, and report Android
+   `InputManager.InputDeviceListener.onInputDeviceRemoved(id)` through
+   `impl_android.gamepad_disconnected(id)` to release held inputs. The sample
+   host does both. Only one navigation controller is active at a time.
 4. Each drawable frame: call `impl_vulkan.new_frame()`,
    `impl_android.new_frame()`, `imgui.new_frame()`, build UI,
    `imgui.render()`, and `impl_vulkan.render_draw_data(imgui.get_draw_data(),
@@ -187,9 +194,9 @@ production host still needs its own UIKit keyboard/text view.
 
 The Android sample is an integration host, not a reusable application shell;
 the Vulkan/NativeActivity host remains C++ while the ImGui widgets are written
-in V. Android uses upstream's platform backend, which does not
-supply clipboard or gamepad integration; the Java bridge adds committed IME
-text and basic editing keys only. There is no on-screen iOS sample yet. The
+in V. Android uses upstream's platform backend plus this repository's
+touch, gamepad, and IME extensions; clipboard integration is still absent.
+There is no on-screen iOS sample yet. The
 iOS layer handles one primary touch and delegates keyboard visibility and
 committed text collection to the host UIKit app.
 

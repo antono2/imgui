@@ -273,6 +273,7 @@ bool initialize(android_app* app)
     if (g.imgui_context == nullptr)
         return false;
     ImGui::GetIO().IniFilename = nullptr;
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     ImGui::StyleColorsDark();
     const int density = AConfiguration_getDensity(app->config);
     const float scale = density > 0 && density < 1000 ? static_cast<float>(density) / 160.0f : 1.0f;
@@ -439,6 +440,8 @@ void on_command(android_app* app, int32_t command)
             break;
         case APP_CMD_LOST_FOCUS:
             g.focused = false;
+            if (g.platform_ready)
+                vimgui_android_clear_gamepad();
             break;
         default:
             break;
@@ -454,6 +457,12 @@ int32_t on_input(android_app*, AInputEvent* event)
     return g.platform_ready ? vimgui_android_handle_input_event(event) : 0;
 }
 } // namespace
+
+extern "C" JNIEXPORT void JNICALL
+Java_io_antono2_vimgui_demo_ImGuiActivity_nativeGamepadDisconnected(JNIEnv*, jclass, jint device_id)
+{
+    vimgui_android_gamepad_disconnected(device_id);
+}
 
 void android_main(android_app* app)
 {

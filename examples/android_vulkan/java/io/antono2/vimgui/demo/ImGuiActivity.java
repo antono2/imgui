@@ -1,13 +1,17 @@
 package io.antono2.vimgui.demo;
 
 import android.app.NativeActivity;
+import android.content.Context;
+import android.hardware.input.InputManager;
 import android.os.Bundle;
 import android.widget.FrameLayout;
 import io.antono2.imgui.ImGuiInputView;
 
 /** NativeActivity host that supplies the focusable IME view missing upstream. */
-public final class ImGuiActivity extends NativeActivity {
+public final class ImGuiActivity extends NativeActivity implements InputManager.InputDeviceListener {
     private ImGuiInputView inputView;
+    private InputManager inputManager;
+    private static native void nativeGamepadDisconnected(int deviceId);
 
     @Override
     protected void onCreate(Bundle state) {
@@ -16,6 +20,23 @@ public final class ImGuiActivity extends NativeActivity {
         inputView = new ImGuiInputView(this);
         inputView.setAlpha(0.0f);
         content.addView(inputView, new FrameLayout.LayoutParams(1, 1));
+        inputManager = (InputManager) getSystemService(Context.INPUT_SERVICE);
+        if (inputManager != null) {
+            inputManager.registerInputDeviceListener(this, null);
+        }
+    }
+
+    @Override public void onInputDeviceAdded(int deviceId) {}
+    @Override public void onInputDeviceChanged(int deviceId) {}
+    @Override public void onInputDeviceRemoved(int deviceId) {
+        nativeGamepadDisconnected(deviceId);
+    }
+
+    @Override protected void onDestroy() {
+        if (inputManager != null) {
+            inputManager.unregisterInputDeviceListener(this);
+        }
+        super.onDestroy();
     }
 
     /** Called by the native render thread; UI work stays on the main thread. */
