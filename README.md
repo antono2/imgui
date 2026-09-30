@@ -159,6 +159,9 @@ native library, verifies the variant and V syntax, and opens or updates a draft
 pull request. It never merges generated changes. A failed generator, build, or
 binding check stops the proposal for review. `--check-only` reports `changed=true` or
 `changed=false` without changing the checkout.
+Pull requests also regenerate both bindings with the pinned toolchain and
+compare them with the committed files, so translator and cleanup changes cannot
+silently alter the public API.
 
 For the workflow to open pull requests with `GITHUB_TOKEN`, a repository admin
 must enable **Settings → Actions → General → Workflow permissions → Allow GitHub
