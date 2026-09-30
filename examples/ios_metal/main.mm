@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 #include <cstdint>
+#include <cstring>
 
 static void write_status(NSString* status)
 {
@@ -64,10 +65,15 @@ static void write_status(NSString* status)
     float _workspaceValue;
     void* _keyboard;
     char _text[256];
+    BOOL _keyboardSmoke;
+    BOOL _keyboardInjected;
+    BOOL _keyboardVerified;
+    int _keyboardSmokeFrames;
 }
 
 - (void)loadView
 {
+    _keyboardSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--keyboard-smoke"];
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     VImGuiView* view = [[VImGuiView alloc] initWithFrame:[UIScreen mainScreen].bounds device:device];
     view.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
@@ -132,7 +138,11 @@ static void write_status(NSString* status)
             ++_tapCount;
         ImGui::SameLine();
         ImGui::Text("count = %d", _tapCount);
+        if (_keyboardSmoke && !_keyboardInjected)
+            ImGui::SetKeyboardFocusHere();
         ImGui::InputText("Text", _text, sizeof(_text));
+        if (_keyboardSmoke && _keyboardInjected && std::strcmp(_text, "Grüße") == 0)
+            _keyboardVerified = YES;
     }
     ImGui::End();
 
@@ -149,7 +159,17 @@ static void write_status(NSString* status)
     ImGui::End();
     ImGui::Render();
     if (_keyboard != nullptr)
-        vimgui_ios_keyboard_set_visible(_keyboard, vimgui_ios_wants_text_input());
+    {
+        const bool wants_keyboard = vimgui_ios_wants_text_input();
+        const bool responder_ready = vimgui_ios_keyboard_set_visible(_keyboard, wants_keyboard);
+        if (_keyboardSmoke && !_keyboardInjected && wants_keyboard && responder_ready)
+        {
+            id<UIKeyInput> responder = (__bridge id<UIKeyInput>)_keyboard;
+            [responder insertText:@"Grüße!"];
+            [responder deleteBackward];
+            _keyboardInjected = YES;
+        }
+    }
 
     id<MTLCommandBuffer> buffer = [_commandQueue commandBuffer];
     id<MTLRenderCommandEncoder> encoder = [buffer renderCommandEncoderWithDescriptor:pass];
@@ -158,14 +178,21 @@ static void write_status(NSString* status)
     vimgui_metal_render_draw_data(ImGui::GetDrawData(), (__bridge void*)buffer, (__bridge void*)encoder);
     [encoder endEncoding];
     [buffer presentDrawable:drawable];
-    if (!_reportedFrame)
+    if (_keyboardSmoke && !_keyboardVerified && ++_keyboardSmokeFrames > 300)
+    {
+        write_status(_keyboardInjected ? @"keyboard_input_mismatch" : @"keyboard_responder_unavailable");
+        _keyboardSmoke = NO;
+        _reportedFrame = YES;
+    }
+    if (!_reportedFrame && (!_keyboardSmoke || _keyboardVerified))
     {
         _reportedFrame = YES;
         const BOOL two_windows_visible = visible_windows == 2;
         [buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
             write_status(completed.status != MTLCommandBufferStatusCompleted
                              ? @"frame_failed"
-                             : (two_windows_visible ? @"multi_window_frame_completed"
+                             : (two_windows_visible ? (_keyboardSmoke ? @"keyboard_input_frame_completed"
+                                                                       : @"multi_window_frame_completed")
                                                     : @"multi_window_missing"));
         }];
     }

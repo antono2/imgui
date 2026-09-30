@@ -30,15 +30,15 @@ xcrun simctl install "$device_id" "$app_bundle"
 container="$(xcrun simctl get_app_container "$device_id" io.antono2.vimgui.ios-demo data)"
 status_file="$container/tmp/vimgui-metal-status.txt"
 rm -f "$status_file"
-xcrun simctl launch "$device_id" io.antono2.vimgui.ios-demo
+xcrun simctl launch "$device_id" io.antono2.vimgui.ios-demo --keyboard-smoke
 for _ in $(seq 1 30); do
   if [[ -f "$status_file" ]]; then
     status="$(<"$status_file")"
     echo "iOS Simulator Metal status: $status"
-    if [[ "$status" == multi_window_frame_completed ]]; then exit 0; fi
+    if [[ "$status" == keyboard_input_frame_completed ]]; then exit 0; fi
     exit 1
   fi
   sleep 1
 done
-echo '::warning::iOS Simulator launched but no Metal frame status was reported.'
+echo '::warning::iOS Simulator launched but no keyboard/Metal frame status was reported.'
 exit 1
