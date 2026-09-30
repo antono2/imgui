@@ -241,10 +241,12 @@ fn transform_identifiers(input string, kind string) string {
 		}
 		mut word := s[start..i].clone()
 		qualified_c := out.len >= 2 && out[out.len - 2] == `C` && out[out.len - 1] == `.`
-		if kind == 'imgui' && word.starts_with('ImGui') && word.len > 5 && starts_upper(word[5..]) {
+		if !qualified_c && kind == 'imgui' && word.starts_with('ImGui') && word.len > 5
+			&& starts_upper(word[5..]) {
 			word = word[5..]
 		}
-		if kind == 'implot' && word.starts_with('ImPlot') && word.len > 6 && starts_upper(word[6..]) {
+		if !qualified_c && kind == 'implot' && word.starts_with('ImPlot') && word.len > 6
+			&& starts_upper(word[6..]) {
 			word = word[6..]
 		}
 		if !qualified_c {
@@ -1440,6 +1442,125 @@ fn replace_struct_block(input string, c_name string, replacement string) string 
 	return input[..start] + replacement + '\n' + input[cursor..]
 }
 
+// c2v can attach a C struct's fields to the following declaration. Recover
+// simple value layouts from the generated C header, rather than maintaining
+// a list of affected upstream type names and field offsets by hand.
+fn header_field_type(kind string, raw string) ?string {
+	mut typ := raw.trim_space().trim_string_left('const ').trim_space()
+	mut pointers := 0
+	for typ.ends_with('*') {
+		pointers++
+		typ = typ[..typ.len - 1].trim_space()
+	}
+	backing := match typ {
+		'float' { 'f32' }
+		'double' { 'f64' }
+		'int' { 'i32' }
+		'unsigned int', 'ImU32' { 'u32' }
+		'short', 'ImS16' { 'i16' }
+		'unsigned short', 'ImU16' { 'u16' }
+		'char', 'ImS8' { 'i8' }
+		'unsigned char', 'ImU8' { 'u8' }
+		'ImS32' { 'i32' }
+		'ImS64' { 'i64' }
+		'ImU64' { 'u64' }
+		'bool' { 'bool' }
+		else {
+			if !starts_upper(typ) || typ.contains_any('[](){}:') || typ.contains(' ') {
+				return none
+			}
+			clean_type_expr(kind, typ)
+		}
+	}
+	return '&'.repeat(pointers) + backing
+}
+
+fn header_scalar_aliases(kind string, header string) map[string]string {
+	mut aliases := map[string]string{}
+	for raw in header.split_into_lines() {
+		line := strip_line_comment(raw).trim_space()
+		if !line.starts_with('typedef ') || !line.ends_with(';') { continue }
+		parts := line[..line.len - 1].fields()
+		if parts.len < 3 { continue }
+		name := parts.last()
+		if !name.bytes().all(is_ident_byte) { continue }
+		backing := parts[1..parts.len - 1].join(' ')
+		if value := header_field_type(kind, backing) {
+			if value in ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'f32', 'f64'] {
+				aliases[clean_type_expr(kind, name)] = value
+			}
+		}
+	}
+	return aliases
+}
+
+fn simple_header_struct(kind string, name string, body []string, scalar_aliases map[string]string) ?string {
+	mut fields := []string{}
+	for raw in body {
+		line := strip_line_comment(raw).trim_space()
+		if line == '' { continue }
+		if !line.ends_with(';') || line.contains_any('[](){}:') { return none }
+		parts := line[..line.len - 1].split(',')
+		first := parts[0].trim_space()
+		space := first.last_index(' ') or { return none }
+		typ := first[..space].trim_space()
+		base_type := header_field_type(kind, typ) or { return none }
+		for i, part in parts {
+			field := if i == 0 { first[space + 1..].trim_space() } else { part.trim_space() }
+			if field == '' || !field.bytes().all(is_ident_byte) { return none }
+			if i > 0 && typ.ends_with('*') { return none }
+			v_name := if field in ['x', 'y', 'z', 'w'] { field } else { field[..1].to_upper() + field[1..] }
+			mut v_type := base_type
+			// V3 interprets `Marker Marker` as an embedded field; use the
+			// typedef's scalar backing when the spelling would be ambiguous.
+			if v_name == v_type {
+				v_type = scalar_aliases[v_type]
+				if v_type == '' { return none }
+			}
+			fields << '\t${v_name} ${v_type}'
+		}
+	}
+	if fields.len == 0 { return none }
+	return 'pub struct C.${name} {\npub mut:\n${fields.join('\n')}\n}'
+}
+
+fn repair_simple_header_structs(kind string, header string, input string) string {
+	mut output := input
+	lines := header.split_into_lines()
+	scalar_aliases := header_scalar_aliases(kind, header)
+	mut seen := map[string]bool{}
+	mut i := 0
+	for i + 2 < lines.len {
+		declaration := lines[i].trim_space()
+		if !declaration.starts_with('struct ') || lines[i + 1].trim_space() != '{' {
+			i++
+			continue
+		}
+		name := declaration[7..].trim_space()
+		if name == '' || seen[name] || !output.contains('pub struct C.${name} {') {
+			i++
+			continue
+		}
+		seen[name] = true
+		mut body := []string{}
+		i += 2
+		for i < lines.len && lines[i].trim_space() != '};' {
+			body << lines[i]
+			i++
+		}
+		if i >= lines.len { break }
+		if !name.ends_with('_c') && !output.contains('pub struct C.${name} {}') {
+			i++
+			continue
+		}
+		if replacement := simple_header_struct(kind, name, body, scalar_aliases) {
+			output = replace_struct_block(output, name, replacement)
+		}
+		i++
+	}
+	return output
+}
+
 fn final_sanitize(kind string, input string) string {
 	mut s := input.replace('unsigned __int64 ImU64', 'u64').replace('unsigned long long ImU64', 'u64').replace('unsigned long ImU64', 'u64')
 	mut public_c := map[string]bool{}
@@ -1478,10 +1599,6 @@ fn final_sanitize(kind string, input string) string {
 			}
 		}
 	}
-	s = replace_struct_block(s, 'ImVec2_c', 'pub struct C.ImVec2_c {\npub mut:\n\tx f32\n\ty f32\n}')
-	s = replace_struct_block(s, 'ImVec2i_c', 'pub struct C.ImVec2i_c {\npub mut:\n\tx int\n\ty int\n}')
-	s = replace_struct_block(s, 'ImVec2ih', 'pub struct C.ImVec2ih {\npub mut:\n\tx i16\n\ty i16\n}')
-	s = replace_struct_block(s, 'ImVec4_c', 'pub struct C.ImVec4_c {\npub mut:\n\tx f32\n\ty f32\n\tz f32\n\tw f32\n}')
 	if kind == 'imgui' {
 		s = remove_self_type_prefix(s, 'imgui.')
 	}
@@ -1636,16 +1753,6 @@ fn name_c_fixed_array_fields(input string) string {
 	if declarations.len > 0 {
 		output = insert_after_version(output, declarations.join('\n') + '\n\n')
 	}
-	// ImVec1 is a by-value C struct, so its binding needs its actual field.
-	output = replace_struct_block(output, 'ImVec1', 'pub struct C.ImVec1 {\npub mut:\n\tx f32\n}')
-	// These ImPlot structs are stored by value. Keep their declarations in
-	// sync with the corresponding definitions in cimplot.h.
-	output = replace_struct_block(output, 'ImPlotDateTimeSpec_c', 'pub struct C.ImPlotDateTimeSpec_c {\npub mut:\n\tDate DateFmt\n\tTime TimeFmt\n\tUseISO8601 bool\n\tUse24HourClock bool\n}')
-	output = replace_struct_block(output, 'ImPlotSpec_c', 'pub struct C.ImPlotSpec_c {\npub mut:\n\tLineColor ImVec4_c\n\tLineColors &u32\n\tLineWeight f32\n\tFillColor ImVec4_c\n\tFillColors &u32\n\tFillAlpha f32\n\tMarker i32\n\tMarkerSize f32\n\tMarkerSizes &f32\n\tMarkerLineColor ImVec4_c\n\tMarkerLineColors &u32\n\tMarkerFillColor ImVec4_c\n\tMarkerFillColors &u32\n\tSize f32\n\tOffset int\n\tStride int\n\tFlags ItemFlags\n}')
-	output = output.replace('pub type DateTimeSpec = C.DateTimeSpec_c', 'pub type DateTimeSpec = DateTimeSpec_c')
-	output = output.replace('pub type Spec = C.Spec_c', 'pub type Spec = Spec_c')
-	output = output.replace('@[typedef]\npub struct C.DateTimeSpec_c {}\n\n', '')
-	output = output.replace('@[typedef]\npub struct C.Spec_c {}\n\n', '')
 	return output
 }
 
@@ -1672,7 +1779,7 @@ fn clean_one(kind string, input_path string, output_path string) ! {
 	lines := source.replace('\r\n', '\n').split_into_lines()
 	mut out := []string{}
 	mut seen_type := map[string]bool{}
-	mut seen_struct := map[string]bool{}
+	mut seen_struct_index := map[string]int{}
 	mut seen_enum := map[string]bool{}
 	mut index := 0
 	for index < lines.len {
@@ -1751,10 +1858,23 @@ fn clean_one(kind string, input_path string, output_path string) ! {
 				index++
 				continue
 			}
-			if clean !in ['Main', 'C'] && !clean.contains('.') && !seen_struct[clean] {
-				seen_struct[clean] = true
+			if clean !in ['Main', 'C'] && !clean.contains('.') {
 				block := emit_struct(kind, original, clean, body)
-				if block != '' { out << block }
+				if block != '' {
+					previous := seen_struct_index[clean]
+					if previous == 0 {
+						out << block
+						seen_struct_index[clean] = out.len
+					} else if block.contains('\npub mut:\n')
+						&& !out[previous - 1].contains('\npub mut:\n') {
+						// c2v may emit a forward declaration before the full definition.
+						// Keep the latter's layout instead of a zero-sized placeholder.
+						out[previous - 1] = block
+					} else if block.contains('\npub mut:\n') && out[previous - 1].contains('\npub mut:\n')
+						&& block != out[previous - 1] {
+						return error('conflicting definitions for ${original}')
+					}
+				}
 			}
 			index++
 			continue
@@ -1786,6 +1906,7 @@ fn clean_one(kind string, input_path string, output_path string) ! {
 	dynamic := dynamic_missing_decls(ctx, body, imported_structs, imported_aliases, imported_types)
 	mut final := postprocess(kind, header_text(ctx, version, number) + dynamic + body)
 	final = final_sanitize(kind, final)
+	final = repair_simple_header_structs(kind, header, final)
 	final = insert_after_version(final, header_alias_decls(ctx, final))
 	final = insert_after_version(final, missing_c_alias_target_decls(final, imported_structs))
 	final = final_sanitize(kind, final)
@@ -1803,14 +1924,19 @@ fn self_test() {
 	assert camel_to_snake('ImGuiWindowFlags') == 'im_gui_window_flags'
 	assert snake_to_camel('set_next_window_pos') == 'SetNextWindowPos'
 	assert clean_type_expr('imgui', '&ImGuiContext') == '&Context'
-	assert clean_type_expr('implot', 'C.ImPlotSpec_c') == 'C.Spec_c'
+	assert clean_type_expr('implot', 'C.ImPlotSpec_c') == 'C.ImPlotSpec_c'
 	assert clean_type_expr('implot', '&ImGuiContext') == '&imgui.Context'
 	assert name_c_fixed_array_fields('pub const version_num = 1\n\npub struct C.Sample {\npub mut:\n\tColors [3]f32\n}\n') == 'pub const version_num = 1\n\npub type BindingFixedArray1 = [3]f32\n\npub struct C.Sample {\npub mut:\n\tColors BindingFixedArray1\n}\n'
 	assert name_c_fixed_array_fields('pub struct C.Node {\npub mut:\n\tChildren [2]&Node\n}\n') == 'pub struct C.Node {\npub mut:\n\tChildren[2]&Node\n}\n'
 	assert name_c_fixed_array_fields('pub type ID = u32\npub struct C.Sample {\npub mut:\n\tID ID\n}\n') == 'pub type ID = u32\npub struct C.Sample {\npub mut:\n\tID u32\n}\n'
-	assert name_c_fixed_array_fields('pub struct C.ImVec1 {}\n').contains('x f32')
-	assert name_c_fixed_array_fields('pub struct C.ImPlotSpec_c {}\n').contains('Marker i32')
-	assert name_c_fixed_array_fields('pub type Spec = C.Spec_c\n') == 'pub type Spec = Spec_c\n'
+	assert name_c_fixed_array_fields('pub struct C.NewUpstreamType {}\n') == 'pub struct C.NewUpstreamType {}\n'
+	assert name_c_fixed_array_fields('pub type NewUpstreamType = C.NewUpstreamType_c\n') == 'pub type NewUpstreamType = C.NewUpstreamType_c\n'
+	header_fixture := 'typedef int ImPlotFutureFlag;\nstruct ImPlotFuture_c\n{\n    float x, y;\n    ImU32* Colors;\n    ImPlotFutureFlag Flag;\n};\n'
+	struct_fixture := repair_simple_header_structs('implot', header_fixture,
+		'pub struct C.ImPlotFuture_c {}\n')
+	assert struct_fixture.contains('pub struct C.ImPlotFuture_c {\npub mut:\n\tx f32\n\ty f32\n\tColors &u32\n\tFlag FutureFlag\n}')
+	assert repair_simple_header_structs('implot', 'struct Future_c\n{\n char Name[16];\n};',
+		'pub struct C.Future_c {}\n') == 'pub struct C.Future_c {}\n'
 	assert postprocess_identifiers('value int, callback C.int(x), args va_list, c C.va_list') == 'value i32, callback (x), args Va_list, c C.va_list'
 	known := {
 		'first': i64(1 << 4)
