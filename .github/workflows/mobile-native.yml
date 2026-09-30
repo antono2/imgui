@@ -156,6 +156,7 @@ jobs:
           test -f build/ci-android/vimgui_vulkan_offscreen_probe
           test -f build/ci-android/libvimgui_android_demo.so
           "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_init
+          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_set_clipboard_context
           "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_apply_text_edit
           "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep Java_io_antono2_imgui_ImGuiInputView_nativeCommitText
       - name: Cross-link a V Android app

@@ -43,6 +43,13 @@ fn draw_ui(zoom &f32, tap_count &int, text &char, text_capacity int, display_wid
 	imgui.text_unformatted(c'Committed:', unsafe { nil })
 	imgui.same_line(0, -1)
 	imgui.text_unformatted(text, unsafe { nil })
+	if imgui.button(c'Copy text', imgui.ImVec2_c{}) {
+		imgui.set_clipboard_text(text)
+	}
+	imgui.same_line(0, -1)
+	if imgui.button(c'Read clipboard', imgui.ImVec2_c{}) {
+		imgui.text_unformatted(imgui.get_clipboard_text(), unsafe { nil })
+	}
 	selection_label := 'UTF-8 cursor ${selection.cursor}, selection ${selection.start}..${selection.end}'
 	imgui.text_unformatted(selection_label.str, unsafe { nil })
 	unsafe { selection_label.free() }

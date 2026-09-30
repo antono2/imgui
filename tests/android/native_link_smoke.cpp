@@ -15,6 +15,9 @@ extern "C" int vimgui_android_link_smoke(void* native_window, const void* event)
     int result = 0;
     if (native_window != nullptr && vimgui_android_init(native_window))
     {
+        // Keep the optional clipboard entry point in the cross-linked ELF.
+        if (result == -1)
+            vimgui_android_set_clipboard_context(nullptr, nullptr);
         result = event != nullptr ? vimgui_android_handle_input_event(event) : 0;
         vimgui_android_shutdown();
     }

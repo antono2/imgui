@@ -284,6 +284,8 @@ bool initialize(android_app* app)
     if (!vimgui_android_init(g.native_window))
         return false;
     g.platform_ready = true;
+    if (!vimgui_android_set_clipboard_context(app->activity->vm, app->activity->clazz))
+        __android_log_print(ANDROID_LOG_WARN, kLogTag, "Android clipboard unavailable");
     ImGui_ImplVulkan_InitInfo imgui_info = {};
     imgui_info.ApiVersion = VK_API_VERSION_1_0;
     imgui_info.Instance = g.instance;

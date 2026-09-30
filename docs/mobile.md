@@ -69,6 +69,14 @@ the existing `imgui.impl_vulkan` renderer remains unchanged.
    Vulkan and call `impl_vulkan.load_functions(...)` before any other Vulkan
    backend function, then `impl_vulkan.vkinit(...)` with the application's
    Vulkan objects and render-pass configuration.
+   To enable copy/paste, also call
+   `impl_android.set_clipboard_context(java_vm, android_context)` after `init`.
+   Pass `ANativeActivity.vm` and `ANativeActivity.clazz` for a NativeActivity,
+   or the equivalent `JavaVM*` and Activity/Context `jobject` for another host.
+   Call it on the ImGui thread while the context object is valid. The bridge
+   uses Android's `ClipboardManager`, converts UTF-16 to ordinary UTF-8, and
+   releases its JNI global references in `shutdown()`. Without this optional
+   call, the upstream Android backend's clipboard remains unavailable.
 3. Send each `AInputEvent` to `impl_android.handle_input_event(event)`. The
    upstream backend maps mouse, pen, keyboard, and wheel events. This wrapper
    tracks touchscreen pointer IDs and maps a stable primary finger to ImGui's
@@ -126,7 +134,8 @@ FreeType profile, and has a UI zoom slider that scales fonts and widget sizes
 together. Its Text field uses the selection-aware callback and displays active
 ImGui cursor and selection offsets in UTF-8 bytes. The Android
 `InputConnection` synchronizes text and selection; composing text appears
-without underline or marked-range styling.
+without underline or marked-range styling. The sample's Copy text and Read
+clipboard buttons exercise the optional Android clipboard bridge.
 
 With the Android SDK (including build-tools and a platform), NDK, JDK, and a
 connected Vulkan-capable tablet:
@@ -205,7 +214,7 @@ production host still needs its own UIKit keyboard/text view.
 The Android sample is an integration host, not a reusable application shell;
 the Vulkan/NativeActivity host remains C++ while the ImGui widgets are written
 in V. Android uses upstream's platform backend plus this repository's
-touch, gamepad, and IME extensions; clipboard integration is still absent.
+touch, gamepad, IME, and optional clipboard extensions.
 The on-screen iOS sample demonstrates rendering and touch input, but not a
 production text-input view. The iOS layer handles one primary touch and
 delegates keyboard visibility and committed text collection to the host UIKit app.

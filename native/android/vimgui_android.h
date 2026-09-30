@@ -9,6 +9,10 @@ extern "C" {
 
 // Opaque NDK pointers keep the V-facing header usable by a C compiler.
 bool vimgui_android_init(void* native_window);
+// Install Android's ClipboardManager after init. The context is a JNI jobject
+// (for example ANativeActivity.clazz); the VM is a JavaVM*. Call on the ImGui
+// thread while both objects are alive. shutdown releases the JNI references.
+bool vimgui_android_set_clipboard_context(void* java_vm, void* context);
 int32_t vimgui_android_handle_input_event(const void* input_event);
 void vimgui_android_new_frame(void);
 void vimgui_android_text_utf8(const char* committed_text);
