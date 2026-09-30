@@ -377,9 +377,6 @@ fn normalize_alias_rhs(kind string, name string, raw string) string {
 		rhs = match name {
 			'ImBitArrayPtr' { '&u32' }
 			'ImStbTexteditState' { 'C.STB_TexteditState' }
-			'ImBitArrayForNamedKeys' {
-				'C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN'
-			}
 			'ImWchar' { 'u32' }
 			else {
 				match rhs {
@@ -391,6 +388,11 @@ fn normalize_alias_rhs(kind string, name string, raw string) string {
 		}
 	}
 	return rhs
+}
+
+fn preserve_header_c_struct_rhs(header string, raw_rhs string, normalized string) string {
+	c_rhs := raw_rhs.trim_space().trim_string_left('C.')
+	return if header.contains('typedef struct ${c_rhs} ') { 'C.${c_rhs}' } else { normalized }
 }
 
 fn camel_to_snake(value string) string {
@@ -1889,6 +1891,10 @@ fn clean_one(kind string, input_path string, output_path string) ! {
 				}
 			}
 			rhs = normalize_alias_rhs(kind, name, rhs)
+			// Preserve the actual C symbol for a struct typedef. c2v may
+			// normalize an embedded ImGui/ImPlot prefix in its V spelling, but
+			// that normalized spelling is not a C type name.
+			rhs = preserve_header_c_struct_rhs(ctx.header, raw_rhs, rhs)
 			if name != '' && !name.contains('.') && name != 'Main' && name != rhs && !seen_type[name] {
 				seen_type[name] = true
 				out << 'pub type ${name} = ${rhs}'
@@ -1925,6 +1931,8 @@ fn self_test() {
 	assert snake_to_camel('set_next_window_pos') == 'SetNextWindowPos'
 	assert clean_type_expr('imgui', '&ImGuiContext') == '&Context'
 	assert clean_type_expr('implot', 'C.ImPlotSpec_c') == 'C.ImPlotSpec_c'
+	assert preserve_header_c_struct_rhs('typedef struct ImFuture_c ImFuture_c;',
+		'ImFuture_c', 'C.Future_c') == 'C.ImFuture_c'
 	assert clean_type_expr('implot', '&ImGuiContext') == '&imgui.Context'
 	assert name_c_fixed_array_fields('pub const version_num = 1\n\npub struct C.Sample {\npub mut:\n\tColors [3]f32\n}\n') == 'pub const version_num = 1\n\npub type BindingFixedArray1 = [3]f32\n\npub struct C.Sample {\npub mut:\n\tColors BindingFixedArray1\n}\n'
 	assert name_c_fixed_array_fields('pub struct C.Node {\npub mut:\n\tChildren [2]&Node\n}\n') == 'pub struct C.Node {\npub mut:\n\tChildren[2]&Node\n}\n'
