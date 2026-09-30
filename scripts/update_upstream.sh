@@ -67,7 +67,18 @@ else
 	if $check_only; then exit 0; fi
 fi
 
-git -C cimgui fetch origin "$cimgui_branch"
+fetch_upstream() {
+	local module=$1 branch=$2
+	# actions/checkout fetches submodules with --depth=1. A shallow graph
+	# cannot prove that the upstream revision descends from our pinned one.
+	if [[ $(git -C "$module" rev-parse --is-shallow-repository) == true ]]; then
+		git -C "$module" fetch --unshallow origin "$branch"
+	else
+		git -C "$module" fetch origin "$branch"
+	fi
+}
+
+fetch_upstream cimgui "$cimgui_branch"
 [[ $(git -C cimgui rev-parse FETCH_HEAD) == "$cimgui_head" ]] || {
 	printf 'cimgui origin/%s moved during update; retry later.\n' "$cimgui_branch" >&2
 	exit 1
@@ -79,7 +90,7 @@ git -C cimgui merge-base --is-ancestor HEAD FETCH_HEAD || {
 git -C cimgui switch --detach FETCH_HEAD
 git -C cimgui submodule update --init --recursive
 
-git -C cimplot fetch origin master
+fetch_upstream cimplot master
 [[ $(git -C cimplot rev-parse FETCH_HEAD) == "$cimplot_head" ]] || {
 	printf 'cimplot origin/master moved during update; retry later.\n' >&2
 	exit 1
