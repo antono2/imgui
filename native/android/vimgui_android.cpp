@@ -40,6 +40,7 @@ int g_text_generation = 1;
 int g_text_revision = 1;
 vimgui::TouchTracker g_touches;
 int g_gamepad_device = -1;
+bool g_gamepad_active = false;
 std::mutex g_gamepad_mutex;
 std::vector<int32_t> g_disconnected_gamepads;
 bool g_gamepad_keys[4] = {};
@@ -68,13 +69,14 @@ void emit_triggers()
 
 void clear_gamepad()
 {
-    if (g_gamepad_device == -1)
+    if (!g_gamepad_active)
         return;
     ImGuiIO& io = ImGui::GetIO();
     for (int key = ImGuiKey_GamepadStart; key <= ImGuiKey_GamepadRStickDown; ++key)
         io.AddKeyAnalogEvent(static_cast<ImGuiKey>(key), false, 0.0f);
     io.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
     g_gamepad_device = -1;
+    g_gamepad_active = false;
     std::fill_n(g_gamepad_keys, 4, false);
     std::fill_n(g_trigger_keys, 2, false);
     std::fill_n(g_trigger_axes, 2, 0.0f);
@@ -122,7 +124,7 @@ bool handle_gamepad(const AInputEvent* event)
     if (type != AINPUT_EVENT_TYPE_KEY && type != AINPUT_EVENT_TYPE_MOTION)
         return false;
     const int32_t device = AInputEvent_getDeviceId(event);
-    if (g_gamepad_device != -1 && device != g_gamepad_device)
+    if (g_gamepad_active && device != g_gamepad_device)
         return false; // Dear ImGui exposes one navigation controller.
     if (type == AINPUT_EVENT_TYPE_KEY)
     {
@@ -139,6 +141,7 @@ bool handle_gamepad(const AInputEvent* event)
         if (action != AKEY_EVENT_ACTION_DOWN && action != AKEY_EVENT_ACTION_UP)
             return true;
         g_gamepad_device = device;
+        g_gamepad_active = true;
         ImGuiIO& io = ImGui::GetIO();
         io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
         const bool down = action == AKEY_EVENT_ACTION_DOWN;
@@ -161,6 +164,7 @@ bool handle_gamepad(const AInputEvent* event)
         action != AMOTION_EVENT_ACTION_MOVE)
         return false;
     g_gamepad_device = device;
+    g_gamepad_active = true;
     ImGuiIO& io = ImGui::GetIO();
     io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
     emit_stick(ImGuiKey_GamepadLStickLeft, ImGuiKey_GamepadLStickRight,
@@ -259,6 +263,7 @@ extern "C" bool vimgui_android_init(void* native_window)
 {
     g_touches.reset();
     g_gamepad_device = -1;
+    g_gamepad_active = false;
     {
         std::lock_guard<std::mutex> lock(g_gamepad_mutex);
         g_disconnected_gamepads.clear();
@@ -282,7 +287,8 @@ extern "C" void vimgui_android_new_frame(void)
         std::lock_guard<std::mutex> lock(g_gamepad_mutex);
         disconnected.swap(g_disconnected_gamepads);
     }
-    if (std::find(disconnected.begin(), disconnected.end(), g_gamepad_device) != disconnected.end())
+    if (g_gamepad_active &&
+        std::find(disconnected.begin(), disconnected.end(), g_gamepad_device) != disconnected.end())
         clear_gamepad();
     std::vector<QueuedInput> pending;
     {
