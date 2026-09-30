@@ -13,6 +13,31 @@ static std::string g_clipboard_text;
 static vimgui::TouchTracker g_touches;
 static bool g_gamepad_active = false;
 
+// UIKit owns keyboard presentation. Keep this responder deliberately small:
+// UIKeyInput supplies committed characters and deletion but not marked ranges.
+@interface VImGuiKeyboardView : UIView <UIKeyInput>
+@end
+
+@implementation VImGuiKeyboardView
+- (BOOL)canBecomeFirstResponder { return YES; }
+- (BOOL)hasText { return YES; } // ImGui owns the actual InputText buffer.
+- (void)insertText:(NSString*)text
+{
+    if ([text isEqualToString:@"\n"])
+    {
+        vimgui_ios_key(ImGuiKey_Enter, true);
+        vimgui_ios_key(ImGuiKey_Enter, false);
+    }
+    else if (text.length > 0)
+        vimgui_ios_text_utf8(text.UTF8String);
+}
+- (void)deleteBackward
+{
+    vimgui_ios_key(ImGuiKey_Backspace, true);
+    vimgui_ios_key(ImGuiKey_Backspace, false);
+}
+@end
+
 static void vimgui_ios_clear_gamepad()
 {
     if (!g_gamepad_active)
@@ -155,6 +180,39 @@ extern "C" void vimgui_ios_text_utf8(const char* committed_text)
 extern "C" bool vimgui_ios_wants_text_input(void)
 {
     return ImGui::GetIO().WantTextInput;
+}
+
+extern "C" void* vimgui_ios_keyboard_create(void* parent_view)
+{
+    if (parent_view == nullptr || ![NSThread isMainThread])
+        return nullptr;
+    UIView* parent = (__bridge UIView*)parent_view;
+    VImGuiKeyboardView* keyboard = [[VImGuiKeyboardView alloc] initWithFrame:CGRectMake(0, 0, 1, 1)];
+    keyboard.backgroundColor = UIColor.clearColor;
+    keyboard.accessibilityElementsHidden = YES;
+    [parent addSubview:keyboard];
+    return (__bridge_retained void*)keyboard;
+}
+
+extern "C" bool vimgui_ios_keyboard_set_visible(void* handle, bool visible)
+{
+    if (handle == nullptr || ![NSThread isMainThread])
+        return false;
+    VImGuiKeyboardView* keyboard = (__bridge VImGuiKeyboardView*)handle;
+    if (visible && !keyboard.isFirstResponder)
+        [keyboard becomeFirstResponder];
+    else if (!visible && keyboard.isFirstResponder)
+        [keyboard resignFirstResponder];
+    return keyboard.isFirstResponder == visible;
+}
+
+extern "C" void vimgui_ios_keyboard_destroy(void* handle)
+{
+    if (handle == nullptr || ![NSThread isMainThread])
+        return;
+    VImGuiKeyboardView* keyboard = CFBridgingRelease(handle);
+    [keyboard resignFirstResponder];
+    [keyboard removeFromSuperview];
 }
 
 extern "C" void vimgui_ios_shutdown(void)

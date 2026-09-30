@@ -62,6 +62,8 @@ static void write_status(NSString* status)
     BOOL _reportedFrame;
     int _tapCount;
     float _workspaceValue;
+    void* _keyboard;
+    char _text[256];
 }
 
 - (void)loadView
@@ -89,6 +91,8 @@ static void write_status(NSString* status)
     _ready = _commandQueue != nil && vimgui_ios_init() && vimgui_metal_init((__bridge void*)device);
     if (!_ready)
         write_status(@"backend_init_failed");
+    else
+        _keyboard = vimgui_ios_keyboard_create((__bridge void*)view);
 }
 
 - (void)mtkView:(MTKView*)view drawableSizeWillChange:(CGSize)size
@@ -128,6 +132,7 @@ static void write_status(NSString* status)
             ++_tapCount;
         ImGui::SameLine();
         ImGui::Text("count = %d", _tapCount);
+        ImGui::InputText("Text", _text, sizeof(_text));
     }
     ImGui::End();
 
@@ -143,6 +148,8 @@ static void write_status(NSString* status)
     }
     ImGui::End();
     ImGui::Render();
+    if (_keyboard != nullptr)
+        vimgui_ios_keyboard_set_visible(_keyboard, vimgui_ios_wants_text_input());
 
     id<MTLCommandBuffer> buffer = [_commandQueue commandBuffer];
     id<MTLRenderCommandEncoder> encoder = [buffer renderCommandEncoderWithDescriptor:pass];
@@ -167,6 +174,7 @@ static void write_status(NSString* status)
 
 - (void)dealloc
 {
+    vimgui_ios_keyboard_destroy(_keyboard);
     if (_ready)
     {
         vimgui_metal_shutdown();

@@ -285,6 +285,7 @@ jobs:
           xcrun nm -gU build/ci-apple/lib/libvimgui.dylib | grep _vimgui_metal_init
           if [ '${{ matrix.sdk }}' != macosx ]; then
             xcrun otool -L build/ci-apple/lib/libvimgui.dylib | grep GameController
+            xcrun nm -gU build/ci-apple/lib/libvimgui.dylib | grep _vimgui_ios_keyboard_create
             test -f build/ci-apple/vimgui_ios_demo.app/vimgui_ios_demo
             test -f build/ci-apple/vimgui_ios_demo.app/Frameworks/libvimgui.dylib
             xcrun lipo -info build/ci-apple/vimgui_ios_demo.app/vimgui_ios_demo | grep '${{ matrix.arch }}'
