@@ -100,6 +100,7 @@ jobs:
           set -euo pipefail
           scripts/update_upstream.sh "$VARIANT"
           v run scripts/check_upstream_variant.vsh
+          v run scripts/configure_variant.vsh --self-test
           v run cleanup_imgui_implot.vsh --self-test
           v -check-syntax imgui.v
           mkdir -p "$RUNNER_TEMP/vmodules/antono2"
