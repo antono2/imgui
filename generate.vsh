@@ -30,12 +30,14 @@ fn remove_file(path string) ! {
 }
 
 fn copy_matching(pattern string, destination string) ! {
+	os.mkdir_all(destination)!
 	files := os.glob(pattern) or { return error('could not expand ${pattern}: ${err}') }
 	if files.len == 0 {
 		return error('no files matched ${pattern}')
 	}
 	for source in files {
-		os.cp(source, os.join_path(destination, os.file_name(source)))!
+		target := os.join_path(destination, os.file_name(source))
+		os.cp(source, target) or { return error('copy ${source} -> ${target}: ${err}') }
 	}
 }
 
