@@ -179,7 +179,18 @@ upstream's Cocoa backend.
    ImGui's primary pointer, with another active touch promoted when it ends.
    Forward hardware keys through `impl_ios.key(...)`
    and committed UTF-8 text through `impl_ios.text_utf8(...)`. Use
-   `impl_ios.wants_text_input()` to show or hide an app-owned UIKit text view.
+   `impl_ios.wants_text_input()` to show or hide a UIKit text responder. The
+   optional `impl_ios.keyboard_create(parent_view)` attaches a small `UIKeyInput`
+   responder to an app-owned `UIView`; call
+   `impl_ios.keyboard_set_visible(keyboard, impl_ios.wants_text_input())` after
+   each rendered frame and `impl_ios.keyboard_destroy(keyboard)` before the
+   parent view is destroyed. The caller owns the opaque handle and must make
+   all three calls on the UIKit thread. It feeds committed text and Backspace
+   into ImGui without requiring V to bind UIKit types directly. `UIKeyInput`
+   supports only simple text entry: rich marked-text composition, selection
+   ranges, candidate positioning, and full language coverage require a future
+   `UITextInput`-based integration. Hosts needing those features should supply
+   their own UIKit text view and feed committed text through `text_utf8`.
    Clipboard reads and writes use `UIPasteboard` and should occur on the main
    thread. Inline marked-text composition and a packaged UITextInput view are
    not part of this first pass. `impl_ios.new_frame` also polls the first
@@ -208,16 +219,18 @@ architectures and iPhoneOS in CI; the matching GitHub-hosted simulator job also
 attempts to launch it and complete one Metal command buffer with both windows
 visible. That runtime step is
 advisory because a hosted runner may lack a usable simulator Metal device.
-The app deliberately does not claim complete iOS text-input handling; a
-production host still needs its own UIKit keyboard/text view.
+The app includes an `InputText` field backed by the optional `UIKeyInput`
+responder. It demonstrates keyboard visibility and simple committed text, but
+does not claim complete iOS IME handling; a host needing marked-text and
+selection support still needs a `UITextInput` integration.
 
 The Android sample is an integration host, not a reusable application shell;
 the Vulkan/NativeActivity host remains C++ while the ImGui widgets are written
 in V. Android uses upstream's platform backend plus this repository's
 touch, gamepad, IME, and optional clipboard extensions.
-The on-screen iOS sample demonstrates rendering and touch input, but not a
-production text-input view. The iOS layer handles one primary touch and
-delegates keyboard visibility and committed text collection to the host UIKit app.
+The on-screen iOS sample demonstrates rendering, touch, and basic keyboard
+input. The iOS layer handles one primary touch; complete marked-text and
+selection support remains the host app's responsibility.
 
 ## Validation boundaries
 

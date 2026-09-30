@@ -21,6 +21,13 @@ extern "C" int vimgui_apple_link_smoke(void* host_view, void* device,
     bool platform_ready = vimgui_ios_init();
     if (platform_ready)
         vimgui_ios_new_frame(100.0f, 100.0f, 2.0f, 1.0f / 60.0f);
+    // Keep the optional UIKit keyboard entry points in the linked test.
+    if (host_view != nullptr && platform_ready)
+    {
+        void* keyboard = vimgui_ios_keyboard_create(host_view);
+        vimgui_ios_keyboard_set_visible(keyboard, false);
+        vimgui_ios_keyboard_destroy(keyboard);
+    }
 #else
     bool platform_ready = host_view != nullptr && vimgui_osx_init(host_view);
     if (platform_ready)
