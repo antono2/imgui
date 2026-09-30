@@ -94,6 +94,9 @@ the existing `imgui.impl_vulkan` renderer remains unchanged.
    own `InputConnection` may instead call `impl_android.text_utf8(...)` on the
    render thread. Preedit is displayed as plain text; inline underlining,
    candidate geometry, and rich marked-text ranges are not implemented.
+   The OS can hide the keyboard with Back while `WantTextInput` remains true;
+   re-request it when the user taps the still-active field, as the sample host
+   does, rather than relying only on `WantTextInput` transitions.
 6. Wait for in-flight Vulkan work, then shut down the Vulkan renderer, call
    `impl_android.shutdown()`, and destroy the ImGui context. Reinitialize the
    Android backend if the native window is replaced.

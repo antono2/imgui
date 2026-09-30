@@ -40,6 +40,7 @@ struct DemoState {
     bool focused = false;
     bool resize_pending = false;
     bool keyboard_visible = false;
+    bool keyboard_request_on_touch = false;
     float density_scale = 1.0f;
     float zoom = 1.0f;
     int tap_count = 0;
@@ -117,6 +118,7 @@ void shutdown()
     if (g.keyboard_visible)
         set_keyboard_visible(false);
     g.keyboard_visible = false;
+    g.keyboard_request_on_touch = false;
     if (g.device != VK_NULL_HANDLE)
         vkDeviceWaitIdle(g.device);
     if (g.renderer_ready)
@@ -332,7 +334,9 @@ bool draw_frame()
     if (zoom_changed)
         vimgui_mobile_set_ui_scale(g.density_scale * g.zoom);
     const bool wants_keyboard = vimgui_android_wants_text_input();
-    if (wants_keyboard != g.keyboard_visible)
+    const bool retry_keyboard = wants_keyboard && g.keyboard_request_on_touch;
+    g.keyboard_request_on_touch = false;
+    if (wants_keyboard != g.keyboard_visible || retry_keyboard)
     {
         set_keyboard_visible(wants_keyboard);
         g.keyboard_visible = wants_keyboard;
@@ -443,6 +447,10 @@ void on_command(android_app* app, int32_t command)
 
 int32_t on_input(android_app*, AInputEvent* event)
 {
+    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION &&
+        (AInputEvent_getSource(event) & AINPUT_SOURCE_TOUCHSCREEN) == AINPUT_SOURCE_TOUCHSCREEN &&
+        (AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK) == AMOTION_EVENT_ACTION_DOWN)
+        g.keyboard_request_on_touch = true;
     return g.platform_ready ? vimgui_android_handle_input_event(event) : 0;
 }
 } // namespace
