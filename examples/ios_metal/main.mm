@@ -110,7 +110,6 @@ static int text_callback(ImGuiInputTextCallbackData* data)
     ImGui::GetIO().IniFilename = nullptr;
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     // ImGui windows share this one MTKView; UIKit scenes/viewports are not used.
-    ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
     ImGui::StyleColorsDark();
     _ready = _commandQueue != nil && vimgui_ios_init() && vimgui_metal_init((__bridge void*)device);
     if (!_ready)
