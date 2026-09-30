@@ -40,7 +40,7 @@ Install the two V dependencies and then use the same build and demo commands:
 
 ```sh
 v install antono2.vulkan@v3.2.0
-v install antono2.glfw
+v install antono2.glfw@v2.0.0
 v run build_vimgui.vsh --linkage shared --glfw system
 ./scripts/run_demo.sh
 ```

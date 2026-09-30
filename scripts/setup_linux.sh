@@ -52,7 +52,7 @@ if command -v v >/dev/null 2>&1; then
 	printf '[ok]      v: %s\n' "$(v version 2>/dev/null || true)"
 	if [[ $mode == install ]]; then
 		v install antono2.vulkan@v3.2.0
-		v install antono2.glfw
+		v install antono2.glfw@v2.0.0
 	fi
 else
 	echo '[missing] v (install from https://github.com/vlang/v)'
