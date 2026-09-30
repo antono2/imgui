@@ -139,7 +139,8 @@ v run generate.vsh
 by the pinned cimgui/cimplot revisions, then builds `libvimgui`. It therefore
 does not require Perl or LuaJIT for a normal upstream refresh. Pass
 `--regenerate-c` only when intentionally rerunning the upstream Lua generators;
-that advanced mode requires LuaJIT.
+that advanced mode requires LuaJIT. Set `C2V_BIN` to an already-built C2V
+executable to bypass `v translate`'s automatic translator installation.
 
 Maintainers can update either line reproducibly with:
 
@@ -151,7 +152,7 @@ Maintainers can update either line reproducibly with:
 
 The [upstream update workflow](.github/workflows/update-upstream.yml) checks
 both lines weekly and can also be started manually. When either cimgui or
-cimplot moves, it regenerates that line with a pinned V compiler, builds the
+cimplot moves, it regenerates that line with pinned V and C2V revisions, builds the
 native library, verifies the variant and V syntax, and opens or updates a draft
 pull request. It never merges generated changes. A failed generator, build, or
 binding check stops the proposal for review. `--check-only` reports `changed=true` or

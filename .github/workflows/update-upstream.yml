@@ -85,6 +85,12 @@ jobs:
           repository: vlang/tccbin
           ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
           path: toolchain/v/thirdparty/tcc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.upstream.outputs.changed == 'true'
+        with:
+          repository: vlang/c2v
+          ref: 38d23660b3d383f19eed3bd506f50f4b8abc426f
+          path: toolchain/c2v
       - name: Install generator and native build dependencies
         if: steps.upstream.outputs.changed == 'true'
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libglfw3-dev libvulkan-dev
@@ -94,6 +100,14 @@ jobs:
         run: |
           make local=1
           echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Build pinned C2V translator
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          make -C toolchain/v v1
+          toolchain/v/v1_fallback -o toolchain/c2v/c2v toolchain/c2v
+          toolchain/c2v/c2v --version
+          echo "C2V_BIN=$GITHUB_WORKSPACE/toolchain/c2v/c2v" >> "$GITHUB_ENV"
       - name: Regenerate and validate bindings
         if: steps.upstream.outputs.changed == 'true'
         run: |
