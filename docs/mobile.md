@@ -217,7 +217,9 @@ Dear ImGui platform viewports. V applications use the same pattern: call
 through `impl_metal` once. The bundled app is built unsigned for both simulator
 architectures and iPhoneOS in CI; the matching GitHub-hosted simulator job also
 attempts to launch it and complete one Metal command buffer with both windows
-visible. That runtime step is
+visible. The simulator launch also focuses the sample `InputText`, injects
+committed UTF-8 through the UIKit responder, sends Backspace, and verifies the
+resulting ImGui buffer before reporting a completed Metal frame. That runtime step is
 advisory because a hosted runner may lack a usable simulator Metal device.
 The app includes an `InputText` field backed by the optional `UIKeyInput`
 responder. It demonstrates keyboard visibility and simple committed text, but
