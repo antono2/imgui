@@ -297,9 +297,16 @@ jobs:
           v_arch="$arch"
           if [ "$arch" = x86_64 ]; then v_arch=amd64; fi
           sdk_path="$(xcrun --sdk "$sdk" --show-sdk-path)"
+          target_flags=""
+          if [ "$sdk" = iphonesimulator ]; then
+            target_flags="-target $arch-apple-ios13.0-simulator"
+          elif [ "$sdk" = iphoneos ]; then
+            target_flags="-target $arch-apple-ios13.0"
+          fi
           v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" \
             -os "$os_name" -arch "$v_arch" -cc "$(xcrun --sdk "$sdk" --find clang)" \
-            -cflags "-isysroot $sdk_path" -ldflags "-isysroot $sdk_path" \
+            -cflags "$target_flags -isysroot $sdk_path" \
+            -ldflags "$target_flags -isysroot $sdk_path" -skip-running \
             -d "$profile_flag" -d use_freetype -gc none -no-memory-limit \
             -o "$RUNNER_TEMP/vimgui-v-apple-smoke" "$smoke"
           xcrun lipo -info "$RUNNER_TEMP/vimgui-v-apple-smoke" | grep "$arch"
