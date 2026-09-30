@@ -117,7 +117,8 @@ bool handle_gamepad(const AInputEvent* event)
 {
     const int32_t source = AInputEvent_getSource(event);
     const bool controller = (source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD ||
-                            (source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK;
+                            (source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK ||
+                            (source & AINPUT_SOURCE_DPAD) == AINPUT_SOURCE_DPAD;
     if (!controller)
         return false;
     const int32_t type = AInputEvent_getType(event);
