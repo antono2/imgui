@@ -206,9 +206,9 @@ The Android sample is an integration host, not a reusable application shell;
 the Vulkan/NativeActivity host remains C++ while the ImGui widgets are written
 in V. Android uses upstream's platform backend plus this repository's
 touch, gamepad, and IME extensions; clipboard integration is still absent.
-There is no on-screen iOS sample yet. The
-iOS layer handles one primary touch and delegates keyboard visibility and
-committed text collection to the host UIKit app.
+The on-screen iOS sample demonstrates rendering and touch input, but not a
+production text-input view. The iOS layer handles one primary touch and
+delegates keyboard visibility and committed text collection to the host UIKit app.
 
 ## Validation boundaries
 
