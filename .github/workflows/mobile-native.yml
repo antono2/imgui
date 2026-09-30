@@ -277,6 +277,32 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release
       - name: Compile and link Apple Metal smoke test
         run: cmake --build build/ci-apple --parallel 4
+      - name: Cross-link a V Apple consumer
+        run: |
+          sdk='${{ matrix.sdk }}'
+          arch='${{ matrix.arch }}'
+          profile="lib/apple-metal/$sdk/$arch/freetype"
+          mkdir -p "$profile"
+          cp build/ci-apple/lib/libvimgui.dylib "$profile/libvimgui.dylib"
+          if [ "$sdk" = macosx ]; then
+            os_name=macos
+            profile_flag=imgui_metal
+            smoke=tests/apple/macos_v_api_link_smoke.v
+          else
+            os_name=ios
+            profile_flag=imgui_ios_simulator
+            smoke=tests/apple/ios_v_api_link_smoke.v
+          fi
+          if [ "$sdk" = iphoneos ]; then profile_flag=imgui_ios_device; fi
+          v_arch="$arch"
+          if [ "$arch" = x86_64 ]; then v_arch=amd64; fi
+          sdk_path="$(xcrun --sdk "$sdk" --show-sdk-path)"
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" \
+            -os "$os_name" -arch "$v_arch" -cc "$(xcrun --sdk "$sdk" --find clang)" \
+            -cflags "-isysroot $sdk_path" -ldflags "-isysroot $sdk_path" \
+            -d "$profile_flag" -d use_freetype -gc none -no-memory-limit \
+            -o "$RUNNER_TEMP/vimgui-v-apple-smoke" "$smoke"
+          xcrun lipo -info "$RUNNER_TEMP/vimgui-v-apple-smoke" | grep "$arch"
       - name: Verify architecture and wrapper export
         run: |
           test -f build/ci-apple/lib/libvimgui.dylib
