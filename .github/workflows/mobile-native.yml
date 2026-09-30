@@ -293,3 +293,19 @@ jobs:
         continue-on-error: true
         timeout-minutes: 15
         run: scripts/run_ios_simulator_smoke.sh build/ci-apple/vimgui_ios_demo.app
+
+  mobile-required-checks:
+    name: mobile-required-checks
+    if: always()
+    needs: [linux-vulkan, android, apple]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify required mobile jobs
+        env:
+          LINUX_RESULT: ${{ needs.linux-vulkan.result }}
+          ANDROID_RESULT: ${{ needs.android.result }}
+          APPLE_RESULT: ${{ needs.apple.result }}
+        run: |
+          test "$LINUX_RESULT" = success
+          test "$ANDROID_RESULT" = success
+          test "$APPLE_RESULT" = success
