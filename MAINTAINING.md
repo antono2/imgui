@@ -46,15 +46,6 @@ automatically. Pull requests also regenerate both bindings with the pinned
 toolchain and compare them byte-for-byte with committed output; translator or
 cleanup changes must therefore be reviewed as API changes.
 
-The proposal job requests only `contents: write` and `pull-requests: write`.
-To let it create PRs with `GITHUB_TOKEN`, a repository admin must enable
-**Settings → Actions → General → Workflow permissions → Allow GitHub Actions to
-create and approve pull requests**. Alternatively, set the optional
-`UPSTREAM_UPDATE_TOKEN` repository secret to a GitHub App installation token
-or fine-grained PAT with those permissions. A separate token can avoid approval
-holds on PR checks triggered by `GITHUB_TOKEN` and is preferable for unattended
-proposals. Neither option authorizes automatic merging.
-
 ## CI and release artifacts
 
 [The mobile workflow](.github/workflows/mobile-native.yml) runs an offscreen
@@ -64,6 +55,12 @@ architectures, and arm64 iPhoneOS. Simulator runtime is advisory because hosted
 runners may lack a usable Metal device; passing it does not validate real Apple
 hardware or IMEs. Android emulator and physical-device tests are separate from
 the required matrix.
+
+[The mobile parity workflow](.github/workflows/mobile-parity.yml) compares
+hand-maintained mobile integration on `master` and `standard` weekly and on
+manual dispatch. Run `bash scripts/check_mobile_parity.sh` locally after
+coordinated changes to both branches. Generated APIs, upstream submodules, and
+variant-specific Vulkan bindings are deliberately excluded.
 
 [The demo workflow](.github/workflows/demo-release.yml) builds Ubuntu 24.04
 x86_64 and Windows 10/11 x64 artifacts. The source path remains
