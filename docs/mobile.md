@@ -173,15 +173,19 @@ upstream's Cocoa backend.
    `impl_ios.wants_text_input()` to show or hide an app-owned UIKit text view.
    Clipboard reads and writes use `UIPasteboard` and should occur on the main
    thread. Inline marked-text composition and a packaged UITextInput view are
-   not part of this first pass.
+   not part of this first pass. `impl_ios.new_frame` also polls the first
+   connected `GCExtendedGamepad`, maps its controls to ImGui navigation, and
+   clears held inputs on disconnect. Set `ImGuiConfigFlags_NavEnableGamepad`
+   to enable navigation; the sample app does this. Call `new_frame` on the
+   UIKit thread that owns the ImGui context.
 5. Ensure command buffers using ImGui resources are complete, call
    `impl_metal.shutdown()`, then the platform shutdown, then destroy the ImGui
    context.
 
 The Metal wrapper and upstream renderer are compiled as Objective-C++ with
 ARC. Android never compiles them; Apple never compiles the Android backend.
-The macOS build also compiles upstream `imgui_impl_osx.mm`. The iOS build does
-not pull in AppKit/Cocoa.
+The macOS build also compiles upstream `imgui_impl_osx.mm`. Both Apple builds
+link `GameController`; the iOS build does not pull in AppKit/Cocoa.
 
 `examples/ios_metal` is a minimal UIKit/`MTKView` host. It creates the Metal
 device, render pass, command buffer, and encoder, and uses the same iOS/Metal
