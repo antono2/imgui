@@ -1,0 +1,314 @@
+name: Mobile native backends
+
+on:
+  pull_request:
+    branches: [master, standard]
+  push:
+    branches: [master, standard]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: imgui-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-vulkan:
+    name: Ubuntu Vulkan / FreeType offscreen
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+      - name: Install Linux native dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libglfw3-dev libvulkan-dev libfreetype-dev mesa-vulkan-drivers
+      - name: Compile Linux backend and Vulkan GPU test
+        run: |
+          cmake -S . -B build/ci-linux -G Ninja \
+            -DVIMGUI_PROFILE=desktop \
+            -DIMGUI_FREETYPE=ON \
+            -DVIMGUI_FREETYPE_PROVIDER=system \
+            -DVIMGUI_BUILD_SMOKE_TESTS=ON \
+            -DSTATIC_BUILD=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/ci-linux --parallel 4
+      - name: Render an offscreen ImGui frame with Lavapipe
+        run: |
+          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          if [ ! -f "$VK_ICD_FILENAMES" ]; then export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json; fi
+          build/ci-linux/vimgui_vulkan_offscreen_probe
+          build/ci-linux/vimgui_touch_tracker_test
+          build/ci-linux/vimgui_text_offsets_test
+          build/ci-linux/vimgui_gamepad_values_test
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/v
+          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          path: toolchain/v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/vc
+          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          path: toolchain/v/vc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/tccbin
+          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          path: toolchain/v/thirdparty/tcc
+      - name: Build V compiler
+        working-directory: toolchain/v
+        run: |
+          make local=1
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Run V InputText selection callback smoke test
+        run: |
+          mkdir -p "$RUNNER_TEMP/vmodules/antono2" lib/freetype
+          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
+          cp build/ci-linux/lib/libvimgui.so lib/freetype/libvimgui.so
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -d use_freetype \
+            -o "$RUNNER_TEMP/vimgui-input-text-callback" tests/input_text_callback.v
+          "$RUNNER_TEMP/vimgui-input-text-callback"
+
+  android:
+    name: Android Vulkan / ${{ matrix.abi }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [armeabi-v7a, arm64-v8a, x86_64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/v
+          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          path: toolchain/v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/vc
+          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          path: toolchain/v/vc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/tccbin
+          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          path: toolchain/v/thirdparty/tcc
+      - name: Build V compiler
+        working-directory: toolchain/v
+        run: |
+          make local=1
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Check V mobile APIs
+        run: |
+          mkdir -p "$RUNNER_TEMP/vmodules/antono2"
+          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
+          case '${{ matrix.abi }}' in
+            armeabi-v7a) arch=arm ;;
+            arm64-v8a) arch=arm64 ;;
+            x86_64) arch=amd64 ;;
+          esac
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os android -arch "$arch" -d use_freetype -shared -check .
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os android -arch "$arch" -shared -check impl_android
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os android -arch "$arch" -shared -check impl_mobile
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Install pinned Android NDK and API
+        run: sdkmanager --install 'ndk;27.3.13750724' 'platforms;android-36'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Compile Android IME Java bridge
+        run: |
+          mkdir -p "$RUNNER_TEMP/vimgui-java"
+          javac -source 8 -target 8 \
+            -cp "$ANDROID_SDK_ROOT/platforms/android-36/android.jar" \
+            -d "$RUNNER_TEMP/vimgui-java" \
+            android/java/io/antono2/imgui/ImGuiInputView.java
+      - name: Configure Android native bindings
+        run: |
+          cmake -S . -B build/ci-android -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_SDK_ROOT/ndk/27.3.13750724/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI='${{ matrix.abi }}' \
+            -DANDROID_PLATFORM=android-24 \
+            -DANDROID_STL=c++_static \
+            -DVIMGUI_PROFILE=android-vulkan \
+            -DIMGUI_FREETYPE=ON \
+            -DVIMGUI_FREETYPE_PROVIDER=bundled \
+            -DVIMGUI_BUILD_SMOKE_TESTS=ON \
+            -DVIMGUI_BUILD_ANDROID_DEMO=ON \
+            -DSTATIC_BUILD=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+      - name: Compile and link Android ELF smoke test
+        run: cmake --build build/ci-android --parallel 4
+      - name: Check packaged native symbols
+        run: |
+          test -f build/ci-android/lib/libvimgui.so
+          test -f build/ci-android/libvimgui_android_link_smoke.so
+          test -f build/ci-android/vimgui_android_device_probe
+          test -f build/ci-android/vimgui_vulkan_offscreen_probe
+          test -f build/ci-android/libvimgui_android_demo.so
+          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_init
+          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_set_clipboard_context
+          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_apply_text_edit
+          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep Java_io_antono2_imgui_ImGuiInputView_nativeCommitText
+      - name: Cross-link a V Android app
+        if: matrix.abi == 'armeabi-v7a'
+        run: |
+          mkdir -p lib/android-vulkan/armeabi-v7a/freetype
+          cp build/ci-android/lib/libvimgui.so lib/android-vulkan/armeabi-v7a/freetype/libvimgui.so
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" \
+            -os android -arch arm \
+            -cc "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi24-clang" \
+            -d use_freetype -gc none -no-memory-limit \
+            -o "$RUNNER_TEMP/vimgui-v-android-smoke" \
+            tests/android/v_api_link_smoke.v
+          file "$RUNNER_TEMP/vimgui-v-android-smoke" | grep 'ELF 32-bit.*ARM'
+      - name: Cross-build V UI and package Android NativeActivity APK
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
+          export ANDROID_ABI='${{ matrix.abi }}'
+          export VIMGUI_ANDROID_BUILD_DIR="$GITHUB_WORKSPACE/build/ci-android"
+          scripts/run_android_demo.sh --build-only
+          test -f "build/ci-android/vimgui-demo-$ANDROID_ABI.apk"
+          unzip -l "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" | grep classes.dex
+          unzip -l "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" | grep "lib/$ANDROID_ABI/libvimgui_android_demo.so"
+          unzip -l "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" | grep "lib/$ANDROID_ABI/libvimgui_android_ui.so"
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D \
+            build/ci-android/libvimgui_android_ui.so | grep vimgui_android_demo_draw_ui
+
+  apple:
+    name: ${{ matrix.sdk }} / ${{ matrix.arch }} Metal
+    runs-on: macos-15
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sdk: macosx
+            arch: x86_64
+          - sdk: iphonesimulator
+            arch: arm64
+          - sdk: iphonesimulator
+            arch: x86_64
+          - sdk: iphoneos
+            arch: arm64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/v
+          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          path: toolchain/v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/vc
+          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          path: toolchain/v/vc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: runner.arch == 'ARM64'
+        with:
+          repository: vlang/tccbin
+          ref: 1d0ad0ecf70a91a1df64cebf215e683b1d5aedb5 # thirdparty-macos-arm64
+          path: toolchain/v/thirdparty/tcc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: runner.arch == 'X64'
+        with:
+          repository: vlang/tccbin
+          ref: 199fa78395ca413aac23d02ec69cc5e7b1d805a2 # thirdparty-macos-amd64
+          path: toolchain/v/thirdparty/tcc
+      - name: Build V compiler
+        working-directory: toolchain/v
+        run: |
+          make local=1 VFLAGS='-cc clang'
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Check V Apple APIs
+        run: |
+          mkdir -p "$RUNNER_TEMP/vmodules/antono2"
+          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
+          if [ '${{ matrix.sdk }}' = macosx ]; then
+            os_name=macos
+            platform_module=impl_osx
+            profile_flag=imgui_metal
+          else
+            os_name=ios
+            platform_module=impl_ios
+            profile_flag=imgui_ios_simulator
+          fi
+          if [ '${{ matrix.sdk }}' = iphoneos ]; then profile_flag=imgui_ios_device; fi
+          arch='${{ matrix.arch }}'
+          if [ "$arch" = x86_64 ]; then arch=amd64; fi
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os "$os_name" -arch "$arch" -d "$profile_flag" -d use_freetype -shared -check .
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os "$os_name" -arch "$arch" -shared -check impl_metal
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os "$os_name" -arch "$arch" -shared -check "$platform_module"
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os "$os_name" -arch "$arch" -shared -check impl_mobile
+      - name: Inspect selected Apple SDK
+        run: |
+          xcodebuild -version
+          xcrun --sdk '${{ matrix.sdk }}' --show-sdk-path
+      - name: Configure Apple native bindings
+        run: |
+          system_arg=()
+          demo_arg=()
+          if [ '${{ matrix.sdk }}' != macosx ]; then
+            system_arg=(-DCMAKE_SYSTEM_NAME=iOS)
+            demo_arg=(-DVIMGUI_BUILD_IOS_DEMO=ON)
+          fi
+          cmake -S . -B build/ci-apple -G Ninja \
+            "${system_arg[@]}" \
+            "${demo_arg[@]}" \
+            -DCMAKE_OSX_SYSROOT='${{ matrix.sdk }}' \
+            -DCMAKE_OSX_ARCHITECTURES='${{ matrix.arch }}' \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="$(if [ '${{ matrix.sdk }}' = macosx ]; then echo 11.0; else echo 13.0; fi)" \
+            -DVIMGUI_PROFILE=apple-metal \
+            -DIMGUI_FREETYPE=ON \
+            -DVIMGUI_FREETYPE_PROVIDER=bundled \
+            -DVIMGUI_BUILD_SMOKE_TESTS=ON \
+            -DSTATIC_BUILD=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+      - name: Compile and link Apple Metal smoke test
+        run: cmake --build build/ci-apple --parallel 4
+      - name: Verify architecture and wrapper export
+        run: |
+          test -f build/ci-apple/lib/libvimgui.dylib
+          test -f build/ci-apple/libvimgui_apple_link_smoke.dylib
+          xcrun lipo -info build/ci-apple/lib/libvimgui.dylib | grep '${{ matrix.arch }}'
+          xcrun nm -gU build/ci-apple/lib/libvimgui.dylib | grep _vimgui_metal_init
+          if [ '${{ matrix.sdk }}' != macosx ]; then
+            xcrun otool -L build/ci-apple/lib/libvimgui.dylib | grep GameController
+            xcrun nm -gU build/ci-apple/lib/libvimgui.dylib | grep _vimgui_ios_keyboard_create
+            xcrun nm -gU build/ci-apple/lib/libvimgui.dylib | grep _vimgui_ios_text_view_apply_edit
+            test -f build/ci-apple/vimgui_ios_demo.app/vimgui_ios_demo
+            test -f build/ci-apple/vimgui_ios_demo.app/Frameworks/libvimgui.dylib
+            xcrun lipo -info build/ci-apple/vimgui_ios_demo.app/vimgui_ios_demo | grep '${{ matrix.arch }}'
+          fi
+      - name: Attempt an iOS Simulator Metal frame
+        if: matrix.sdk == 'iphonesimulator' && ((matrix.arch == 'x86_64' && runner.arch == 'X64') || (matrix.arch == 'arm64' && runner.arch == 'ARM64'))
+        continue-on-error: true
+        timeout-minutes: 15
+        run: scripts/run_ios_simulator_smoke.sh build/ci-apple/vimgui_ios_demo.app
+
+  mobile-required-checks:
+    name: mobile-required-checks
+    if: always()
+    needs: [linux-vulkan, android, apple]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify required mobile jobs
+        env:
+          LINUX_RESULT: ${{ needs.linux-vulkan.result }}
+          ANDROID_RESULT: ${{ needs.android.result }}
+          APPLE_RESULT: ${{ needs.apple.result }}
+        run: |
+          test "$LINUX_RESULT" = success
+          test "$ANDROID_RESULT" = success
+          test "$APPLE_RESULT" = success
