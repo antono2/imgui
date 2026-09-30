@@ -64,7 +64,7 @@ fn main() {
 		}
 		if install {
 			run('brew install cmake glfw') or { panic(err) }
-			run('v install antono2.glfw') or { panic(err) }
+			run('v install antono2.glfw@v2.0.0') or { panic(err) }
 			run('git -C ${os.quoted_path(project_dir)} submodule update --init --recursive') or {
 				panic(err)
 			}
