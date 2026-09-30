@@ -53,7 +53,13 @@ static void write_status(NSString* status)
 @end
 
 @interface VImGuiViewController : UIViewController <MTKViewDelegate>
+- (int)applyTextCallback:(ImGuiInputTextCallbackData*)data;
 @end
+
+static int text_callback(ImGuiInputTextCallbackData* data)
+{
+    return [(__bridge VImGuiViewController*)data->UserData applyTextCallback:data];
+}
 
 @implementation VImGuiViewController
 {
@@ -64,8 +70,17 @@ static void write_status(NSString* status)
     int _tapCount;
     float _workspaceValue;
     void* _keyboard;
+    void* _richText;
+    BOOL _richFailed;
+    int _richError;
     char _text[256];
     BOOL _keyboardSmoke;
+    BOOL _compositionSmoke;
+    int _compositionPhase;
+    BOOL _compositionSelectionVerified;
+    BOOL _overflowSmoke;
+    BOOL _overflowInjected;
+    BOOL _fallbackReady;
     BOOL _keyboardInjected;
     BOOL _keyboardDeleteSent;
     BOOL _keyboardVerified;
@@ -75,6 +90,8 @@ static void write_status(NSString* status)
 - (void)loadView
 {
     _keyboardSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--keyboard-smoke"];
+    _compositionSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--composition-smoke"];
+    _overflowSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--overflow-smoke"];
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     VImGuiView* view = [[VImGuiView alloc] initWithFrame:[UIScreen mainScreen].bounds device:device];
     view.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
@@ -99,7 +116,27 @@ static void write_status(NSString* status)
     if (!_ready)
         write_status(@"backend_init_failed");
     else
+    {
+        _richText = vimgui_ios_text_view_create((__bridge void*)view);
+        _richFailed = _richText == nullptr || _keyboardSmoke;
         _keyboard = vimgui_ios_keyboard_create((__bridge void*)view);
+    }
+}
+
+- (int)applyTextCallback:(ImGuiInputTextCallbackData*)data
+{
+    if (_richText != nullptr && !_richFailed)
+    {
+        if (!vimgui_ios_text_view_apply_edit(_richText, data))
+        {
+            _richError = vimgui_ios_text_view_error(_richText);
+            _richFailed = YES;
+        }
+        if (_compositionSmoke && _compositionPhase == 1 &&
+            data->SelectionStart == 3 && data->SelectionEnd == 3)
+            _compositionSelectionVerified = YES;
+    }
+    return 0;
 }
 
 - (void)mtkView:(MTKView*)view drawableSizeWillChange:(CGSize)size
@@ -139,9 +176,16 @@ static void write_status(NSString* status)
             ++_tapCount;
         ImGui::SameLine();
         ImGui::Text("count = %d", _tapCount);
-        if (_keyboardSmoke && !_keyboardInjected)
+        if ((_keyboardSmoke && !_keyboardInjected) || (_compositionSmoke && _compositionPhase == 0) ||
+            (_overflowSmoke && !_overflowInjected))
             ImGui::SetKeyboardFocusHere();
-        ImGui::InputText("Text", _text, sizeof(_text));
+        ImGui::InputText("Text", _text, sizeof(_text), ImGuiInputTextFlags_CallbackAlways,
+                         text_callback, (__bridge void*)self);
+        if (_richText != nullptr && !_richFailed)
+        {
+            const ImVec2 anchor = ImGui::GetItemRectMin();
+            vimgui_ios_text_view_set_anchor(_richText, anchor.x, anchor.y);
+        }
         if (_keyboardSmoke && _keyboardInjected && !_keyboardDeleteSent &&
             std::strcmp(_text, "Grüße!") == 0)
         {
@@ -151,6 +195,24 @@ static void write_status(NSString* status)
         }
         if (_keyboardSmoke && _keyboardDeleteSent && std::strcmp(_text, "Grüße") == 0)
             _keyboardVerified = YES;
+        if (_compositionSmoke && _compositionPhase == 1)
+        {
+            int32_t start = -1, end = -1;
+            if (std::strcmp(_text, "かな") != 0 || !_compositionSelectionVerified ||
+                !vimgui_ios_text_view_marked_range(_richText, &start, &end) || start != 0 || end != 2)
+                _richFailed = YES;
+            else
+                _compositionPhase = 2;
+        }
+        else if (_compositionSmoke && _compositionPhase == 3)
+        {
+            int32_t start = -1, end = -1;
+            if (std::strcmp(_text, "仮名") != 0 ||
+                vimgui_ios_text_view_marked_range(_richText, &start, &end))
+                _richFailed = YES;
+            else
+                _compositionPhase = 4;
+        }
     }
     ImGui::End();
 
@@ -166,10 +228,48 @@ static void write_status(NSString* status)
     }
     ImGui::End();
     ImGui::Render();
-    if (_keyboard != nullptr)
+    if (_richText != nullptr && !_richFailed)
+    {
+        const bool wants_keyboard = vimgui_ios_wants_text_input();
+        if (!vimgui_ios_text_view_set_visible(_richText, wants_keyboard))
+        {
+            _richError = vimgui_ios_text_view_error(_richText);
+            _richFailed = YES;
+        }
+        if (_compositionSmoke && !_richFailed && wants_keyboard)
+        {
+            id<UITextInput> input = (__bridge id<UITextInput>)_richText;
+            if (_compositionPhase == 0)
+            {
+                [input setMarkedText:@"かな" selectedRange:NSMakeRange(1, 0)];
+                _compositionPhase = 1;
+            }
+            else if (_compositionPhase == 2)
+            {
+                [input setMarkedText:@"仮名" selectedRange:NSMakeRange(2, 0)];
+                [input unmarkText];
+                _compositionPhase = 3;
+            }
+        }
+        if (_overflowSmoke && !_richFailed && wants_keyboard && !_overflowInjected)
+        {
+            id<UIKeyInput> input = (__bridge id<UIKeyInput>)_richText;
+            [input insertText:[@"" stringByPaddingToLength:300 withString:@"x" startingAtIndex:0]];
+            _overflowInjected = YES;
+        }
+    }
+    if (_richFailed && _richText != nullptr)
+    {
+        vimgui_ios_text_view_set_visible(_richText, false);
+        vimgui_ios_text_view_destroy(_richText);
+        _richText = nullptr;
+    }
+    if (_keyboard != nullptr && (_richFailed || _keyboardSmoke))
     {
         const bool wants_keyboard = vimgui_ios_wants_text_input();
         const bool responder_ready = vimgui_ios_keyboard_set_visible(_keyboard, wants_keyboard);
+        if (_overflowSmoke && _richFailed && wants_keyboard)
+            _fallbackReady = responder_ready;
         if (_keyboardSmoke && !_keyboardInjected && wants_keyboard && responder_ready)
         {
             id<UIKeyInput> responder = (__bridge id<UIKeyInput>)_keyboard;
@@ -185,20 +285,37 @@ static void write_status(NSString* status)
     vimgui_metal_render_draw_data(ImGui::GetDrawData(), (__bridge void*)buffer, (__bridge void*)encoder);
     [encoder endEncoding];
     [buffer presentDrawable:drawable];
+    if (_compositionSmoke && _richFailed)
+    {
+        write_status([NSString stringWithFormat:@"composition_bridge_failed_%d", _richError]);
+        _compositionSmoke = NO;
+        _reportedFrame = YES;
+    }
+    if (_overflowSmoke && _richFailed && !_reportedFrame)
+    {
+        _reportedFrame = YES;
+        const BOOL safe_fallback = _richError == 2 && _fallbackReady && _text[0] == '\0';
+        [buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
+            write_status(completed.status == MTLCommandBufferStatusCompleted && safe_fallback
+                             ? @"overflow_fallback_frame_completed" : @"overflow_fallback_failed");
+        }];
+    }
     if (_keyboardSmoke && !_keyboardVerified && ++_keyboardSmokeFrames > 300)
     {
         write_status(_keyboardInjected ? @"keyboard_input_mismatch" : @"keyboard_responder_unavailable");
         _keyboardSmoke = NO;
         _reportedFrame = YES;
     }
-    if (!_reportedFrame && (!_keyboardSmoke || _keyboardVerified))
+    if (!_reportedFrame && (!_keyboardSmoke || _keyboardVerified) &&
+        (!_compositionSmoke || _compositionPhase == 4) && !_overflowSmoke)
     {
         _reportedFrame = YES;
         const BOOL two_windows_visible = visible_windows == 2;
         [buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
             write_status(completed.status != MTLCommandBufferStatusCompleted
                              ? @"frame_failed"
-                             : (two_windows_visible ? (_keyboardSmoke ? @"keyboard_input_frame_completed"
+                             : (two_windows_visible ? (_compositionSmoke ? @"composition_frame_completed"
+                                                     : _keyboardSmoke ? @"keyboard_input_frame_completed"
                                                                        : @"multi_window_frame_completed")
                                                     : @"multi_window_missing"));
         }];
@@ -208,6 +325,7 @@ static void write_status(NSString* status)
 
 - (void)dealloc
 {
+    vimgui_ios_text_view_destroy(_richText);
     vimgui_ios_keyboard_destroy(_keyboard);
     if (_ready)
     {

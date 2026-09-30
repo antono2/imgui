@@ -20,6 +20,16 @@ bool vimgui_ios_wants_text_input(void);
 void* vimgui_ios_keyboard_create(void* parent_view);
 bool vimgui_ios_keyboard_set_visible(void* keyboard, bool visible);
 void vimgui_ios_keyboard_destroy(void* keyboard);
+// Optional UITextView-backed IME. UIKit calls and InputText callbacks must run
+// on the main thread. The caller owns the handle. Error codes: 0=OK,
+// 1=invalid handle/thread, 2=text exceeds ImGui buffer, 3=invalid callback.
+void* vimgui_ios_text_view_create(void* parent_view);
+bool vimgui_ios_text_view_set_visible(void* text_view, bool visible);
+bool vimgui_ios_text_view_apply_edit(void* text_view, void* callback_data);
+bool vimgui_ios_text_view_marked_range(void* text_view, int32_t* start, int32_t* end);
+void vimgui_ios_text_view_set_anchor(void* text_view, float x, float y);
+int32_t vimgui_ios_text_view_error(void* text_view);
+void vimgui_ios_text_view_destroy(void* text_view);
 void vimgui_ios_shutdown(void);
 
 #ifdef __cplusplus

@@ -27,6 +27,13 @@ extern "C" int vimgui_apple_link_smoke(void* host_view, void* device,
         void* keyboard = vimgui_ios_keyboard_create(host_view);
         vimgui_ios_keyboard_set_visible(keyboard, false);
         vimgui_ios_keyboard_destroy(keyboard);
+        void* text_view = vimgui_ios_text_view_create(host_view);
+        vimgui_ios_text_view_set_anchor(text_view, 0.0f, 0.0f);
+        int32_t start = 0, end = 0;
+        vimgui_ios_text_view_marked_range(text_view, &start, &end);
+        vimgui_ios_text_view_error(text_view);
+        vimgui_ios_text_view_set_visible(text_view, false);
+        vimgui_ios_text_view_destroy(text_view);
     }
 #else
     bool platform_ready = host_view != nullptr && vimgui_osx_init(host_view);
