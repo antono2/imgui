@@ -36,7 +36,8 @@ fn copy_matching(pattern string, destination string) ! {
 		return error('no files matched ${pattern}')
 	}
 	for source in files {
-		os.cp(source, os.join_path(destination, os.file_name(source)))!
+		target := os.join_path(destination, os.file_name(source))
+		os.cp(source, target) or { return error('copy ${source} -> ${target}: ${err}') }
 	}
 }
 
