@@ -61,6 +61,7 @@ static void write_status(NSString* status)
     BOOL _ready;
     BOOL _reportedFrame;
     int _tapCount;
+    float _workspaceValue;
 }
 
 - (void)loadView
@@ -82,6 +83,8 @@ static void write_status(NSString* status)
     ImGui::CreateContext();
     ImGui::GetIO().IniFilename = nullptr;
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    // ImGui windows share this one MTKView; UIKit scenes/viewports are not used.
+    ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
     ImGui::StyleColorsDark();
     _ready = _commandQueue != nil && vimgui_ios_init() && vimgui_metal_init((__bridge void*)device);
     if (!_ready)
@@ -111,13 +114,33 @@ static void write_status(NSString* status)
     vimgui_metal_new_frame((__bridge void*)pass);
     vimgui_ios_new_frame(points.width, points.height, scale, delta);
     ImGui::NewFrame();
-    ImGui::SetNextWindowPos(ImVec2(20.0f, 60.0f), ImGuiCond_FirstUseEver);
-    ImGui::Begin("iOS Metal / ImGui");
-    ImGui::Text("UIKit points: %.0f x %.0f, scale %.1f", points.width, points.height, scale);
-    if (ImGui::Button("Tap here"))
-        ++_tapCount;
-    ImGui::SameLine();
-    ImGui::Text("count = %d", _tapCount);
+    const bool side_by_side = points.width > points.height;
+    const float window_width = side_by_side ? (points.width - 48.0f) * 0.5f : points.width - 32.0f;
+    const float window_height = side_by_side ? points.height - 80.0f : 180.0f;
+    int visible_windows = 0;
+    ImGui::SetNextWindowPos(ImVec2(16.0f, 60.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(window_width, window_height), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Controls"))
+    {
+        ++visible_windows;
+        ImGui::Text("UIKit points: %.0f x %.0f, scale %.1f", points.width, points.height, scale);
+        if (ImGui::Button("Tap here"))
+            ++_tapCount;
+        ImGui::SameLine();
+        ImGui::Text("count = %d", _tapCount);
+    }
+    ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(side_by_side ? window_width + 32.0f : 16.0f,
+                                  side_by_side ? 60.0f : 256.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(window_width, window_height), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Workspace"))
+    {
+        ++visible_windows;
+        ImGui::TextWrapped("A second ImGui window in the same Metal view.");
+        ImGui::SliderFloat("Value", &_workspaceValue, 0.0f, 1.0f);
+        ImGui::TextWrapped("Drag either title bar to arrange the workspace.");
+    }
     ImGui::End();
     ImGui::Render();
 
@@ -131,9 +154,12 @@ static void write_status(NSString* status)
     if (!_reportedFrame)
     {
         _reportedFrame = YES;
+        const BOOL two_windows_visible = visible_windows == 2;
         [buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
-            write_status(completed.status == MTLCommandBufferStatusCompleted
-                             ? @"frame_completed" : @"frame_failed");
+            write_status(completed.status != MTLCommandBufferStatusCompleted
+                             ? @"frame_failed"
+                             : (two_windows_visible ? @"multi_window_frame_completed"
+                                                    : @"multi_window_missing"));
         }];
     }
     [buffer commit];

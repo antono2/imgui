@@ -189,9 +189,15 @@ link `GameController`; the iOS build does not pull in AppKit/Cocoa.
 
 `examples/ios_metal` is a minimal UIKit/`MTKView` host. It creates the Metal
 device, render pass, command buffer, and encoder, and uses the same iOS/Metal
-wrappers exposed to V. The bundled app is built unsigned for both simulator
+wrappers exposed to V. It renders independently movable `Controls` and
+`Workspace` ImGui windows within one `MTKView`, without native UIKit scenes or
+Dear ImGui platform viewports. V applications use the same pattern: call
+`imgui.begin(...)` / `imgui.end()` for each window between one
+`imgui.new_frame()` and `imgui.render()`, then submit the combined draw data
+through `impl_metal` once. The bundled app is built unsigned for both simulator
 architectures and iPhoneOS in CI; the matching GitHub-hosted simulator job also
-attempts to launch it and complete one Metal command buffer. That runtime step is
+attempts to launch it and complete one Metal command buffer with both windows
+visible. That runtime step is
 advisory because a hosted runner may lack a usable simulator Metal device.
 The app deliberately does not claim complete iOS text-input handling; a
 production host still needs its own UIKit keyboard/text view.
