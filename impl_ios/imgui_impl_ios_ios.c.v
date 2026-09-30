@@ -41,7 +41,8 @@ pub fn key(key imgui.Key, down bool) {
 	C.vimgui_ios_key(int(key), down)
 }
 
-// Feed only committed UTF-8 text; marked-text preedit is not supported yet.
+// Feed committed UTF-8 text through the basic path. For composition, use a
+// UITextView and text_view_apply_edit instead of also feeding these events.
 pub fn text_utf8(committed_text string) {
 	C.vimgui_ios_text_utf8(committed_text.str)
 }
@@ -83,8 +84,8 @@ pub fn text_view_apply_edit(text_view voidptr, mut data imgui.InputTextCallbackD
 }
 
 // Marked range is in UTF-16 code units, matching UIKit; false means no preedit.
-pub fn text_view_marked_range(text_view voidptr, mut start int, mut end int) bool {
-	return C.vimgui_ios_text_view_marked_range(text_view, &start, &end)
+pub fn text_view_marked_range(text_view voidptr, start &int, end &int) bool {
+	return C.vimgui_ios_text_view_marked_range(text_view, start, end)
 }
 
 pub fn text_view_set_anchor(text_view voidptr, x f32, y f32) {
