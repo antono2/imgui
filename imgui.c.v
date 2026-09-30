@@ -106,7 +106,7 @@ $if android {
 	$if !imgui_static ? {
 		#flag -l vimgui
 	}
-	#flag darwin -lc++ -framework Foundation -framework Metal -framework MetalKit -framework QuartzCore -framework UIKit
+	#flag darwin -lc++ -framework Foundation -framework Metal -framework MetalKit -framework QuartzCore -framework UIKit -framework GameController
 } $else $if macos && imgui_metal ? {
 	$if arm64 {
 		$if use_freetype ? {
