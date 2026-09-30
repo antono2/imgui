@@ -25,7 +25,7 @@ fn observe_text_selection(mut data imgui.InputTextCallbackData) i32 {
 // exported function keeps the example's actual widget construction in V.
 // Its arguments are borrowed for this call and stay owned by the host.
 @[export: 'vimgui_android_demo_draw_ui']
-fn draw_ui(zoom &f32, tap_count &int, text &char, text_capacity int, display_width f32, display_height f32) bool {
+fn draw_ui(zoom &f32, tap_count &int, text &char, text_capacity int, clipboard_preview &char, clipboard_capacity int, display_width f32, display_height f32) bool {
 	imgui.set_next_window_pos(imgui.ImVec2_c{ x: 24, y: 24 }, imgui.Cond(imgui.Cond_.first_use_ever), imgui.ImVec2_c{})
 	imgui.set_next_window_size(imgui.ImVec2_c{ x: 700, y: 420 }, imgui.Cond(imgui.Cond_.first_use_ever))
 	imgui.begin(c'Android Vulkan + FreeType', unsafe { nil }, 0)
@@ -47,9 +47,26 @@ fn draw_ui(zoom &f32, tap_count &int, text &char, text_capacity int, display_wid
 		imgui.set_clipboard_text(text)
 	}
 	imgui.same_line(0, -1)
-	if imgui.button(c'Read clipboard', imgui.ImVec2_c{}) {
-		imgui.text_unformatted(imgui.get_clipboard_text(), unsafe { nil })
+	if imgui.button(c'Read clipboard', imgui.ImVec2_c{}) && clipboard_capacity > 0 {
+		clip := imgui.get_clipboard_text()
+		unsafe {
+			mut index := 0
+			if clip != nil {
+				for index < clipboard_capacity - 1 && clip[index] != 0 {
+					clipboard_preview[index] = clip[index]
+					index++
+				}
+			}
+			clipboard_preview[index] = 0
+		}
 	}
+	imgui.same_line(0, -1)
+	if imgui.button(c'Clear preview', imgui.ImVec2_c{}) && clipboard_capacity > 0 {
+		unsafe { clipboard_preview[0] = 0 }
+	}
+	imgui.text_unformatted(c'Clipboard preview:', unsafe { nil })
+	imgui.same_line(0, -1)
+	imgui.text_unformatted(clipboard_preview, unsafe { nil })
 	selection_label := 'UTF-8 cursor ${selection.cursor}, selection ${selection.start}..${selection.end}'
 	imgui.text_unformatted(selection_label.str, unsafe { nil })
 	unsafe { selection_label.free() }

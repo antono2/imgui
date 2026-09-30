@@ -45,10 +45,11 @@ struct DemoState {
     float zoom = 1.0f;
     int tap_count = 0;
     char text[128] = {};
+    char clipboard_preview[1024] = {};
 };
 
 DemoState g;
-using DrawUiFn = bool (*)(float*, int*, char*, int, float, float);
+using DrawUiFn = bool (*)(float*, int*, char*, int, char*, int, float, float);
 void* ui_library = nullptr;
 DrawUiFn draw_ui = nullptr;
 
@@ -330,6 +331,7 @@ bool draw_frame()
     ImGui::NewFrame();
     const int previous_tap_count = g.tap_count;
     const bool zoom_changed = draw_ui(&g.zoom, &g.tap_count, g.text, sizeof(g.text),
+                                      g.clipboard_preview, sizeof(g.clipboard_preview),
                                       ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y);
     if (g.tap_count != previous_tap_count)
         __android_log_print(ANDROID_LOG_INFO, kLogTag, "V UI tap count: %d", g.tap_count);
