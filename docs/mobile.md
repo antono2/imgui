@@ -150,8 +150,8 @@ scripts/run_android_demo.sh
 The script selects the device ABI, builds the native host and V UI, packages,
 debug-signs, installs, and launches `io.antono2.vimgui.demo`. It requires `v`
 on `PATH` (or `V_BIN` pointing to it). Set `ANDROID_SERIAL` if multiple devices
-are connected. For CI/offline packaging, set `ANDROID_ABI` and pass
-`--build-only`.
+are connected. To package without installing or launching, set `ANDROID_ABI`
+and pass `--build-only`.
 Tap the button, enter committed text, change UI zoom, rotate the tablet, and
 background/resume the app. `adb logcat -s vimgui-android-demo:I` reports
 initialization, swapchain recreation, tap counts, and keyboard visibility.
@@ -225,15 +225,10 @@ wrappers exposed to V. It renders independently movable `Controls` and
 Dear ImGui platform viewports. V applications use the same pattern: call
 `imgui.begin(...)` / `imgui.end()` for each window between one
 `imgui.new_frame()` and `imgui.render()`, then submit the combined draw data
-through `impl_metal` once. The bundled app is built unsigned for both simulator
-architectures and iPhoneOS in CI; the matching GitHub-hosted simulator job also
-attempts to launch it and complete one Metal command buffer with both windows
-visible. The Simulator runs both the basic responder (committed text and
-Backspace) and the UITextView bridge (marked text, selection, replacement, and
-commit). It also checks oversized input rejection and fallback activation,
-verifying each ImGui buffer and a Metal frame. That runtime step is
-advisory because a hosted runner may lack a usable Simulator Metal device;
-success still does not establish hardware IME or GPU behavior.
+through `impl_metal` once. The sample can be built for iOS Simulator or
+iPhoneOS without signing; installing on a physical device requires the host
+app's normal signing setup. Simulator success does not establish hardware IME
+or GPU behavior.
 
 The Android sample is an integration host, not a reusable application shell;
 the Vulkan/NativeActivity host remains C++ while the ImGui widgets are written
@@ -244,22 +239,15 @@ composition, and a basic-keyboard fallback. The iOS layer handles one primary
 touch. Hosts must choose a sufficient `InputText` buffer, check bridge errors,
 and present any desired marked-text styling.
 
-## Validation boundaries
+## Testing on a device
 
-`mobile-native.yml` renders an offscreen ImGui frame through Lavapipe on Ubuntu,
-then builds and link-tests the Android native backend, on-screen host, V UI,
-and IME Java class for three ABIs, cross-links a small V app, and packages a
-debug APK for each ABI. It builds and
-link-tests Metal/FreeType on GitHub-hosted macOS for
-macOS, both iOS Simulator architectures, and arm64 iPhoneOS. The iOS jobs
-also link a UIKit/Metal app; the host-architecture simulator job makes an
-advisory runtime frame attempt. No developer signing or attached Apple
-hardware is required for the compile/link jobs. On a connected Android
-device, `vimgui_android_device_probe` tests context/scaling and physical-device
-discovery; `vimgui_vulkan_offscreen_probe` submits a real ImGui frame to the GPU.
-The installable sample additionally exercises an on-screen Vulkan swapchain,
-touch, rotation, background/resume, and committed IME input on Android hardware.
-Emulator UI testing and real Apple GPU tests remain separate optional work.
+On a connected Android device, `vimgui_android_device_probe` tests
+context/scaling and physical-device discovery;
+`vimgui_vulkan_offscreen_probe` submits an ImGui frame to the GPU. The
+installable sample exercises an on-screen Vulkan swapchain, touch, rotation,
+background/resume, and committed IME input. iOS Simulator tests cannot replace
+validation of real Apple hardware, keyboard languages, candidate placement,
+or GPU behavior. The CI matrix is documented in [Maintaining](../MAINTAINING.md).
 
 For the connected-device checks, set `ANDROID_NDK_HOME` and run
 `scripts/run_android_probes.sh`. It builds the device's reported ABI, stages only
