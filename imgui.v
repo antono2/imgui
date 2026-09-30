@@ -103,6 +103,7 @@ pub type InputTextCallback = fn (&InputTextCallbackData) i32
 
 pub type SizeCallback = fn (&SizeCallbackData)
 
+@[typedef]
 pub type Va_list = C.va_list
 
 @[typedef]
@@ -121,7 +122,7 @@ pub mut:
 
 pub type ImColor = C.ImColor_c
 pub type ImRect = C.ImRect_c
-pub type ImTextureRef = ImTextureRef_c
+pub type ImTextureRef = C.ImTextureRef_c
 pub type ImVec2 = C.ImVec2_c
 pub type ImVec2i = C.ImVec2i_c
 pub type ImVec4 = C.ImVec4_c
@@ -154,7 +155,7 @@ pub type ImU16 = u16
 pub type ImS32 = i32
 pub type ImU32 = u32
 pub type ImS64 = i64
-pub type ImU64 = i64
+pub type ImU64 = u64
 pub type Col = i32
 pub type Cond = i32
 pub type DataType = i32
@@ -210,7 +211,7 @@ pub mut:
 	w f32
 }
 
-pub type ImTextureID = i64
+pub type ImTextureID = u64
 
 pub type ImTextureRef_c = C.ImTextureRef_c
 
@@ -345,7 +346,6 @@ pub enum PopupFlags_ {
 	any_popup_level             = 1 << 11
 	any_popup                   = 1 << 10 | 1 << 11
 	mouse_button_shift_         = 1 << 1
-	// mouse_button_mask_ = 1 << 2 | 1 << 3
 	invalid_mask_               = 1 << 0 | 1 << 1
 }
 
@@ -386,7 +386,6 @@ pub enum TabBarFlags_ {
 	fitting_policy_shrink             = 1 << 8
 	fitting_policy_scroll             = 1 << 9
 	fitting_policy_mask_              = 1 << 7 | 1 << 8 | 1 << 9
-	// fitting_policy_default_ = 1 << 7
 }
 
 pub enum TabItemFlags_ {
@@ -485,7 +484,6 @@ pub enum SortDirection {
 pub enum Key {
 	none                   = 0
 	named_key_begin        = 512
-	// tab = 512
 	left_arrow             = 513
 	right_arrow            = 514
 	up_arrow               = 515
@@ -642,7 +640,6 @@ pub enum Key {
 	reserved_for_mod_super = 666
 	named_key_end          = 667
 	named_key_count        = 155
-	// mod_none = 0
 	mod_ctrl               = 4096
 	mod_shift              = 8192
 	mod_alt                = 16384
@@ -1544,7 +1541,6 @@ pub enum ImDrawFlags_ {
 	round_corners_bottom_right = 1 << 7
 	round_corners_none         = 1 << 8
 	round_corners_all          = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
-	// round_corners_default_ = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
 	round_corners_top          = 1 << 4 | 1 << 5
 	round_corners_bottom       = 1 << 6 | 1 << 7
 	round_corners_left         = 1 << 4 | 1 << 6
@@ -2305,7 +2301,6 @@ pub enum ButtonFlagsPrivate_ {
 	no_test_key_owner                 = 1 << 21
 	no_focus                          = 1 << 22
 	pressed_on_mask_                  = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9
-	// pressed_on_default_ = 1 << 5
 }
 
 pub enum ComboFlagsPrivate_ {
@@ -2842,10 +2837,8 @@ pub enum InputFlagsPrivate_ {
 	repeat_rate_mask_                      = 1 << 1 | 1 << 2 | 1 << 3
 	repeat_until_mask_                     = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
 	repeat_mask_                           = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
-	// cond_mask_ = 1 << 22 | 1 << 23
 	route_type_mask_                       = 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13
 	route_options_mask_                    = 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
-	// supported_by_is_key_pressed = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
 	supported_by_is_mouse_clicked          = 1 << 0
 	supported_by_shortcut                  = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
 	supported_by_set_next_item_shortcut    = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17 | 1 << 18

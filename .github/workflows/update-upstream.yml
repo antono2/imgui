@@ -31,6 +31,54 @@ jobs:
           scripts/update_upstream.sh "$variant" --check-only
           git diff --exit-code
 
+  verify-generated:
+    name: Verify committed bindings regenerate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/v
+          ref: c9b806b294234408af3794f419439599a293a0ea
+          path: toolchain/v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/vc
+          ref: 21490f7811a2dd366c3daa39bef8e53c1e3e5727
+          path: toolchain/v/vc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/tccbin
+          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          path: toolchain/v/thirdparty/tcc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/c2v
+          ref: 8a208ffeba5fd29dd90af8fa91cadaaeb675db9e
+          path: toolchain/c2v
+      - name: Install generator and native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libglfw3-dev libvulkan-dev
+      - name: Build pinned generators
+        run: |
+          set -euo pipefail
+          make -C toolchain/v local=1
+          make -C toolchain/v v1
+          v1_root=$(< toolchain/v/v1_fallback.vroot)
+          "$v1_root/v" -o toolchain/c2v/c2v toolchain/c2v
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+          echo "C2V_BIN=$GITHUB_WORKSPACE/toolchain/c2v/c2v" >> "$GITHUB_ENV"
+      - name: Regenerate and compare committed bindings
+        run: |
+          set -euo pipefail
+          v run generate.vsh
+          v run scripts/check_upstream_variant.vsh
+          git diff --check
+          git diff --exit-code
+
   propose:
     name: Propose ${{ matrix.variant }} update
     if: github.event_name != 'pull_request'
@@ -89,7 +137,7 @@ jobs:
         if: steps.upstream.outputs.changed == 'true'
         with:
           repository: vlang/c2v
-          ref: 38d23660b3d383f19eed3bd506f50f4b8abc426f
+          ref: 8a208ffeba5fd29dd90af8fa91cadaaeb675db9e
           path: toolchain/c2v
       - name: Install generator and native build dependencies
         if: steps.upstream.outputs.changed == 'true'
