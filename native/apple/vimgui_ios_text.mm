@@ -121,8 +121,10 @@ extern "C" bool vimgui_ios_text_view_apply_edit(void* handle, void* callback_dat
         view->syncing = true;
         const std::u16string text = vimgui::utf8_to_utf16(data->Buf, data->BufTextLen);
         view.text = ns_text(text);
-        const int cursor = vimgui::utf8_offset_to_utf16_index(data->Buf, data->CursorPos);
-        view.selectedRange = NSMakeRange(cursor, 0);
+        const int selection_start = vimgui::utf8_offset_to_utf16_index(data->Buf, data->SelectionStart);
+        const int selection_end = vimgui::utf8_offset_to_utf16_index(data->Buf, data->SelectionEnd);
+        view.selectedRange = NSMakeRange(std::min(selection_start, selection_end),
+                                         std::max(selection_start, selection_end) - std::min(selection_start, selection_end));
         view->syncing = false;
     }
     if (view->pending)
@@ -159,14 +161,16 @@ extern "C" bool vimgui_ios_text_view_apply_edit(void* handle, void* callback_dat
         // ImGui may change text or cursor via hardware keys and touch. Do not
         // overwrite UIKit while it owns a provisional marked-text segment.
         const std::u16string text = vimgui::utf8_to_utf16(data->Buf, data->BufTextLen);
-        const int start = vimgui::utf8_offset_to_utf16_index(data->Buf, data->SelectionStart);
-        const int end = vimgui::utf8_offset_to_utf16_index(data->Buf, data->SelectionEnd);
+        const int selection_start = vimgui::utf8_offset_to_utf16_index(data->Buf, data->SelectionStart);
+        const int selection_end = vimgui::utf8_offset_to_utf16_index(data->Buf, data->SelectionEnd);
+        const int start = std::min(selection_start, selection_end);
+        const int length = std::max(selection_start, selection_end) - start;
         if (utf16_text(view.text ?: @"") != text || view.selectedRange.location != static_cast<NSUInteger>(start) ||
-            view.selectedRange.length != static_cast<NSUInteger>(end - start))
+            view.selectedRange.length != static_cast<NSUInteger>(length))
         {
             view->syncing = true;
             view.text = ns_text(text);
-            view.selectedRange = NSMakeRange(start, end - start);
+            view.selectedRange = NSMakeRange(start, length);
             view->syncing = false;
         }
     }
