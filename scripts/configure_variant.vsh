@@ -39,15 +39,36 @@ fn remove_marked_block(lines []string, begin string, end string) ![]string {
 	return output
 }
 
-fn insert_after_once(input string, anchor string, addition string) !string {
-	count := input.count(anchor)
-	if count != 1 {
-		return error('expected one ${anchor.trim_space()} anchor, found ${count}')
+fn insert_after_field_once(input string, field string, typ string, addition string) !string {
+	mut output := []string{}
+	mut count := 0
+	for line in input.split_into_lines() {
+		output << line
+		if line.trim_space().fields() == [field, typ] {
+			count++
+			output << addition.trim_right('\n')
+		}
 	}
-	return input.replace_once(anchor, anchor + addition)
+	if count != 1 {
+		return error('expected one ${field} ${typ} field, found ${count}')
+	}
+	return output.join('\n') + '\n'
+}
+
+fn self_test() {
+	assert (insert_after_field_once('\tfield   SomeType\n', 'field', 'SomeType', '\tother OtherType\n') or {
+		''
+	}) == '\tfield   SomeType\n\tother OtherType\n'
+	assert (insert_after_field_once('\tfield SomeType\n\tfield SomeType\n', 'field',
+		'SomeType', '\tother OtherType\n') or { '' }) == ''
+	println('configure_variant.vsh self-test passed')
 }
 
 fn main() {
+	if os.args.len == 2 && os.args[1] == '--self-test' {
+		self_test()
+		return
+	}
 	if os.args.len != 2 || os.args[1] !in ['standard', 'docking'] {
 		usage()
 		exit(2)
@@ -69,11 +90,13 @@ fn main() {
 	}
 	mut source := lines.join('\n') + '\n'
 	if variant == 'docking' {
-		source = insert_after_once(source, '\tpipeline_rendering_create_info vk.PipelineRenderingCreateInfoKHR\n', '${pipeline_begin}\n\tswap_chain_image_usage         vk.ImageUsageFlags\n${pipeline_end}\n') or {
+		source = insert_after_field_once(source, 'pipeline_rendering_create_info',
+			'vk.PipelineRenderingCreateInfoKHR', '${pipeline_begin}\n\tswap_chain_image_usage vk.ImageUsageFlags\n${pipeline_end}\n') or {
 			eprintln(err)
 			exit(1)
 		}
-		source = insert_after_once(source, '\tpipeline_info_main             PipelineInfo\n', '${init_begin}\n\tpipeline_info_for_viewports    PipelineInfo\n${init_end}\n') or {
+		source = insert_after_field_once(source, 'pipeline_info_main', 'PipelineInfo',
+			'${init_begin}\n\tpipeline_info_for_viewports PipelineInfo\n${init_end}\n') or {
 			eprintln(err)
 			exit(1)
 		}
