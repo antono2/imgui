@@ -58,7 +58,7 @@ and secondary-viewport rendering helpers become safe no-ops there.
 
 ## Dependencies
 `v install antono2.vulkan@v3.2.0`<br>
-`v install antono2.glfw`
+`v install antono2.glfw@v2.0.0`
 
 ## Install
 ```bash

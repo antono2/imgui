@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/glfw
-          ref: e9a367938577919b4a5140a477c1250112978d8e
+          ref: v2.0.0
           path: source/modules/antono2/glfw
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -141,7 +141,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/glfw
-          ref: 3d7c1ddacb7215a7bbeb5fef0d7a68c90ba392ed
+          ref: v2.0.0
           path: source/modules/antono2/glfw
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -257,7 +257,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/glfw
-          ref: e9a367938577919b4a5140a477c1250112978d8e
+          ref: v2.0.0
           path: source/modules/antono2/glfw
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
