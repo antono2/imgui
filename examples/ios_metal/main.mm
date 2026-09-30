@@ -67,6 +67,7 @@ static void write_status(NSString* status)
     char _text[256];
     BOOL _keyboardSmoke;
     BOOL _keyboardInjected;
+    BOOL _keyboardDeleteSent;
     BOOL _keyboardVerified;
     int _keyboardSmokeFrames;
 }
@@ -141,7 +142,14 @@ static void write_status(NSString* status)
         if (_keyboardSmoke && !_keyboardInjected)
             ImGui::SetKeyboardFocusHere();
         ImGui::InputText("Text", _text, sizeof(_text));
-        if (_keyboardSmoke && _keyboardInjected && std::strcmp(_text, "Grüße") == 0)
+        if (_keyboardSmoke && _keyboardInjected && !_keyboardDeleteSent &&
+            std::strcmp(_text, "Grüße!") == 0)
+        {
+            id<UIKeyInput> responder = (__bridge id<UIKeyInput>)_keyboard;
+            [responder deleteBackward];
+            _keyboardDeleteSent = YES;
+        }
+        if (_keyboardSmoke && _keyboardDeleteSent && std::strcmp(_text, "Grüße") == 0)
             _keyboardVerified = YES;
     }
     ImGui::End();
@@ -166,7 +174,6 @@ static void write_status(NSString* status)
         {
             id<UIKeyInput> responder = (__bridge id<UIKeyInput>)_keyboard;
             [responder insertText:@"Grüße!"];
-            [responder deleteBackward];
             _keyboardInjected = YES;
         }
     }
