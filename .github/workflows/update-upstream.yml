@@ -105,7 +105,11 @@ jobs:
         run: |
           set -euo pipefail
           make -C toolchain/v v1
-          toolchain/v/v1_fallback -o toolchain/c2v/c2v toolchain/c2v
+          # The fallback binary needs its matching 0.5.2 vlib, not the
+          # adjacent V3 checkout's vlib. The installer records that root.
+          v1_root=$(< toolchain/v/v1_fallback.vroot)
+          test -x "$v1_root/v"
+          "$v1_root/v" -o toolchain/c2v/c2v toolchain/c2v
           toolchain/c2v/c2v --version
           echo "C2V_BIN=$GITHUB_WORKSPACE/toolchain/c2v/c2v" >> "$GITHUB_ENV"
       - name: Regenerate and validate bindings
