@@ -1,0 +1,361 @@
+// Minimal UIKit/Metal lifecycle host for the iOS backend. The app can be
+// installed in Simulator without an Xcode project or signing credentials.
+#include "../../cimgui/imgui/imgui.h"
+#include "../../native/apple/vimgui_ios.h"
+#include "../../native/apple/vimgui_metal.h"
+
+#import <MetalKit/MetalKit.h>
+#import <QuartzCore/QuartzCore.h>
+#import <UIKit/UIKit.h>
+
+#include <cstdint>
+#include <cstring>
+
+static void write_status(NSString* status)
+{
+    NSString* path = [NSTemporaryDirectory() stringByAppendingPathComponent:@"vimgui-metal-status.txt"];
+    [status writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    NSLog(@"vimgui-ios-demo: %@", status);
+}
+
+@interface VImGuiView : MTKView
+@end
+
+@implementation VImGuiView
+- (void)forwardTouches:(NSSet<UITouch*>*)touches down:(BOOL)down
+{
+    for (UITouch* touch in touches)
+    {
+        CGPoint point = [touch locationInView:self];
+        vimgui_ios_touch((uint64_t)(__bridge void*)touch, point.x, point.y, down);
+    }
+}
+- (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event
+{
+    [self forwardTouches:touches down:YES];
+    [super touchesBegan:touches withEvent:event];
+}
+- (void)touchesMoved:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event
+{
+    [self forwardTouches:touches down:YES];
+    [super touchesMoved:touches withEvent:event];
+}
+- (void)touchesEnded:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event
+{
+    [self forwardTouches:touches down:NO];
+    [super touchesEnded:touches withEvent:event];
+}
+- (void)touchesCancelled:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event
+{
+    [self forwardTouches:touches down:NO];
+    [super touchesCancelled:touches withEvent:event];
+}
+@end
+
+@interface VImGuiViewController : UIViewController <MTKViewDelegate>
+- (int)applyTextCallback:(ImGuiInputTextCallbackData*)data;
+@end
+
+static int text_callback(ImGuiInputTextCallbackData* data)
+{
+    return [(__bridge VImGuiViewController*)data->UserData applyTextCallback:data];
+}
+
+@implementation VImGuiViewController
+{
+    id<MTLCommandQueue> _commandQueue;
+    CFTimeInterval _lastFrameTime;
+    BOOL _ready;
+    BOOL _reportedFrame;
+    int _tapCount;
+    float _workspaceValue;
+    void* _keyboard;
+    void* _richText;
+    BOOL _richFailed;
+    int _richError;
+    char _text[256];
+    BOOL _keyboardSmoke;
+    BOOL _compositionSmoke;
+    int _compositionPhase;
+    BOOL _compositionSelectionVerified;
+    BOOL _overflowSmoke;
+    BOOL _overflowInjected;
+    BOOL _fallbackReady;
+    BOOL _keyboardInjected;
+    BOOL _keyboardDeleteSent;
+    BOOL _keyboardVerified;
+    int _keyboardSmokeFrames;
+}
+
+- (void)loadView
+{
+    _keyboardSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--keyboard-smoke"];
+    _compositionSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--composition-smoke"];
+    _overflowSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--overflow-smoke"];
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    VImGuiView* view = [[VImGuiView alloc] initWithFrame:[UIScreen mainScreen].bounds device:device];
+    view.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
+    view.clearColor = MTLClearColorMake(0.08, 0.08, 0.08, 1.0);
+    view.preferredFramesPerSecond = 60;
+    view.delegate = self;
+    self.view = view;
+    if (device == nil)
+    {
+        write_status(@"metal_unavailable");
+        return;
+    }
+    _commandQueue = [device newCommandQueue];
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::GetIO().IniFilename = nullptr;
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    // ImGui windows share this one MTKView; UIKit scenes/viewports are not used.
+    ImGui::StyleColorsDark();
+    _ready = _commandQueue != nil && vimgui_ios_init() && vimgui_metal_init((__bridge void*)device);
+    if (!_ready)
+        write_status(@"backend_init_failed");
+    else
+    {
+        _richText = vimgui_ios_text_view_create((__bridge void*)view);
+        _richFailed = _richText == nullptr || _keyboardSmoke;
+        _keyboard = vimgui_ios_keyboard_create((__bridge void*)view);
+    }
+}
+
+- (int)applyTextCallback:(ImGuiInputTextCallbackData*)data
+{
+    if (_richText != nullptr && !_richFailed)
+    {
+        if (!vimgui_ios_text_view_apply_edit(_richText, data))
+        {
+            _richError = vimgui_ios_text_view_error(_richText);
+            _richFailed = YES;
+        }
+        if (_compositionSmoke && _compositionPhase == 1 &&
+            data->SelectionStart == 3 && data->SelectionEnd == 3)
+            _compositionSelectionVerified = YES;
+    }
+    return 0;
+}
+
+- (void)mtkView:(MTKView*)view drawableSizeWillChange:(CGSize)size
+{
+    (void)view;
+    (void)size;
+}
+
+- (void)drawInMTKView:(MTKView*)view
+{
+    if (!_ready)
+        return;
+    MTLRenderPassDescriptor* pass = view.currentRenderPassDescriptor;
+    id<CAMetalDrawable> drawable = view.currentDrawable;
+    if (pass == nil || drawable == nil)
+        return;
+
+    const CFTimeInterval now = CACurrentMediaTime();
+    const float delta = _lastFrameTime > 0 ? (float)(now - _lastFrameTime) : 1.0f / 60.0f;
+    _lastFrameTime = now;
+    const CGSize points = view.bounds.size;
+    const float scale = points.width > 0 ? view.drawableSize.width / points.width : 1.0f;
+    vimgui_metal_new_frame((__bridge void*)pass);
+    vimgui_ios_new_frame(points.width, points.height, scale, delta);
+    ImGui::NewFrame();
+    const bool side_by_side = points.width > points.height;
+    const float window_width = side_by_side ? (points.width - 48.0f) * 0.5f : points.width - 32.0f;
+    const float window_height = side_by_side ? points.height - 80.0f : 180.0f;
+    int visible_windows = 0;
+    ImGui::SetNextWindowPos(ImVec2(16.0f, 60.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(window_width, window_height), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Controls"))
+    {
+        ++visible_windows;
+        ImGui::Text("UIKit points: %.0f x %.0f, scale %.1f", points.width, points.height, scale);
+        if (ImGui::Button("Tap here"))
+            ++_tapCount;
+        ImGui::SameLine();
+        ImGui::Text("count = %d", _tapCount);
+        if ((_keyboardSmoke && !_keyboardInjected) || (_compositionSmoke && _compositionPhase == 0) ||
+            (_overflowSmoke && !_overflowInjected))
+            ImGui::SetKeyboardFocusHere();
+        ImGui::InputText("Text", _text, sizeof(_text), ImGuiInputTextFlags_CallbackAlways,
+                         text_callback, (__bridge void*)self);
+        if (_richText != nullptr && !_richFailed)
+        {
+            const ImVec2 anchor = ImGui::GetItemRectMin();
+            vimgui_ios_text_view_set_anchor(_richText, anchor.x, anchor.y);
+        }
+        if (_keyboardSmoke && _keyboardInjected && !_keyboardDeleteSent &&
+            std::strcmp(_text, "Grüße!") == 0)
+        {
+            id<UIKeyInput> responder = (__bridge id<UIKeyInput>)_keyboard;
+            [responder deleteBackward];
+            _keyboardDeleteSent = YES;
+        }
+        if (_keyboardSmoke && _keyboardDeleteSent && std::strcmp(_text, "Grüße") == 0)
+            _keyboardVerified = YES;
+        if (_compositionSmoke && _compositionPhase == 1)
+        {
+            int32_t start = -1, end = -1;
+            if (std::strcmp(_text, "かな") != 0 || !_compositionSelectionVerified ||
+                !vimgui_ios_text_view_marked_range(_richText, &start, &end) || start != 0 || end != 2)
+                _richFailed = YES;
+            else
+                _compositionPhase = 2;
+        }
+        else if (_compositionSmoke && _compositionPhase == 3)
+        {
+            int32_t start = -1, end = -1;
+            if (std::strcmp(_text, "仮名") != 0 ||
+                vimgui_ios_text_view_marked_range(_richText, &start, &end))
+                _richFailed = YES;
+            else
+                _compositionPhase = 4;
+        }
+    }
+    ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(side_by_side ? window_width + 32.0f : 16.0f,
+                                  side_by_side ? 60.0f : 256.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(window_width, window_height), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Workspace"))
+    {
+        ++visible_windows;
+        ImGui::TextWrapped("A second ImGui window in the same Metal view.");
+        ImGui::SliderFloat("Value", &_workspaceValue, 0.0f, 1.0f);
+        ImGui::TextWrapped("Drag either title bar to arrange the workspace.");
+    }
+    ImGui::End();
+    ImGui::Render();
+    if (_richText != nullptr && !_richFailed)
+    {
+        const bool wants_keyboard = vimgui_ios_wants_text_input();
+        if (!vimgui_ios_text_view_set_visible(_richText, wants_keyboard))
+        {
+            _richError = vimgui_ios_text_view_error(_richText);
+            _richFailed = YES;
+        }
+        if (_compositionSmoke && !_richFailed && wants_keyboard)
+        {
+            id<UITextInput> input = (__bridge id<UITextInput>)_richText;
+            if (_compositionPhase == 0)
+            {
+                [input setMarkedText:@"かな" selectedRange:NSMakeRange(1, 0)];
+                _compositionPhase = 1;
+            }
+            else if (_compositionPhase == 2)
+            {
+                [input setMarkedText:@"仮名" selectedRange:NSMakeRange(2, 0)];
+                [input unmarkText];
+                _compositionPhase = 3;
+            }
+        }
+        if (_overflowSmoke && !_richFailed && wants_keyboard && !_overflowInjected)
+        {
+            id<UIKeyInput> input = (__bridge id<UIKeyInput>)_richText;
+            [input insertText:[@"" stringByPaddingToLength:300 withString:@"x" startingAtIndex:0]];
+            _overflowInjected = YES;
+        }
+    }
+    if (_richFailed && _richText != nullptr)
+    {
+        vimgui_ios_text_view_set_visible(_richText, false);
+        vimgui_ios_text_view_destroy(_richText);
+        _richText = nullptr;
+    }
+    if (_keyboard != nullptr && (_richFailed || _keyboardSmoke))
+    {
+        const bool wants_keyboard = vimgui_ios_wants_text_input();
+        const bool responder_ready = vimgui_ios_keyboard_set_visible(_keyboard, wants_keyboard);
+        if (_overflowSmoke && _richFailed && wants_keyboard)
+            _fallbackReady = responder_ready;
+        if (_keyboardSmoke && !_keyboardInjected && wants_keyboard && responder_ready)
+        {
+            id<UIKeyInput> responder = (__bridge id<UIKeyInput>)_keyboard;
+            [responder insertText:@"Grüße!"];
+            _keyboardInjected = YES;
+        }
+    }
+
+    id<MTLCommandBuffer> buffer = [_commandQueue commandBuffer];
+    id<MTLRenderCommandEncoder> encoder = [buffer renderCommandEncoderWithDescriptor:pass];
+    if (encoder == nil)
+        return;
+    vimgui_metal_render_draw_data(ImGui::GetDrawData(), (__bridge void*)buffer, (__bridge void*)encoder);
+    [encoder endEncoding];
+    [buffer presentDrawable:drawable];
+    if (_compositionSmoke && _richFailed)
+    {
+        write_status([NSString stringWithFormat:@"composition_bridge_failed_%d", _richError]);
+        _compositionSmoke = NO;
+        _reportedFrame = YES;
+    }
+    if (_overflowSmoke && _richFailed && !_reportedFrame)
+    {
+        _reportedFrame = YES;
+        const BOOL safe_fallback = _richError == 2 && _fallbackReady && _text[0] == '\0';
+        [buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
+            write_status(completed.status == MTLCommandBufferStatusCompleted && safe_fallback
+                             ? @"overflow_fallback_frame_completed" : @"overflow_fallback_failed");
+        }];
+    }
+    if (_keyboardSmoke && !_keyboardVerified && ++_keyboardSmokeFrames > 300)
+    {
+        write_status(_keyboardInjected ? @"keyboard_input_mismatch" : @"keyboard_responder_unavailable");
+        _keyboardSmoke = NO;
+        _reportedFrame = YES;
+    }
+    if (!_reportedFrame && (!_keyboardSmoke || _keyboardVerified) &&
+        (!_compositionSmoke || _compositionPhase == 4) && !_overflowSmoke)
+    {
+        _reportedFrame = YES;
+        const BOOL two_windows_visible = visible_windows == 2;
+        [buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
+            write_status(completed.status != MTLCommandBufferStatusCompleted
+                             ? @"frame_failed"
+                             : (two_windows_visible ? (_compositionSmoke ? @"composition_frame_completed"
+                                                     : _keyboardSmoke ? @"keyboard_input_frame_completed"
+                                                                       : @"multi_window_frame_completed")
+                                                    : @"multi_window_missing"));
+        }];
+    }
+    [buffer commit];
+}
+
+- (void)dealloc
+{
+    vimgui_ios_text_view_destroy(_richText);
+    vimgui_ios_keyboard_destroy(_keyboard);
+    if (_ready)
+    {
+        vimgui_metal_shutdown();
+        vimgui_ios_shutdown();
+    }
+    if (ImGui::GetCurrentContext() != nullptr)
+        ImGui::DestroyContext();
+}
+@end
+
+@interface VImGuiAppDelegate : UIResponder <UIApplicationDelegate>
+@property(nonatomic, strong) UIWindow* window;
+@end
+
+@implementation VImGuiAppDelegate
+- (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)options
+{
+    (void)application;
+    (void)options;
+    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    self.window.rootViewController = [[VImGuiViewController alloc] init];
+    [self.window makeKeyAndVisible];
+    return YES;
+}
+@end
+
+int main(int argc, char** argv)
+{
+    @autoreleasepool
+    {
+        return UIApplicationMain(argc, argv, nil, NSStringFromClass([VImGuiAppDelegate class]));
+    }
+}

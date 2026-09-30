@@ -6,6 +6,8 @@
 
 For a fresh-clone setup and a one-command GLFW/Vulkan demo, see
 [`QUICKSTART.md`](QUICKSTART.md).
+For Android Vulkan and Apple Metal/iOS build and lifecycle details, see
+[`docs/mobile.md`](docs/mobile.md).
 
 The cross-platform setup entry point installs prerequisites and builds the
 native library without regenerating bindings:

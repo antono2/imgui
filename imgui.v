@@ -99,7 +99,7 @@ pub type BindingFixedArray31 = [999]i8
 
 pub type ImWchar = u32
 
-pub type InputTextCallback = fn (&InputTextCallbackData) i32
+pub type InputTextCallback = fn (mut InputTextCallbackData) i32
 
 pub type SizeCallback = fn (&SizeCallbackData)
 

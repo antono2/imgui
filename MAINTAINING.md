@@ -2,7 +2,7 @@
 
 This document is for contributors updating generated bindings, release artifacts,
 or repository automation. For installation and application integration, use the
-[README](README.md) and [Quick Start](QUICKSTART.md).
+[README](README.md), [Quick Start](QUICKSTART.md), and [mobile guide](docs/mobile.md).
 
 ## Generated API and upstream variants
 
@@ -56,6 +56,14 @@ holds on PR checks triggered by `GITHUB_TOKEN` and is preferable for unattended
 proposals. Neither option authorizes automatic merging.
 
 ## CI and release artifacts
+
+[The mobile workflow](.github/workflows/mobile-native.yml) runs an offscreen
+Vulkan/FreeType frame on Ubuntu, cross-builds Android for `armeabi-v7a`,
+`arm64-v8a`, and `x86_64`, and compiles/links Metal for macOS, both iOS Simulator
+architectures, and arm64 iPhoneOS. Simulator runtime is advisory because hosted
+runners may lack a usable Metal device; passing it does not validate real Apple
+hardware or IMEs. Android emulator and physical-device tests are separate from
+the required matrix.
 
 [The demo workflow](.github/workflows/demo-release.yml) builds Ubuntu 24.04
 x86_64 and Windows 10/11 x64 artifacts. The source path remains
