@@ -1,0 +1,140 @@
+name: Propose upstream ImGui bindings
+
+on:
+  pull_request:
+    branches: [master, standard]
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: imgui-upstream-update
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate upstream update script
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+      - name: Check script and variant without modifying sources
+        run: |
+          set -euo pipefail
+          bash -n scripts/update_upstream.sh
+          variant=$(tr -d '[:space:]' < UPSTREAM_VARIANT)
+          scripts/update_upstream.sh "$variant" --check-only
+          git diff --exit-code
+
+  propose:
+    name: Propose ${{ matrix.variant }} update
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: docking
+            base: master
+          - variant: standard
+            base: standard
+    env:
+      VARIANT: ${{ matrix.variant }}
+      BASE_BRANCH: ${{ matrix.base }}
+      UPDATE_BRANCH: generated/upstream-${{ matrix.variant }}
+      GH_TOKEN: ${{ secrets.UPSTREAM_UPDATE_TOKEN || github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ matrix.base }}
+          submodules: recursive
+          token: ${{ secrets.UPSTREAM_UPDATE_TOKEN || github.token }}
+      - name: Check variant and upstream revisions
+        id: upstream
+        run: |
+          set -euo pipefail
+          test "$(tr -d '[:space:]' < UPSTREAM_VARIANT)" = "$VARIANT"
+          result=$(scripts/update_upstream.sh "$VARIANT" --check-only)
+          printf '%s\n' "$result"
+          [[ "$result" == changed=true || "$result" == changed=false ]]
+          echo "$result" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.upstream.outputs.changed == 'true'
+        with:
+          repository: vlang/v
+          ref: c9b806b294234408af3794f419439599a293a0ea
+          path: toolchain/v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.upstream.outputs.changed == 'true'
+        with:
+          repository: vlang/vc
+          ref: 21490f7811a2dd366c3daa39bef8e53c1e3e5727
+          path: toolchain/v/vc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.upstream.outputs.changed == 'true'
+        with:
+          repository: vlang/tccbin
+          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          path: toolchain/v/thirdparty/tcc
+      - name: Install generator and native build dependencies
+        if: steps.upstream.outputs.changed == 'true'
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libglfw3-dev libvulkan-dev
+      - name: Build pinned V compiler
+        if: steps.upstream.outputs.changed == 'true'
+        working-directory: toolchain/v
+        run: |
+          make local=1
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Regenerate and validate bindings
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          scripts/update_upstream.sh "$VARIANT"
+          v run scripts/check_upstream_variant.vsh
+          v run cleanup_imgui_implot.vsh --self-test
+          v -check-syntax imgui.v
+          mkdir -p "$RUNNER_TEMP/vmodules/antono2"
+          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
+          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -shared -check implot
+          git diff --check
+      - name: Propose reviewable upstream update
+        if: steps.upstream.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git add -A -- cimgui cimplot UPSTREAM_VARIANT imgui.v implot/implot.v \
+            include impl_vulkan/imgui_impl_vulkan.c.v
+          git diff --exit-code
+          if git diff --cached --quiet; then
+            echo 'No generated changes to propose.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$UPDATE_BRANCH"
+          git commit -m "Update $VARIANT ImGui and ImPlot bindings"
+          remote_ref="refs/heads/$UPDATE_BRANCH"
+          remote_sha=$(git ls-remote origin "$remote_ref" | awk '{print $1}')
+          if [[ -n "$remote_sha" ]]; then
+            existing=$(gh pr list --base "$BASE_BRANCH" --head "$UPDATE_BRANCH" \
+              --state open --json number --jq '.[0].number // empty')
+            [[ -n "$existing" ]] || {
+              echo "Refusing to replace $remote_ref without an open update PR." >&2
+              exit 1
+            }
+            git push --force-with-lease="$remote_ref:$remote_sha" origin "HEAD:$remote_ref"
+            echo "Updated PR #$existing"
+          else
+            git push origin "HEAD:$remote_ref"
+            gh pr create --draft --base "$BASE_BRANCH" --head "$UPDATE_BRANCH" \
+              --title "Update $VARIANT ImGui and ImPlot bindings" \
+              --body "Automated upstream refresh for the $VARIANT variant. cimgui: $(git -C cimgui rev-parse HEAD); cimplot: $(git -C cimplot rev-parse HEAD). Generated V bindings and native sources must pass CI and receive human review before merge."
+          fi
