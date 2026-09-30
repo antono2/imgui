@@ -24,6 +24,9 @@ struct CleanupContext {
 	cfg          Config
 	header       string
 	const_params map[string]bool
+mut:
+	callback_param_types map[string]string
+	header_param_names   map[string][]string
 }
 
 struct ExprParser {
@@ -479,14 +482,23 @@ fn emit_function(ctx CleanupContext, csym string, decl FnDecl) string {
 	mut vparts := []string{}
 	mut cparts := []string{}
 	mut args := []string{}
-	for raw in split_top_level_commas(decl.params) {
+	header_names := ctx.header_param_names[csym]
+	for param_index, raw in split_top_level_commas(decl.params) {
 		p := raw.trim_space()
 		if p == '' || p == '...' || p.starts_with('vargs ') {
 			continue
 		}
 		is_mut, raw_name, raw_type := parameter_parts(p) or { continue }
 		mut name := raw_name
-		typ := clean_type_expr(ctx.kind, raw_type).replace('& i8', '&char').replace('&i8', '&char')
+		if param_index < header_names.len && header_names[param_index] == '_' + name {
+			name = header_names[param_index]
+		}
+		mut typ := clean_type_expr(ctx.kind, raw_type).replace('& i8', '&char').replace('&i8', '&char')
+		if typ == '&voidptr' {
+			if callback_type := ctx.callback_param_types['${csym}\x00${name}'] {
+				typ = callback_type
+			}
+		}
 		fallback_const := typ == '&char' && name in ['fmt', 'text', 'text_end', 'label', 'str',
 			'str_id', 'overlay', 'shortcut', 'name', 'begin', 'end', 'fmt_begin', 'fmt_end']
 		if (ctx.const_params['${csym}\x00${name}'] || fallback_const) && !name.starts_with('const_') {
@@ -1233,6 +1245,67 @@ fn parse_callback_typedefs(ctx CleanupContext) map[string]string {
 	return result
 }
 
+// C2V may erase a pointer-to-callback typedef into &voidptr. Recover its
+// public V type from the C prototype when that typedef is present in the
+// header, without depending on a particular function or parameter name.
+fn parse_callback_param_types(ctx CleanupContext) map[string]string {
+	callbacks := parse_callback_typedefs(ctx)
+	mut result := map[string]string{}
+	for raw in ctx.header.split_into_lines() {
+		line := strip_line_comment(raw).trim_space()
+		if !(line.starts_with('CIMGUI_API ') || line.starts_with('IMPLOT_API '))
+			|| !line.ends_with(';') {
+			continue
+		}
+		open_index := line.index('(') or { continue }
+		close_index := line.last_index(')') or { continue }
+		if close_index < open_index { continue }
+		symbol := line[..open_index].trim_space().all_after_last(' ')
+		for raw_param in split_top_level_commas(line[open_index + 1..close_index]) {
+			param := raw_param.trim_space()
+			space := param.last_index(' ') or { continue }
+			name := param[space + 1..].trim_space().trim_left('*')
+			type_part := param[..space].trim_space()
+			if name == '' || !name.bytes().all(is_ident_byte) || type_part.count('*') != 1 {
+				continue
+			}
+			c_type := type_part.replace('const ', '').replace('*', '').trim_space()
+			v_type := clean_type_name(ctx.kind, c_type)
+			if v_type in callbacks {
+				result['${symbol}\x00${name}'] = '&${v_type}'
+			}
+		}
+	}
+	return result
+}
+
+// Keep C parameter names that C2V simplified by dropping a leading underscore.
+// This preserves public wrapper names while deriving them from the same header
+// as the generated C symbols.
+fn parse_header_param_names(header string) map[string][]string {
+	mut result := map[string][]string{}
+	for raw in header.split_into_lines() {
+		line := strip_line_comment(raw).trim_space()
+		if !(line.starts_with('CIMGUI_API ') || line.starts_with('IMPLOT_API '))
+			|| !line.ends_with(';') {
+			continue
+		}
+		open_index := line.index('(') or { continue }
+		close_index := line.last_index(')') or { continue }
+		if close_index < open_index { continue }
+		symbol := line[..open_index].trim_space().all_after_last(' ')
+		mut names := []string{}
+		for raw_param in split_top_level_commas(line[open_index + 1..close_index]) {
+			param := raw_param.trim_space()
+			space := param.last_index(' ') or { names << ''; continue }
+			name := param[space + 1..].trim_space().trim_left('*')
+			names << if name.bytes().all(is_ident_byte) { name } else { '' }
+		}
+		result[symbol] = names
+	}
+	return result
+}
+
 fn defined_types(body string) map[string]bool {
 	mut result := map[string]bool{}
 	for line in body.split_into_lines() {
@@ -1773,7 +1846,17 @@ fn clean_one(kind string, input_path string, output_path string) ! {
 		'cimplot.h'
 	})
 	header := os.read_file(header_path)!
-	ctx := CleanupContext{kind, cfg, header, parse_const_params(header)}
+	mut ctx := CleanupContext{kind, cfg, header, parse_const_params(header), map[string]string{},
+		map[string][]string{}}
+	ctx.callback_param_types = parse_callback_param_types(ctx)
+	// C2V also translates cimgui declarations imported by cimplot.h. Consult
+	// both public headers so those duplicate wrappers keep their V parameter names.
+	name_header := if kind == 'implot' {
+		header + '\n' + os.read_file(os.join_path(@DIR, 'include', 'cimgui.h'))!
+	} else {
+		header
+	}
+	ctx.header_param_names = parse_header_param_names(name_header)
 	version, number := parse_version(source, header, kind)
 
 	mut imported_structs := map[string]bool{}
@@ -1957,6 +2040,18 @@ fn self_test() {
 	assert repair_simple_header_structs('implot', 'struct Future_c\n{\n char Name[16];\n};',
 		'pub struct C.Future_c {}\n') == 'pub struct C.Future_c {}\n'
 	assert postprocess_identifiers('value int, callback C.int(x), args va_list, c C.va_list') == 'value i32, callback (x), args Va_list, c C.va_list'
+	callback_header := 'typedef void* (*ImGuiMemAllocFunc)(size_t sz, void* user_data);\nCIMGUI_API void igGetAllocatorFunctions(ImGuiMemAllocFunc* p_alloc_func);'
+	mut callback_ctx := CleanupContext{'imgui', Config{'imgui', 'ImGui', 'im_gui_'}, callback_header,
+		map[string]bool{}, map[string]string{}, map[string][]string{}}
+	callback_ctx.callback_param_types = parse_callback_param_types(callback_ctx)
+	assert callback_ctx.callback_param_types['igGetAllocatorFunctions\x00p_alloc_func'] == '&MemAllocFunc'
+	assert emit_function(callback_ctx, 'igGetAllocatorFunctions', FnDecl{'get_allocator_functions',
+		'p_alloc_func &voidptr', ''}).contains('pub fn get_allocator_functions(p_alloc_func &MemAllocFunc)')
+	assert parse_header_param_names('CIMGUI_API ImVec2* ImVec2_ImVec2_Float(float _x,float _y);')['ImVec2_ImVec2_Float'] == [
+		'_x', '_y']
+	callback_ctx.header_param_names = parse_header_param_names('CIMGUI_API ImVec2* ImVec2_ImVec2_Float(float _x,float _y);')
+	assert emit_function(callback_ctx, 'ImVec2_ImVec2_Float', FnDecl{'im_vec2_im_vec2_float',
+		'x f32, y f32', '&ImVec2'}).contains('pub fn im_vec2_im_vec2_float(_x f32, _y f32)')
 	known := {
 		'first': i64(1 << 4)
 	}
