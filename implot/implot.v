@@ -3997,14 +3997,14 @@ pub type Tm = C.Tm
 @[typedef]
 pub struct C.Tm {}
 
-pub type Axis = Axis_c
+pub type Axis = C.ImPlotAxis_c
 pub type DateTimeSpec = C.ImPlotDateTimeSpec_c
-pub type Point = Point_c
-pub type Range = Range_c
-pub type Rect = Rect_c
+pub type Point = C.ImPlotPoint_c
+pub type Range = C.ImPlotRange_c
+pub type Rect = C.ImPlotRect_c
 pub type Spec = C.ImPlotSpec_c
-pub type Tick = Tick_c
-pub type Time = Time_c
+pub type Tick = C.ImPlotTick_c
+pub type Time = C.ImPlotTime_c
 
 
 pub type AxisColor = C.ImPlotAxisColor
