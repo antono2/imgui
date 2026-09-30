@@ -230,7 +230,8 @@ architectures and iPhoneOS in CI; the matching GitHub-hosted simulator job also
 attempts to launch it and complete one Metal command buffer with both windows
 visible. The Simulator runs both the basic responder (committed text and
 Backspace) and the UITextView bridge (marked text, selection, replacement, and
-commit), verifying each ImGui buffer and a Metal frame. That runtime step is
+commit). It also checks oversized input rejection and fallback activation,
+verifying each ImGui buffer and a Metal frame. That runtime step is
 advisory because a hosted runner may lack a usable Simulator Metal device;
 success still does not establish hardware IME or GPU behavior.
 

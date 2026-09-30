@@ -78,6 +78,9 @@ static int text_callback(ImGuiInputTextCallbackData* data)
     BOOL _compositionSmoke;
     int _compositionPhase;
     BOOL _compositionSelectionVerified;
+    BOOL _overflowSmoke;
+    BOOL _overflowInjected;
+    BOOL _fallbackReady;
     BOOL _keyboardInjected;
     BOOL _keyboardDeleteSent;
     BOOL _keyboardVerified;
@@ -88,6 +91,7 @@ static int text_callback(ImGuiInputTextCallbackData* data)
 {
     _keyboardSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--keyboard-smoke"];
     _compositionSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--composition-smoke"];
+    _overflowSmoke = [[NSProcessInfo processInfo].arguments containsObject:@"--overflow-smoke"];
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     VImGuiView* view = [[VImGuiView alloc] initWithFrame:[UIScreen mainScreen].bounds device:device];
     view.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
@@ -172,7 +176,8 @@ static int text_callback(ImGuiInputTextCallbackData* data)
             ++_tapCount;
         ImGui::SameLine();
         ImGui::Text("count = %d", _tapCount);
-        if ((_keyboardSmoke && !_keyboardInjected) || (_compositionSmoke && _compositionPhase == 0))
+        if ((_keyboardSmoke && !_keyboardInjected) || (_compositionSmoke && _compositionPhase == 0) ||
+            (_overflowSmoke && !_overflowInjected))
             ImGui::SetKeyboardFocusHere();
         ImGui::InputText("Text", _text, sizeof(_text), ImGuiInputTextFlags_CallbackAlways,
                          text_callback, (__bridge void*)self);
@@ -246,6 +251,12 @@ static int text_callback(ImGuiInputTextCallbackData* data)
                 _compositionPhase = 3;
             }
         }
+        if (_overflowSmoke && !_richFailed && wants_keyboard && !_overflowInjected)
+        {
+            id<UIKeyInput> input = (__bridge id<UIKeyInput>)_richText;
+            [input insertText:[@"" stringByPaddingToLength:300 withString:@"x" startingAtIndex:0]];
+            _overflowInjected = YES;
+        }
     }
     if (_richFailed && _richText != nullptr)
     {
@@ -257,6 +268,8 @@ static int text_callback(ImGuiInputTextCallbackData* data)
     {
         const bool wants_keyboard = vimgui_ios_wants_text_input();
         const bool responder_ready = vimgui_ios_keyboard_set_visible(_keyboard, wants_keyboard);
+        if (_overflowSmoke && _richFailed && wants_keyboard)
+            _fallbackReady = responder_ready;
         if (_keyboardSmoke && !_keyboardInjected && wants_keyboard && responder_ready)
         {
             id<UIKeyInput> responder = (__bridge id<UIKeyInput>)_keyboard;
@@ -278,6 +291,15 @@ static int text_callback(ImGuiInputTextCallbackData* data)
         _compositionSmoke = NO;
         _reportedFrame = YES;
     }
+    if (_overflowSmoke && _richFailed && !_reportedFrame)
+    {
+        _reportedFrame = YES;
+        const BOOL safe_fallback = _richError == 2 && _fallbackReady && _text[0] == '\0';
+        [buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
+            write_status(completed.status == MTLCommandBufferStatusCompleted && safe_fallback
+                             ? @"overflow_fallback_frame_completed" : @"overflow_fallback_failed");
+        }];
+    }
     if (_keyboardSmoke && !_keyboardVerified && ++_keyboardSmokeFrames > 300)
     {
         write_status(_keyboardInjected ? @"keyboard_input_mismatch" : @"keyboard_responder_unavailable");
@@ -285,7 +307,7 @@ static int text_callback(ImGuiInputTextCallbackData* data)
         _reportedFrame = YES;
     }
     if (!_reportedFrame && (!_keyboardSmoke || _keyboardVerified) &&
-        (!_compositionSmoke || _compositionPhase == 4))
+        (!_compositionSmoke || _compositionPhase == 4) && !_overflowSmoke)
     {
         _reportedFrame = YES;
         const BOOL two_windows_visible = visible_windows == 2;

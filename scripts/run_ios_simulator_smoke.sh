@@ -49,3 +49,5 @@ run_smoke() {
 run_smoke --keyboard-smoke keyboard_input_frame_completed
 xcrun simctl terminate "$device_id" io.antono2.vimgui.ios-demo
 run_smoke --composition-smoke composition_frame_completed
+xcrun simctl terminate "$device_id" io.antono2.vimgui.ios-demo
+run_smoke --overflow-smoke overflow_fallback_frame_completed
