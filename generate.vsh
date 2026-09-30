@@ -23,6 +23,15 @@ fn run_at(command string, directory string) ! {
 	}
 }
 
+fn translate_header(header string, directory string) ! {
+	c2v_bin := os.getenv('C2V_BIN')
+	if c2v_bin != '' {
+		run_at('${os.quoted_path(c2v_bin)} ${os.quoted_path(header)}', directory)!
+	} else {
+		run_at('v translate ${os.quoted_path(header)}', directory)!
+	}
+}
+
 fn remove_file(path string) ! {
 	if os.is_file(path) {
 		os.rm(path)!
@@ -147,8 +156,8 @@ fn main() {
 	run_at('git checkout-index -a -f --prefix=${os.quoted_path(implot_include)}', os.join_path(repo_dir, 'cimplot', 'implot')) or { panic(err) }
 
 	os.write_file(os.join_path(include_dir, 'c2v.toml'), '[project]\nadditional_flags = "${c2v_flags}"\n')!
-	run_at('v translate cimgui.h', include_dir) or { panic(err) }
-	run_at('v translate cimplot.h', include_dir) or { panic(err) }
+	translate_header('cimgui.h', include_dir) or { panic(err) }
+	translate_header('cimplot.h', include_dir) or { panic(err) }
 	remove_file(os.join_path(include_dir, 'cimgui.json')) or { panic(err) }
 	remove_file(os.join_path(include_dir, 'cimplot.json')) or { panic(err) }
 
