@@ -281,6 +281,7 @@ public final class ImGuiInputView extends View {
         } else {
             synchronized (this) {
                 keyboardVisible = false;
+                removeCallbacks(syncWhileVisible);
                 stateful = false;
                 sentSerial = 0;
                 batchDepth = 0;
@@ -289,5 +290,18 @@ public final class ImGuiInputView extends View {
             imm.hideSoftInputFromWindow(getWindowToken(), 0);
             clearFocus();
         }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        synchronized (this) {
+            keyboardVisible = false;
+            removeCallbacks(syncWhileVisible);
+            stateful = false;
+            sentSerial = 0;
+            seenRevision = 0;
+            batchDepth = 0;
+        }
+        super.onDetachedFromWindow();
     }
 }
