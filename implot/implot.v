@@ -78,6 +78,7 @@ pub type BindingFixedArray5 = [6]Cond
 pub type BindingFixedArray6 = [6]Range_c
 pub type BindingFixedArray7 = [6]bool
 
+@[typedef]
 pub type Va_list = imgui.Va_list
 
 // External C type declarations (from headers)
@@ -136,7 +137,7 @@ pub type ImU16 = u16
 pub type ImS32 = i32
 pub type ImU32 = u32
 pub type ImS64 = i64
-pub type ImU64 = i64
+pub type ImU64 = u64
 pub type ImGuiCol = i32
 pub type ImGuiCond = i32
 pub type ImGuiDataType = i32
@@ -183,7 +184,7 @@ pub type ImGuiMemFreeFunc = fn (voidptr, voidptr)
 
 pub type ImVec4_c = imgui.ImVec4_c
 
-pub type ImTextureID = i64
+pub type ImTextureID = u64
 
 pub type ImTextureRef_c = imgui.ImTextureRef_c
 
@@ -317,7 +318,6 @@ pub enum ImGuiPopupFlags_ {
  any_popup_level                    = 1 << 11
  any_popup                          = 1 << 10 | 1 << 11
  mouse_button_shift_                = 1 << 1
- //mouse_button_mask_ = 1 << 2 | 1 << 3
  invalid_mask_                      = 1 << 0 | 1 << 1
 }
 
@@ -361,7 +361,6 @@ pub enum ImGuiTabBarFlags_ {
  fitting_policy_shrink              = 1 << 8
  fitting_policy_scroll              = 1 << 9
  fitting_policy_mask_               = 1 << 7 | 1 << 8 | 1 << 9
- //fitting_policy_default_ = 1 << 7
 }
 
 
@@ -468,7 +467,6 @@ pub enum ImGuiSortDirection {
 pub enum ImGuiKey {
  none                               = 0
  named_key_begin                    = 512
- //tab = 512
  left_arrow                         = 513
  right_arrow                        = 514
  up_arrow                           = 515
@@ -625,7 +623,6 @@ pub enum ImGuiKey {
  reserved_for_mod_super             = 666
  named_key_end                      = 667
  named_key_count                    = 155
- //im_gui_mod_none = 0
  im_gui_mod_ctrl                    = 4096
  im_gui_mod_shift                   = 8192
  im_gui_mod_alt                     = 16384
@@ -1055,7 +1052,6 @@ pub enum ImDrawFlags_ {
  round_corners_bottom_right         = 1 << 7
  round_corners_none                 = 1 << 8
  round_corners_all                  = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
- //round_corners_default_ = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
  round_corners_top                  = 1 << 4 | 1 << 5
  round_corners_bottom               = 1 << 6 | 1 << 7
  round_corners_left                 = 1 << 4 | 1 << 6
@@ -1301,7 +1297,6 @@ pub enum ImGuiButtonFlagsPrivate_ {
  no_test_key_owner                  = 1 << 21
  no_focus                           = 1 << 22
  pressed_on_mask_                   = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9
- //pressed_on_default_ = 1 << 5
 }
 
 
@@ -1487,10 +1482,8 @@ pub enum ImGuiInputFlagsPrivate_ {
  repeat_rate_mask_                  = 1 << 1 | 1 << 2 | 1 << 3
  repeat_until_mask_                 = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
  repeat_mask_                       = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
- //cond_mask_ = 1 << 22 | 1 << 23
  route_type_mask_                   = 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13
  route_options_mask_                = 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
- //supported_by_is_key_pressed = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
  supported_by_is_mouse_clicked      = 1 << 0
  supported_by_shortcut              = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17
  supported_by_set_next_item_shortcut = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 10 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 15 | 1 << 16 | 1 << 17 | 1 << 18
@@ -3889,14 +3882,14 @@ pub type Tm = C.Tm
 @[typedef]
 pub struct C.Tm {}
 
-pub type Axis = Axis_c
+pub type Axis = C.ImPlotAxis_c
 pub type DateTimeSpec = C.ImPlotDateTimeSpec_c
-pub type Point = Point_c
-pub type Range = Range_c
-pub type Rect = Rect_c
+pub type Point = C.ImPlotPoint_c
+pub type Range = C.ImPlotRange_c
+pub type Rect = C.ImPlotRect_c
 pub type Spec = C.ImPlotSpec_c
-pub type Tick = Tick_c
-pub type Time = Time_c
+pub type Tick = C.ImPlotTick_c
+pub type Time = C.ImPlotTime_c
 
 
 pub type AxisColor = C.ImPlotAxisColor
