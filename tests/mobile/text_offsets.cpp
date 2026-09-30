@@ -1,5 +1,7 @@
 #include "../../native/mobile/vimgui_text_offsets.h"
 
+// CI builds this target in Release mode; keep the test checks executable.
+#undef NDEBUG
 #include <cassert>
 
 int main()
