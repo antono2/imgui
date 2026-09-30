@@ -122,15 +122,10 @@ pub mut:
 
 // docking branch
 pub type ImColor = C.ImColor_c
-
 pub type ImRect = C.ImRect_c
-
-pub type ImTextureRef = ImTextureRef_c
-
+pub type ImTextureRef = C.ImTextureRef_c
 pub type ImVec2 = C.ImVec2_c
-
 pub type ImVec2i = C.ImVec2i_c
-
 pub type ImVec4 = C.ImVec4_c
 
 pub type TextFilter = C.ImGuiTextFilter
@@ -174,109 +169,57 @@ pub mut:
 }
 
 pub type ID = u32
-
 pub type ImS8 = i8
-
 pub type ImU8 = u8
-
 pub type ImS16 = i16
-
 pub type ImU16 = u16
-
 pub type ImS32 = i32
-
 pub type ImU32 = u32
-
 pub type ImS64 = i64
-
 pub type ImU64 = i64
-
 pub type Col = i32
-
 pub type Cond = i32
-
 pub type DataType = i32
-
 pub type MouseButton = i32
-
 pub type MouseCursor = i32
-
 pub type StyleVar = i32
-
 pub type TableBgTarget = i32
-
 pub type ImDrawFlags = i32
-
 pub type ImDrawListFlags = i32
-
 pub type ImDrawTextFlags = i32
-
 pub type ImFontFlags = i32
-
 pub type ImFontAtlasFlags = i32
-
 pub type BackendFlags = i32
-
 pub type ButtonFlags = i32
-
 pub type ChildFlags = i32
-
 pub type ColorEditFlags = i32
-
 pub type ConfigFlags = i32
-
 pub type ComboFlags = i32
-
 pub type DockNodeFlags = i32
-
 pub type DragDropFlags = i32
-
 pub type FocusedFlags = i32
-
 pub type HoveredFlags = i32
-
 pub type InputFlags = i32
-
 pub type InputTextFlags = i32
-
 pub type ItemFlags = i32
-
 pub type KeyChord = i32
-
 pub type ListClipperFlags = i32
-
 pub type PopupFlags = i32
-
 pub type MultiSelectFlags = i32
-
 pub type SelectableFlags = i32
-
 pub type SliderFlags = i32
-
 pub type TabBarFlags = i32
-
 pub type TabItemFlags = i32
-
 pub type TableFlags = i32
-
 pub type TableColumnFlags = i32
-
 pub type TableRowFlags = i32
-
 pub type TreeNodeFlags = i32
-
 pub type ViewportFlags = i32
-
 pub type WindowFlags = i32
-
 pub type ImWchar32 = u32
-
 pub type ImWchar16 = u16
-
 pub type SelectionUserData = i64
-
 pub type MemAllocFunc = fn (usize, voidptr) voidptr
-
 pub type MemFreeFunc = fn (voidptr, voidptr)
 
 pub type ImVec4_c = C.ImVec4_c
@@ -1178,7 +1121,7 @@ pub mut:
 	AntiAliasedFill                  bool
 	CurveTessellationTol             f32
 	CircleTessellationMaxError       f32
-	Colors BindingFixedArray1
+	Colors                           BindingFixedArray1
 	HoverStationaryDelay             f32
 	HoverDelayShort                  f32
 	HoverDelayNormal                 f32
@@ -1296,7 +1239,7 @@ pub mut:
 	MouseDelta                                    ImVec2_c
 	Ctx                                           &Context
 	MousePos                                      ImVec2_c
-	MouseDown BindingFixedArray2
+	MouseDown                                     BindingFixedArray2
 	MouseWheel                                    f32
 	MouseWheelH                                   f32
 	MouseSource                                   MouseSource
@@ -1306,25 +1249,25 @@ pub mut:
 	KeyAlt                                        bool
 	KeySuper                                      bool
 	KeyMods                                       KeyChord
-	KeysData BindingFixedArray3
+	KeysData                                      BindingFixedArray3
 	WantCaptureMouseUnlessPopupClose              bool
 	MousePosPrev                                  ImVec2_c
-	MouseClickedPos BindingFixedArray4
-	MouseClickedTime BindingFixedArray5
-	MouseClicked BindingFixedArray2
-	MouseDoubleClicked BindingFixedArray2
-	MouseClickedCount BindingFixedArray6
-	MouseClickedLastCount BindingFixedArray6
-	MouseReleased BindingFixedArray2
-	MouseReleasedTime BindingFixedArray5
-	MouseDownOwned BindingFixedArray2
-	MouseDownOwnedUnlessPopupClose BindingFixedArray2
+	MouseClickedPos                               BindingFixedArray4
+	MouseClickedTime                              BindingFixedArray5
+	MouseClicked                                  BindingFixedArray2
+	MouseDoubleClicked                            BindingFixedArray2
+	MouseClickedCount                             BindingFixedArray6
+	MouseClickedLastCount                         BindingFixedArray6
+	MouseReleased                                 BindingFixedArray2
+	MouseReleasedTime                             BindingFixedArray5
+	MouseDownOwned                                BindingFixedArray2
+	MouseDownOwnedUnlessPopupClose                BindingFixedArray2
 	MouseWheelRequestAxisSwap                     bool
 	MouseCtrlLeftAsRightClick                     bool
-	MouseDownDuration BindingFixedArray7
-	MouseDownDurationPrev BindingFixedArray7
-	MouseDragMaxDistanceAbs BindingFixedArray4
-	MouseDragMaxDistanceSqr BindingFixedArray7
+	MouseDownDuration                             BindingFixedArray7
+	MouseDownDurationPrev                         BindingFixedArray7
+	MouseDragMaxDistanceAbs                       BindingFixedArray4
+	MouseDragMaxDistanceSqr                       BindingFixedArray7
 	PenPressure                                   f32
 	AppFocusLost                                  bool
 	AppAcceptingEvents                            bool
@@ -1392,7 +1335,7 @@ pub mut:
 	SourceId       ID
 	SourceParentId ID
 	DataFrameCount i32
-	DataType BindingFixedArray8
+	DataType       BindingFixedArray8
 	Preview        bool
 	Delivery       bool
 }
@@ -1586,7 +1529,6 @@ pub mut:
 }
 
 pub type ImDrawIdx = u16
-
 pub type ImDrawCallback = fn (&ImDrawList, &ImDrawCmd)
 
 pub type ImDrawCmd = C.ImDrawCmd
@@ -1874,7 +1816,7 @@ pub type ImFontConfig = C.ImFontConfig
 @[typedef]
 pub struct C.ImFontConfig {
 pub mut:
-	Name BindingFixedArray9
+	Name                 BindingFixedArray9
 	FontData             voidptr
 	FontDataSize         i32
 	FontDataOwnedByAtlas bool
@@ -2016,7 +1958,7 @@ pub mut:
 	TexUvWhitePixel     ImVec2_c
 	Fonts               ImVector_ImFontPtr
 	Sources             ImVector_ImFontConfig
-	TexUvLines BindingFixedArray10
+	TexUvLines          BindingFixedArray10
 	TexNextUniqueID     i32
 	FontNextUniqueID    i32
 	DrawListSharedDatas ImVector_ImDrawListSharedDataPtr
@@ -2115,7 +2057,7 @@ pub mut:
 	Sources                  ImVector_ImFontConfigPtr
 	EllipsisChar             ImWchar
 	FallbackChar             ImWchar
-	Used8kPagesMap BindingFixedArray11
+	Used8kPagesMap           BindingFixedArray11
 	EllipsisAutoBake         bool
 	RemapPairs               Storage
 }
@@ -2261,45 +2203,25 @@ pub mut:
 }
 
 pub type DataAuthority = u32
-
 pub type LayoutType = i32
-
 pub type ActivateFlags = i32
-
 pub type DebugLogFlags = i32
-
 pub type FocusRequestFlags = i32
-
 pub type ItemStatusFlags = i32
-
 pub type OldColumnFlags = i32
-
 pub type LogFlags = i32
-
 pub type NavRenderCursorFlags = i32
-
 pub type NavMoveFlags = i32
-
 pub type NextItemDataFlags = i32
-
 pub type NextWindowDataFlags = i32
-
 pub type ScrollFlags = i32
-
 pub type SeparatorFlags = i32
-
 pub type TextFlags = i32
-
 pub type TooltipFlags = i32
-
 pub type TypingSelectFlags = i32
-
 pub type WindowBgClickFlags = i32
-
 pub type WindowRefreshFlags = i32
-
 pub type TableColumnIdx = i16
-
 pub type TableDrawChannelIdx = u16
 
 pub enum ImDrawTextFlags_ {
@@ -2330,8 +2252,8 @@ pub type ImVec2i_c = C.ImVec2i_c
 @[typedef]
 pub struct C.ImVec2i_c {
 pub mut:
-	x int
-	y int
+	x i32
+	y i32
 }
 
 pub type ImVec2ih = C.ImVec2ih
@@ -2412,9 +2334,9 @@ pub mut:
 	TempBuffer                 ImVector_ImVec2
 	DrawLists                  ImVector_ImDrawListPtr
 	Context                    &Context
-	ArcFastVtx BindingFixedArray12
+	ArcFastVtx                 BindingFixedArray12
 	ArcFastRadiusCutoff        f32
-	CircleSegmentCounts BindingFixedArray13
+	CircleSegmentCounts        BindingFixedArray13
 }
 
 pub type ImDrawDataBuilder = C.ImDrawDataBuilder
@@ -2670,7 +2592,7 @@ pub mut:
 	OffsetLabel    ImU16
 	OffsetShortcut ImU16
 	OffsetMark     ImU16
-	Widths BindingFixedArray15
+	Widths         BindingFixedArray15
 }
 
 pub type InputTextDeactivatedState = C.ImGuiInputTextDeactivatedState
@@ -2686,7 +2608,23 @@ pub mut:
 pub type ImStbTexteditState = C.STB_TexteditState
 
 @[typedef]
-pub struct C.STB_TexteditState {}
+pub struct C.STB_TexteditState {
+pub mut:
+	Cursor                i32
+	Select_start          i32
+	Select_end            i32
+	Insert_mode           u8
+	Row_count_per_page    i32
+	Cursor_at_end_of_line u8
+	Initialized           u8
+	Has_preferred_x       u8
+	Single_line           u8
+	Padding1              u8
+	Padding2              u8
+	Padding3              u8
+	Preferred_x           f32
+	Undostate             StbUndoState
+}
 
 pub type InputTextState = C.ImGuiInputTextState
 
@@ -3052,7 +2990,7 @@ pub type KeyRoutingTable = C.ImGuiKeyRoutingTable
 @[typedef]
 pub struct C.ImGuiKeyRoutingTable {
 pub mut:
-	Index BindingFixedArray17
+	Index       BindingFixedArray17
 	Entries     ImVector_KeyRoutingData
 	EntriesNext ImVector_KeyRoutingData
 }
@@ -3235,7 +3173,7 @@ pub type TypingSelectState = C.ImGuiTypingSelectState
 pub struct C.ImGuiTypingSelectState {
 pub mut:
 	Request            TypingSelectRequest
-	SearchBuffer BindingFixedArray18
+	SearchBuffer       BindingFixedArray18
 	FocusScope         ID
 	LastRequestFrame   i32
 	LastRequestTime    f32
@@ -3314,7 +3252,7 @@ pub mut:
 	Window                &Window
 	UnclipMode            bool
 	UnclipRect            ImRect_c
-	UnclipRects BindingFixedArray19
+	UnclipRects           BindingFixedArray19
 	BoxSelectRectPrev     ImRect_c
 	BoxSelectRectCurr     ImRect_c
 }
@@ -3651,7 +3589,7 @@ pub mut:
 	TotalAllocCount i32
 	TotalFreeCount  i32
 	LastEntriesIdx  ImS16
-	LastEntriesBuf BindingFixedArray22
+	LastEntriesBuf  BindingFixedArray22
 }
 
 pub type MetricsConfig = C.ImGuiMetricsConfig
@@ -4055,7 +3993,7 @@ pub mut:
 	FrameCountPlatformEnded            i32
 	FrameCountRendered                 i32
 	Time                               f64
-	ContextName BindingFixedArray23
+	ContextName                        BindingFixedArray23
 	IO                                 IO
 	PlatformIO                         PlatformIO
 	Style                              Style
@@ -4136,7 +4074,7 @@ pub mut:
 	LastKeyModsChangeFromNoneTime      f64
 	LastKeyboardKeyPressTime           f64
 	KeysMayBeCharInput                 ImBitArrayForNamedKeys
-	KeysOwnerData BindingFixedArray24
+	KeysOwnerData                      BindingFixedArray24
 	KeysRoutingTable                   KeyRoutingTable
 	ActiveIdUsingNavDirMask            ImU32
 	ActiveIdUsingAllKeyboardKeys       bool
@@ -4254,7 +4192,7 @@ pub mut:
 	DragDropAcceptFrameCount           i32
 	DragDropHoldJustPressedId          ID
 	DragDropPayloadBufHeap             ImVector_unsigned_char
-	DragDropPayloadBufLocal BindingFixedArray25
+	DragDropPayloadBufLocal            BindingFixedArray25
 	ClipperTempDataStacked             i32
 	ClipperTempData                    ImVector_ListClipperData
 	CurrentTable                       &Table
@@ -4372,7 +4310,7 @@ pub mut:
 	DebugIDStackTool                   IDStackTool
 	DebugAllocInfo                     DebugAllocInfo
 	DebugHoveredDockNode               &DockNode
-	FramerateSecPerFrame BindingFixedArray26
+	FramerateSecPerFrame               BindingFixedArray26
 	FramerateSecPerFrameIdx            i32
 	FramerateSecPerFrameCount          i32
 	FramerateSecPerFrameAccum          f32
@@ -4380,7 +4318,7 @@ pub mut:
 	WantCaptureKeyboardNextFrame       i32
 	WantTextInputNextFrame             i32
 	TempBuffer                         ImVector_char
-	TempKeychordName BindingFixedArray18
+	TempKeychordName                   BindingFixedArray18
 }
 
 pub type WindowTempData = C.ImGuiWindowTempData
@@ -4557,9 +4495,9 @@ pub mut:
 	RootWindowForNav                   &Window
 	ParentWindowForFocusRoute          &Window
 	NavLastChildNavWindow              &Window
-	NavLastIds BindingFixedArray27
-	NavRectRel BindingFixedArray19
-	NavPreferredScoringPosRel BindingFixedArray28
+	NavLastIds                         BindingFixedArray27
+	NavRectRel                         BindingFixedArray19
+	NavPreferredScoringPosRel          BindingFixedArray28
 	NavRootFocusScopeId                ID
 	MemoryDrawListIdxCapacity          i32
 	MemoryDrawListVtxCapacity          i32
@@ -4844,7 +4782,7 @@ pub mut:
 	RowFlags                   TableRowFlags
 	LastRowFlags               TableRowFlags
 	RowBgColorCounter          i32
-	RowBgColor BindingFixedArray29
+	RowBgColor                 BindingFixedArray29
 	BorderColorStrong          ImU32
 	BorderColorLight           ImU32
 	BorderX1                   f32
@@ -5148,8 +5086,8 @@ pub type StbUndoState = C.StbUndoState
 @[typedef]
 pub struct C.StbUndoState {
 pub mut:
-	Undo_rec BindingFixedArray31
-	Undo_char BindingFixedArray32
+	Undo_rec        BindingFixedArray31
+	Undo_char       BindingFixedArray32
 	Undo_point      i16
 	Redo_point      i16
 	Undo_char_point i32
@@ -5180,7 +5118,15 @@ pub mut:
 pub type StbTexteditRow = C.StbTexteditRow
 
 @[typedef]
-pub struct C.StbTexteditRow {}
+pub struct C.StbTexteditRow {
+pub mut:
+	X0               f32
+	X1               f32
+	Baseline_y_delta f32
+	Ymin             f32
+	Ymax             f32
+	Num_chars        i32
+}
 
 @[typedef]
 pub struct C.ImTextureRef {

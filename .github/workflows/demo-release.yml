@@ -70,8 +70,10 @@ jobs:
         run: |
           v run setup.vsh --check
           v run generate.vsh --help
+          v run generate.vsh --self-test
           v run scripts/check_upstream_variant.vsh
           v run cleanup_imgui_implot.vsh --self-test
+          v run scripts/configure_variant.vsh --self-test
       - name: Select package variant
         id: variant
         working-directory: source/modules/antono2/imgui

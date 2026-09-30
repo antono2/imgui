@@ -67,7 +67,7 @@ pub mut:
 	// VIMGUI_DOCKING_INIT_END
 	use_dynamic_rendering          bool
 	allocator                      &vk.AllocationCallbacks = unsafe { nil }
-	check_vk_result_fn             PFN_CheckVkResult = unsafe { nil }
+	check_vk_result_fn             PFN_CheckVkResult       = unsafe { nil }
 	min_allocation_size            vk.DeviceSize
 	custom_shader_vert_create_info vk.ShaderModuleCreateInfo
 	custom_shader_frag_create_info vk.ShaderModuleCreateInfo
@@ -439,11 +439,11 @@ pub fn create_window_swap_chain(physical_device vk.PhysicalDevice, device vk.Dev
 	image_view_ci.components.b = vk.ComponentSwizzle.b
 	image_view_ci.components.a = vk.ComponentSwizzle.a
 	image_range := vk.ImageSubresourceRange{
-		aspectMask: vk.ImageAspectFlags(vk.ImageAspectFlagBits.color)
-		baseMipLevel: 0
-		levelCount: 1
+		aspectMask:     vk.ImageAspectFlags(vk.ImageAspectFlagBits.color)
+		baseMipLevel:   0
+		levelCount:     1
 		baseArrayLayer: 0
-		layerCount: 1
+		layerCount:     1
 	}
 	image_view_ci.subresourceRange = image_range
 	for i in 0 .. wd.image_count {

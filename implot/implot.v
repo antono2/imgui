@@ -112,8 +112,8 @@ pub mut:
 	MarkerFillColor ImVec4_c
 	MarkerFillColors &u32
 	Size f32
-	Offset int
-	Stride int
+	Offset i32
+	Stride i32
 	Flags ItemFlags
 }
 
@@ -121,15 +121,10 @@ pub type ImVec2_c = imgui.ImVec2
 
 // docking branch
 pub type ImColor = ImColor_c
-
 pub type ImRect = ImRect_c
-
 pub type ImTextureRef = ImTextureRef_c
-
 pub type ImVec2 = imgui.ImVec2
-
 pub type ImVec2i = ImVec2i_c
-
 pub type ImVec4 = ImVec4_c
 
 pub type Stbrp_node = imgui.Stbrp_node_im
@@ -137,109 +132,57 @@ pub type Stbrp_node = imgui.Stbrp_node_im
 pub type ImVector_const_charPtr = imgui.ImVector_const_charPtr
 
 pub type ImGuiID = u32
-
 pub type ImS8 = i8
-
 pub type ImU8 = u8
-
 pub type ImS16 = i16
-
 pub type ImU16 = u16
-
 pub type ImS32 = i32
-
 pub type ImU32 = u32
-
 pub type ImS64 = i64
-
 pub type ImU64 = i64
-
 pub type ImGuiCol = i32
-
 pub type ImGuiCond = i32
-
 pub type ImGuiDataType = i32
-
 pub type ImGuiMouseButton = i32
-
 pub type ImGuiMouseCursor = i32
-
 pub type ImGuiStyleVar = i32
-
 pub type ImGuiTableBgTarget = i32
-
 pub type ImDrawFlags = i32
-
 pub type ImDrawListFlags = i32
-
 pub type ImDrawTextFlags = i32
-
 pub type ImFontFlags = i32
-
 pub type ImFontAtlasFlags = i32
-
 pub type ImGuiBackendFlags = i32
-
 pub type ImGuiButtonFlags = i32
-
 pub type ImGuiChildFlags = i32
-
 pub type ImGuiColorEditFlags = i32
-
 pub type ImGuiConfigFlags = i32
-
 pub type ImGuiComboFlags = i32
-
 pub type ImGuiDockNodeFlags = i32
-
 pub type ImGuiDragDropFlags = i32
-
 pub type ImGuiFocusedFlags = i32
-
 pub type ImGuiHoveredFlags = i32
-
 pub type ImGuiInputFlags = i32
-
 pub type ImGuiInputTextFlags = i32
-
 pub type ImGuiItemFlags = i32
-
 pub type ImGuiKeyChord = i32
-
 pub type ImGuiListClipperFlags = i32
-
 pub type ImGuiPopupFlags = i32
-
 pub type ImGuiMultiSelectFlags = i32
-
 pub type ImGuiSelectableFlags = i32
-
 pub type ImGuiSliderFlags = i32
-
 pub type ImGuiTabBarFlags = i32
-
 pub type ImGuiTabItemFlags = i32
-
 pub type ImGuiTableFlags = i32
-
 pub type ImGuiTableColumnFlags = i32
-
 pub type ImGuiTableRowFlags = i32
-
 pub type ImGuiTreeNodeFlags = i32
-
 pub type ImGuiViewportFlags = i32
-
 pub type ImGuiWindowFlags = i32
-
 pub type ImWchar32 = u32
-
 pub type ImWchar16 = u16
-
 pub type ImGuiSelectionUserData = i64
-
 pub type ImGuiMemAllocFunc = fn (usize, voidptr) voidptr
-
 pub type ImGuiMemFreeFunc = fn (voidptr, voidptr)
 
 pub type ImVec4_c = imgui.ImVec4_c
@@ -1114,7 +1057,6 @@ pub enum ImGuiSelectionRequestType {
 }
 
 pub type ImDrawIdx = u16
-
 pub type ImDrawCallback = fn (&imgui.ImDrawList, &imgui.ImDrawCmd)
 
 pub type ImDrawCmd = imgui.ImDrawCmd
@@ -1274,45 +1216,25 @@ pub type ImVector_ImGuiPlatformMonitor = imgui.ImVector_PlatformMonitor
 pub type ImVector_ImGuiViewportPtr = imgui.ImVector_ViewportPtr
 
 pub type ImGuiDataAuthority = u32
-
 pub type ImGuiLayoutType = i32
-
 pub type ImGuiActivateFlags = i32
-
 pub type ImGuiDebugLogFlags = i32
-
 pub type ImGuiFocusRequestFlags = i32
-
 pub type ImGuiItemStatusFlags = i32
-
 pub type ImGuiOldColumnFlags = i32
-
 pub type ImGuiLogFlags = i32
-
 pub type ImGuiNavRenderCursorFlags = i32
-
 pub type ImGuiNavMoveFlags = i32
-
 pub type ImGuiNextItemDataFlags = i32
-
 pub type ImGuiNextWindowDataFlags = i32
-
 pub type ImGuiScrollFlags = i32
-
 pub type ImGuiSeparatorFlags = i32
-
 pub type ImGuiTextFlags = i32
-
 pub type ImGuiTooltipFlags = i32
-
 pub type ImGuiTypingSelectFlags = i32
-
 pub type ImGuiWindowBgClickFlags = i32
-
 pub type ImGuiWindowRefreshFlags = i32
-
 pub type ImGuiTableColumnIdx = i16
-
 pub type ImGuiTableDrawChannelIdx = u16
 
 
@@ -4075,21 +3997,14 @@ pub type Tm = C.Tm
 @[typedef]
 pub struct C.Tm {}
 
-pub type Axis = Axis_c
-
-pub type DateTimeSpec = DateTimeSpec_c
-
-pub type Point = Point_c
-
-pub type Range = Range_c
-
-pub type Rect = Rect_c
-
-pub type Spec = Spec_c
-
-pub type Tick = Tick_c
-
-pub type Time = Time_c
+pub type Axis = C.ImPlotAxis_c
+pub type DateTimeSpec = C.ImPlotDateTimeSpec_c
+pub type Point = C.ImPlotPoint_c
+pub type Range = C.ImPlotRange_c
+pub type Rect = C.ImPlotRect_c
+pub type Spec = C.ImPlotSpec_c
+pub type Tick = C.ImPlotTick_c
+pub type Time = C.ImPlotTime_c
 
 
 pub type AxisColor = C.ImPlotAxisColor
@@ -4149,75 +4064,40 @@ pub mut:
 pub const implot_auto = -1
 
 pub type ImAxis = i32
-
 pub type Prop = i32
-
 pub type Flags = i32
-
 pub type AxisFlags = i32
-
 pub type SubplotFlags = i32
-
 pub type LegendFlags = i32
-
 pub type MouseTextFlags = i32
-
 pub type DragToolFlags = i32
-
 pub type ColormapScaleFlags = i32
-
 pub type ItemFlags = i32
-
 pub type LineFlags = i32
-
 pub type ScatterFlags = i32
-
 pub type BubblesFlags = i32
-
 pub type PolygonFlags = i32
-
 pub type StairsFlags = i32
-
 pub type ShadedFlags = i32
-
 pub type BarsFlags = i32
-
 pub type BarGroupsFlags = i32
-
 pub type ErrorBarsFlags = i32
-
 pub type StemsFlags = i32
-
 pub type InfLinesFlags = i32
-
 pub type PieChartFlags = i32
-
 pub type HeatmapFlags = i32
-
 pub type HistogramFlags = i32
-
 pub type DigitalFlags = i32
-
 pub type ImageFlags = i32
-
 pub type TextFlags = i32
-
 pub type DummyFlags = i32
-
 pub type Cond = i32
-
 pub type Col = i32
-
 pub type StyleVar = i32
-
 pub type Scale = i32
-
 pub type Marker = i32
-
 pub type Colormap = i32
-
 pub type Location = i32
-
 pub type Bin = i32
 
 
@@ -4592,23 +4472,8 @@ pub type Point_c = C.ImPlotPoint_c
 @[typedef]
 pub struct C.ImPlotPoint_c {
 pub mut:
-	LineColor ImVec4_c
-	LineColors &u32
-	LineWeight f32
-	FillColor ImVec4_c
-	FillColors &u32
-	FillAlpha f32
-	Marker i32
-	MarkerSize f32
-	MarkerSizes &f32
-	MarkerLineColor ImVec4_c
-	MarkerLineColors &u32
-	MarkerFillColor ImVec4_c
-	MarkerFillColors &u32
-	Size f32
-	Offset i32
-	Stride i32
-	Flags ItemFlags
+	x f64
+	y f64
 }
 
 
@@ -4616,8 +4481,8 @@ pub type Range_c = C.ImPlotRange_c
 @[typedef]
 pub struct C.ImPlotRange_c {
 pub mut:
-	X f64
-	Y f64
+	Min f64
+	Max f64
 }
 
 
@@ -4625,8 +4490,8 @@ pub type Rect_c = C.ImPlotRect_c
 @[typedef]
 pub struct C.ImPlotRect_c {
 pub mut:
-	Min f64
-	Max f64
+	X Range_c
+	Y Range_c
 }
 
 
@@ -4681,9 +4546,7 @@ pub mut:
 }
 
 pub type Formatter = fn (f64, &char, i32, voidptr) i32
-
 pub type Getter = fn (i32, voidptr) Point_c
-
 pub type Transform = fn (f64, voidptr) f64
 
 pub const implot_min_time = f64(0)
@@ -4693,11 +4556,8 @@ pub const implot_max_time = f64(32503680000)
 pub const implot_label_max_size = 32
 
 pub type TimeUnit = i32
-
 pub type DateFmt = i32
-
 pub type TimeFmt = i32
-
 pub type MarkerInternal = i32
 
 

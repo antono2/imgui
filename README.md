@@ -141,7 +141,8 @@ v run generate.vsh
 by the pinned cimgui/cimplot revisions, then builds `libvimgui`. It therefore
 does not require Perl or LuaJIT for a normal upstream refresh. Pass
 `--regenerate-c` only when intentionally rerunning the upstream Lua generators;
-that advanced mode requires LuaJIT.
+that advanced mode requires LuaJIT. Set `C2V_BIN` to an already-built C2V
+executable to bypass `v translate`'s automatic translator installation.
 
 Maintainers can update either line reproducibly with:
 
@@ -150,6 +151,24 @@ Maintainers can update either line reproducibly with:
 # On the standard branch:
 ./scripts/update_upstream.sh standard
 ```
+
+The [upstream update workflow](.github/workflows/update-upstream.yml) checks
+both lines weekly and can also be started manually. When either cimgui or
+cimplot moves, it regenerates that line with pinned V and C2V revisions, builds the
+native library, verifies the variant and V syntax, and opens or updates a draft
+pull request. It never merges generated changes. A failed generator, build, or
+binding check stops the proposal for review. `--check-only` reports `changed=true` or
+`changed=false` without changing the checkout.
+
+For the workflow to open pull requests with `GITHUB_TOKEN`, a repository admin
+must enable **Settings → Actions → General → Workflow permissions → Allow GitHub
+Actions to create and approve pull requests**. The workflow requests only
+`contents: write` and `pull-requests: write` for its proposal job. An optional
+`UPSTREAM_UPDATE_TOKEN` repository secret containing a GitHub App installation
+token or fine-grained PAT with those permissions can be used instead. Because
+GitHub may hold PR checks triggered by `GITHUB_TOKEN` for approval, the optional
+token is preferable for fully unattended CI; no token or setting permits
+automatic merging.
 
 To only rebuild the native library after a system upgrade or on an older Linux
 distribution, run `v run build_vimgui.vsh`.
