@@ -135,7 +135,8 @@ together. Its Text field uses the selection-aware callback and displays active
 ImGui cursor and selection offsets in UTF-8 bytes. The Android
 `InputConnection` synchronizes text and selection; composing text appears
 without underline or marked-range styling. The sample's Copy text and Read
-clipboard buttons exercise the optional Android clipboard bridge.
+clipboard buttons exercise the optional Android clipboard bridge; the last
+read value remains visible as a preview until the next read or Clear preview.
 
 With the Android SDK (including build-tools and a platform), NDK, JDK, and a
 connected Vulkan-capable tablet:
