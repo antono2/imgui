@@ -4,3 +4,6 @@
 [submodule "cimgui"]
 	path = cimgui
 	url = https://github.com/cimgui/cimgui
+[submodule "third_party/freetype"]
+	path = third_party/freetype
+	url = https://github.com/freetype/freetype.git

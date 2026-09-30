@@ -1219,6 +1219,11 @@ fn parse_callback_typedefs(ctx CleanupContext) map[string]string {
 			vparams << c_type_to_v(ctx.kind, param)
 		}
 		vret := c_type_to_v(ctx.kind, ret)
+		// cimgui's callback receives mutable editing state. A plain `&T` V
+		// callback generates `const T*` in C and is incompatible with its ABI.
+		if ctx.kind == 'imgui' && name == 'InputTextCallback' && vparams == ['&InputTextCallbackData'] {
+			vparams[0] = 'mut InputTextCallbackData'
+		}
 		result[name] = 'pub type ${name} = fn (${vparams.join(', ')})' + if vret != '' {
 			' ${vret}'
 		} else {
@@ -1350,7 +1355,8 @@ fn dynamic_missing_decls(ctx CleanupContext, body string, imported_structs map[s
 		}
 		if name.ends_with('Callback') {
 			target := without_suffix(name, 'Callback') + 'CallbackData'
-			decls << 'pub type ${name} = fn (&${target})' + if name == 'InputTextCallback' {
+			param := if name == 'InputTextCallback' { 'mut ${target}' } else { '&${target}' }
+			decls << 'pub type ${name} = fn (${param})' + if name == 'InputTextCallback' {
 				' i32'
 			} else {
 				''
@@ -1922,6 +1928,11 @@ fn clean_one(kind string, input_path string, output_path string) ! {
 }
 
 fn self_test() {
+	callbacks := parse_callback_typedefs(CleanupContext{
+		kind:   'imgui'
+		header: 'typedef int (*ImGuiInputTextCallback)(ImGuiInputTextCallbackData* data);'
+	})
+	assert callbacks['InputTextCallback'] == 'pub type InputTextCallback = fn (mut InputTextCallbackData) i32'
 	assert split_top_level_commas('a int, callback fn (i32, i32), values [2]f32') == [
 		'a int',
 		' callback fn (i32, i32)',
