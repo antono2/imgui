@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 project(vimgui_application LANGUAGES C CXX)
+if(APPLE)
+  # Enable this in the parent scope before the folder-dialog dependency uses it.
+  enable_language(OBJCXX)
+endif()
 set(VIMGUI_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 add_subdirectory("${VIMGUI_ROOT}/native/accessibility" accessibility)
 find_package(glfw3 REQUIRED)
@@ -32,7 +36,6 @@ target_include_directories(vimgui_app PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
   PRIVATE "${VIMGUI_ROOT}/cimgui/imgui" "${VIMGUI_ROOT}/cimgui/imgui/backends")
 target_link_libraries(vimgui_app PRIVATE vimgui_accessibility glfw nfd)
 if(APPLE)
-  enable_language(OBJCXX)
   target_sources(vimgui_app PRIVATE desktop_metal.mm "${VIMGUI_ROOT}/cimgui/imgui/backends/imgui_impl_metal.mm")
   target_compile_options(vimgui_app PRIVATE "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
   target_link_libraries(vimgui_app PRIVATE "-framework Metal" "-framework QuartzCore" "-framework Cocoa")
