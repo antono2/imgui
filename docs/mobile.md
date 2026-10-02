@@ -254,3 +254,18 @@ For the connected-device checks, set `ANDROID_NDK_HOME` and run
 the two probe executables and `libvimgui.so` under
 `/data/local/tmp/io.antono2.vimgui.probe`, and executes both. Set
 `ANDROID_SERIAL` when more than one device is connected.
+
+## Application forms and touch scrolling
+
+The `appui` wrapper exposes responsive column rows through `begin_columns`,
+`next_column`, and `end_columns`. A zero trailing width gives two equally sized
+field columns; a positive trailing width reserves a compact action column.
+Below the required widths, controls stack vertically. `next_column(true)` aligns
+an action with the preceding input box, including a wrapped label above it.
+Use current text scale when choosing the minimum field width. Logical
+accessibility identities stay unchanged when the row switches layout.
+
+Touch dragging from empty space scrolls the hovered application window or
+panel when content exceeds its height. Buttons, editable fields, and scrollbars
+retain their own gestures; list content also supports its existing drag scroll.
+Back controls include a native arrow without relying on a font's arrow glyph.

@@ -1,0 +1,20 @@
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -38,8 +38,6 @@
+ [[package]]
+ name = "accesskit_atspi_common"
+ version = "0.21.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "52c182f9c282ac9c5638d876d551d15e5f7d397ec263349a0c6a2b61595dd5e4"
+ dependencies = [
+  "accesskit",
+  "accesskit_consumer",
+@@ -90,8 +88,6 @@
+ [[package]]
+ name = "accesskit_unix"
+ version = "0.24.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "202f24df034a7476d07b7f74284de84f6d62aabd858dbe7ee9cad3b7ad6f8f9d"
+ dependencies = [
+  "accesskit",
+  "accesskit_atspi_common",

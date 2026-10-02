@@ -11,6 +11,7 @@
 #include <android/keycodes.h>
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -36,6 +37,7 @@ std::vector<QueuedInput> g_queued_input;
 TextState g_text_snapshot;
 TextState g_pending_text;
 bool g_stateful_text = false;
+ImGuiID g_text_widget = 0;
 int g_text_generation = 1;
 int g_text_revision = 1;
 vimgui::TouchTracker g_touches;
@@ -395,6 +397,41 @@ bool handle_touch(const AInputEvent* event)
 }
 }
 
+extern "C" float vimgui_android_ui_scale(void* java_vm, void* context, float fallback)
+{
+    if (!std::isfinite(fallback) || fallback<=0) fallback=1;
+    ScopedJNIEnv jni(static_cast<JavaVM*>(java_vm));
+    JNIEnv* env=jni.env;
+    if (!env || !context) return fallback;
+    if (env->PushLocalFrame(16)!=JNI_OK) { clear_jni_exception(env); return fallback; }
+    const float result=[&]() -> float {
+        jclass cls=env->GetObjectClass(static_cast<jobject>(context));
+        if (!cls || env->ExceptionCheck()) return fallback;
+        jmethodID resources_method=env->GetMethodID(cls,"getResources","()Landroid/content/res/Resources;");
+        if (!resources_method || env->ExceptionCheck()) return fallback;
+        jobject resources=env->CallObjectMethod(static_cast<jobject>(context),resources_method);
+        if (!resources || env->ExceptionCheck()) return fallback;
+        cls=env->GetObjectClass(resources);
+        if (!cls || env->ExceptionCheck()) return fallback;
+        jmethodID metrics_method=env->GetMethodID(cls,"getDisplayMetrics","()Landroid/util/DisplayMetrics;");
+        if (!metrics_method || env->ExceptionCheck()) return fallback;
+        jobject metrics=env->CallObjectMethod(resources,metrics_method);
+        if (!metrics || env->ExceptionCheck()) return fallback;
+        cls=env->FindClass("android/util/TypedValue");
+        if (!cls || env->ExceptionCheck()) return fallback;
+        jmethodID convert=env->GetStaticMethodID(cls,"applyDimension","(IFLandroid/util/DisplayMetrics;)F");
+        if (!convert || env->ExceptionCheck()) return fallback;
+        // SP conversion respects the OS font preference and Android 14's
+        // nonlinear conversion for the application's base 16sp font.
+        const float scale=env->CallStaticFloatMethod(cls,convert,2,16.0f,metrics)/16.0f;
+        if (env->ExceptionCheck() || !std::isfinite(scale) || scale<=0) return fallback;
+        return scale;
+    }();
+    clear_jni_exception(env);
+    env->PopLocalFrame(nullptr);
+    return result;
+}
+
 extern "C" bool vimgui_android_init(void* native_window)
 {
     g_touches.reset();
@@ -493,14 +530,24 @@ extern "C" bool vimgui_android_apply_text_edit(void* callback_data)
     TextState pending;
     {
         std::lock_guard<std::mutex> lock(g_input_mutex);
+        if (g_text_widget != data->ID || data->EventActivated)
+        {
+            g_text_widget = data->ID;
+            g_pending_text = TextState{};
+            g_text_snapshot = TextState{};
+            ++g_text_generation;
+        }
         g_stateful_text = true;
         pending = g_pending_text;
         g_pending_text.valid = false;
     }
-    const bool applied = pending.valid && (data->Flags & ImGuiInputTextFlags_ReadOnly) == 0;
+    const std::string utf8 = pending.valid ? vimgui::utf16_to_utf8(pending.text) : std::string();
+    // Reject an oversized replacement before deleting the existing buffer.
+    const bool applied = pending.valid && (data->Flags & ImGuiInputTextFlags_ReadOnly) == 0 &&
+        (utf8.size() < static_cast<size_t>(data->BufSize) ||
+         (data->Flags & ImGuiInputTextFlags_CallbackResize) != 0);
     if (applied)
     {
-        const std::string utf8 = vimgui::utf16_to_utf8(pending.text);
         if (data->BufTextLen != int(utf8.size()) ||
             std::memcmp(data->Buf, utf8.data(), utf8.size()) != 0)
         {
@@ -570,6 +617,7 @@ extern "C" void vimgui_android_shutdown(void)
     g_pending_text = TextState{};
     g_text_snapshot = TextState{};
     g_stateful_text = false;
+    g_text_widget = 0;
     ++g_text_generation;
     ++g_text_revision;
 }
@@ -668,4 +716,16 @@ Java_io_antono2_imgui_ImGuiInputView_nativeKey(JNIEnv*, jclass, jint key, jboole
     }
     std::lock_guard<std::mutex> lock(g_input_mutex);
     g_queued_input.push_back({std::u16string(), imgui_key, down == JNI_TRUE});
+}
+
+extern "C" JNIEXPORT jfloat JNICALL
+Java_io_antono2_imgui_ImGuiInputView_nativeUiScale(JNIEnv* env, jclass, jobject context) {
+    JavaVM* vm=nullptr;
+    if (env->GetJavaVM(&vm)!=JNI_OK) return 1;
+    return vimgui_android_ui_scale(vm,context,1);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_io_antono2_imgui_ImGuiInputView_notifyGamepadDisconnected(JNIEnv*, jclass, jint device_id) {
+    vimgui_android_gamepad_disconnected(device_id);
 }
