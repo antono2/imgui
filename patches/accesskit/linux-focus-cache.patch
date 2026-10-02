@@ -1,0 +1,48 @@
+--- a/accesskit_atspi_common-0.21.0/src/context.rs
++++ b/accesskit_atspi_common-0.21.0/src/context.rs
+@@ -69,12 +69,12 @@
+         })
+     }
+ 
+-    pub(crate) fn child_index(&self, parent: NodeRef<'_>, child: FullNodeId) -> usize {
++    pub(crate) fn child_index(&self, parent: NodeRef<'_>, child: FullNodeId) -> Option<usize> {
+         let mut cache = self.child_indices.lock().unwrap();
+         let indices = cache.entry(parent.id()).or_insert_with(|| {
+             parent.filtered_children(&filter).enumerate().map(|(index, node)| (node.id(), index)).collect()
+         });
+-        *indices.get(&child).expect("filtered child belongs to parent")
++        indices.get(&child).copied()
+     }
+ 
+     pub(crate) fn read_tree(&self) -> RwLockReadGuard<'_, Tree> {
+--- a/accesskit_atspi_common-0.21.0/src/node.rs
++++ b/accesskit_atspi_common-0.21.0/src/node.rs
+@@ -933,7 +933,7 @@
+     pub fn index_in_parent(&self) -> Result<i32> {
+         self.resolve_with_context(|node, _tree, context| {
+             if let Some(parent) = node.filtered_parent(&filter) {
+-                i32::try_from(context.child_index(parent, node.id()))
++                i32::try_from(context.child_index(parent, node.id()).ok_or(Error::Defunct)?)
+                     .map_err(|_| Error::IndexOutOfRange)
+             } else {
+                 let index = context
+@@ -948,7 +948,7 @@
+     pub fn cache_node(&self) -> Result<CacheNode> {
+         self.resolve_with_context(|node, tree, context| {
+             let index_in_parent = if let Some(parent) = node.filtered_parent(&filter) {
+-                i32::try_from(context.child_index(parent, node.id()))
++                i32::try_from(context.child_index(parent, node.id()).ok_or(Error::Defunct)?)
+                     .map_err(|_| Error::IndexOutOfRange)?
+             } else {
+                 let index = context
+--- a/accesskit_atspi_common-0.21.0/src/adapter.rs
++++ b/accesskit_atspi_common-0.21.0/src/adapter.rs
+@@ -542,6 +542,8 @@
+     pub fn update_window_focus_state(&mut self, is_focused: bool) {
+         let mut handler = AdapterChangeHandler::new(self);
+         let mut tree = self.context.tree.write().unwrap();
++        // Focus affects common_filter, including off-screen focused list rows.
++        self.context.child_indices.lock().unwrap().clear();
+         tree.update_host_focus_state_and_process_changes(is_focused, &mut handler);
+     }
+ 

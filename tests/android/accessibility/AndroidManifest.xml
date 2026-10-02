@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="io.antono2.vimgui.accessible.test">
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="32" />
+    <application android:label="ImGui accessibility checks" />
+    <instrumentation android:name="io.antono2.vimgui.accessible.test.AccessibilitySmoke" android:targetPackage="io.antono2.vimgui.accessible" />
+</manifest>

@@ -5,6 +5,12 @@
 #include "../../cimgui/imgui/backends/imgui_impl_vulkan.h"
 #include "../../native/android/vimgui_android.h"
 #include "../../native/mobile/vimgui_scale.h"
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+#include "../../native/application/vimgui_app.h"
+#ifdef VIMGUI_ACCESSIBLE_DEMO
+extern "C" bool vimgui_android_accessible_draw(float*,int*,char*,int,char*,int,float,float);
+#endif
+#endif
 
 #include <android/asset_manager.h>
 #include <android/configuration.h>
@@ -52,9 +58,47 @@ DemoState g;
 using DrawUiFn = bool (*)(float*, int*, char*, int, char*, int, float, float);
 void* ui_library = nullptr;
 DrawUiFn draw_ui = nullptr;
+#ifdef VIMGUI_APPLICATION_HOST
+// The Activity loads this library on the process main thread before NativeActivity.
+// The application owns retained state; the renderer owns each ImGui context.
+using BeginAppFn = bool (*)(const char *,float);
+using TitleAppFn = const char *(*)();
+using MountAppFn = void (*)(float);
+using DrawAppFn = bool (*)();
+using EndAppFn = void (*)();
+using BackAppFn = bool (*)();
+BeginAppFn begin_app = nullptr;
+TitleAppFn title_app = nullptr;
+MountAppFn mount_app = nullptr;
+DrawAppFn draw_app = nullptr;
+EndAppFn end_app = nullptr;
+BackAppFn can_back_app = nullptr, back_app = nullptr;
+#endif
 
 bool load_v_ui()
 {
+#ifdef VIMGUI_APPLICATION_HOST
+    if (draw_app) return true;
+    ui_library=dlopen("libvimgui_android_application.so",RTLD_NOW|RTLD_LOCAL);
+    if (!ui_library) { __android_log_print(ANDROID_LOG_ERROR,kLogTag,"Application load: %s",dlerror()); return false; }
+    title_app=reinterpret_cast<TitleAppFn>(dlsym(ui_library,"vimgui_android_application_title"));
+    begin_app=reinterpret_cast<BeginAppFn>(dlsym(ui_library,"vimgui_android_application_begin"));
+    mount_app=reinterpret_cast<MountAppFn>(dlsym(ui_library,"vimgui_android_application_mount"));
+    draw_app=reinterpret_cast<DrawAppFn>(dlsym(ui_library,"vimgui_android_application_draw"));
+    end_app=reinterpret_cast<EndAppFn>(dlsym(ui_library,"vimgui_android_application_end"));
+    can_back_app=reinterpret_cast<BackAppFn>(dlsym(ui_library,"vimgui_android_application_can_back"));
+    back_app=reinterpret_cast<BackAppFn>(dlsym(ui_library,"vimgui_android_application_back"));
+    if (!begin_app || !mount_app || !draw_app || !end_app) {
+        draw_app=nullptr;
+        __android_log_print(ANDROID_LOG_ERROR,kLogTag,"Application lifecycle symbols missing");
+        return false;
+    }
+    // Keep the library loaded for process lifetime: retained state and workers use it.
+    return true;
+#elif defined(VIMGUI_ACCESSIBLE_DEMO)
+    draw_ui = vimgui_android_accessible_draw;
+    return true;
+#else
     if (draw_ui != nullptr)
         return true;
     ui_library = dlopen("libvimgui_android_ui.so", RTLD_NOW | RTLD_LOCAL);
@@ -72,7 +116,25 @@ bool load_v_ui()
         return false;
     }
     return true;
+#endif
 }
+
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+void set_accessibility_context(vimgui_accessibility *context) {
+    JavaVM *vm=g.app->activity->vm;
+    JNIEnv *env=nullptr;
+    const bool detach=vm->GetEnv(reinterpret_cast<void**>(&env),JNI_VERSION_1_6)==JNI_EDETACHED;
+    if (detach && vm->AttachCurrentThread(&env,nullptr)!=JNI_OK) return;
+    if (!env) return;
+    jobject activity=g.app->activity->clazz;
+    jclass cls=env->GetObjectClass(activity);
+    jmethodID method=env->GetMethodID(cls,"setImGuiAccessibilityContext","(J)V");
+    if (method) env->CallVoidMethod(activity,method,static_cast<jlong>(reinterpret_cast<uintptr_t>(context)));
+    if (env->ExceptionCheck()) { env->ExceptionDescribe(); env->ExceptionClear(); }
+    env->DeleteLocalRef(cls);
+    if (detach) vm->DetachCurrentThread();
+}
+#endif
 
 void set_keyboard_visible(bool visible)
 {
@@ -99,6 +161,12 @@ void set_keyboard_visible(bool visible)
     env->DeleteLocalRef(activity_class);
     if (detach)
         vm->DetachCurrentThread();
+}
+
+float configured_ui_scale(android_app* app) {
+    const int density=AConfiguration_getDensity(app->config);
+    const float fallback=density>0 && density<1000 ? static_cast<float>(density)/160.0f : 1.0f;
+    return vimgui_android_ui_scale(app->activity->vm,app->activity->clazz,fallback);
 }
 
 bool check(VkResult result, const char* operation)
@@ -130,6 +198,10 @@ void shutdown()
     g.platform_ready = false;
     if (g.imgui_context != nullptr)
     {
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+        set_accessibility_context(nullptr);
+        vimgui_app_shutdown();
+#endif
         ImGui::DestroyContext(g.imgui_context);
         g.imgui_context = nullptr;
         vimgui_mobile_reset_style_baseline();
@@ -276,8 +348,7 @@ bool initialize(android_app* app)
     ImGui::GetIO().IniFilename = nullptr;
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     ImGui::StyleColorsDark();
-    const int density = AConfiguration_getDensity(app->config);
-    const float scale = density > 0 && density < 1000 ? static_cast<float>(density) / 160.0f : 1.0f;
+    const float scale = configured_ui_scale(app);
     g.density_scale = scale;
     if (!vimgui_mobile_set_ui_scale(scale))
         return false;
@@ -302,6 +373,19 @@ bool initialize(android_app* app)
     if (!ImGui_ImplVulkan_Init(&imgui_info))
         return false;
     g.renderer_ready = true;
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+#ifdef VIMGUI_APPLICATION_HOST
+    if (!vimgui_app_initialize(title_app ? title_app() : "Application")) return false;
+#else
+    if (!vimgui_app_initialize("Accessible file review")) return false;
+#endif
+    vimgui_app_theme(true,false,scale,true);
+    vimgui_app_set_text_edit_handler([](void *data,void *) { vimgui_android_apply_text_edit(data); },nullptr);
+    set_accessibility_context(vimgui_app_accessibility());
+#ifdef VIMGUI_APPLICATION_HOST
+    mount_app(scale);
+#endif
+#endif
     __android_log_print(ANDROID_LOG_INFO, kLogTag, "Vulkan window ready: %dx%d, scale %.2f", width, height, scale);
     return true;
 }
@@ -329,13 +413,29 @@ bool draw_frame()
     ImGui_ImplVulkan_NewFrame();
     vimgui_android_new_frame();
     ImGui::NewFrame();
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+    const ARect &content=g.app->contentRect;
+    if (content.right>content.left && content.bottom>content.top) {
+        const ImVec2 display=ImGui::GetIO().DisplaySize;
+        vimgui_app_safe_area(static_cast<float>(content.left),static_cast<float>(content.top),
+            display.x-content.right,display.y-content.bottom);
+    }
+#endif
+#ifdef VIMGUI_APPLICATION_HOST
+    const bool application_ok=draw_app();
+    const bool zoom_changed=false;
+#else
     const int previous_tap_count = g.tap_count;
     const bool zoom_changed = draw_ui(&g.zoom, &g.tap_count, g.text, sizeof(g.text),
                                       g.clipboard_preview, sizeof(g.clipboard_preview),
                                       ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y);
     if (g.tap_count != previous_tap_count)
         __android_log_print(ANDROID_LOG_INFO, kLogTag, "V UI tap count: %d", g.tap_count);
+#endif
     ImGui::Render();
+#ifdef VIMGUI_APPLICATION_HOST
+    if (!application_ok) return false;
+#endif
     if (zoom_changed)
         vimgui_mobile_set_ui_scale(g.density_scale * g.zoom);
     const bool wants_keyboard = vimgui_android_wants_text_input();
@@ -420,6 +520,9 @@ void on_command(android_app* app, int32_t command)
             {
                 __android_log_print(ANDROID_LOG_ERROR, kLogTag, "Window initialization failed");
                 shutdown();
+#ifdef VIMGUI_APPLICATION_HOST
+                ANativeActivity_finish(app->activity);
+#endif
             }
             break;
         case APP_CMD_TERM_WINDOW:
@@ -433,9 +536,16 @@ void on_command(android_app* app, int32_t command)
             g.resize_pending = true;
             if (g.imgui_context != nullptr)
             {
-                const int density = AConfiguration_getDensity(app->config);
-                g.density_scale = density > 0 && density < 1000 ? static_cast<float>(density) / 160.0f : 1.0f;
+                g.density_scale = configured_ui_scale(app);
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+#ifdef VIMGUI_APPLICATION_HOST
+                mount_app(g.density_scale);
+#else
+                vimgui_app_theme(true,false,g.density_scale,true);
+#endif
+#else
                 vimgui_mobile_set_ui_scale(g.density_scale * g.zoom);
+#endif
             }
             break;
         }
@@ -454,6 +564,13 @@ void on_command(android_app* app, int32_t command)
 
 int32_t on_input(android_app*, AInputEvent* event)
 {
+#ifdef VIMGUI_APPLICATION_HOST
+    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY &&
+        AKeyEvent_getKeyCode(event) == AKEYCODE_BACK && can_back_app && back_app && can_back_app()) {
+        if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_UP) back_app();
+        return 1;
+    }
+#endif
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION &&
         (AInputEvent_getSource(event) & AINPUT_SOURCE_TOUCHSCREEN) == AINPUT_SOURCE_TOUCHSCREEN &&
         (AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK) == AMOTION_EVENT_ACTION_DOWN)
@@ -462,17 +579,21 @@ int32_t on_input(android_app*, AInputEvent* event)
 }
 } // namespace
 
-extern "C" JNIEXPORT void JNICALL
-Java_io_antono2_vimgui_demo_ImGuiActivity_nativeGamepadDisconnected(JNIEnv*, jclass, jint device_id)
-{
-    vimgui_android_gamepad_disconnected(device_id);
-}
-
 void android_main(android_app* app)
 {
+    __android_log_print(ANDROID_LOG_INFO,kLogTag,"NativeActivity render thread starting");
     app->onAppCmd = on_command;
     app->onInputEvent = on_input;
     g.app = app;
+#ifdef VIMGUI_APPLICATION_HOST
+    const float scale=configured_ui_scale(app);
+    if (!load_v_ui() || !begin_app(app->activity->internalDataPath,scale)) {
+        __android_log_print(ANDROID_LOG_ERROR,kLogTag,"Application startup failed");
+        ANativeActivity_finish(app->activity);
+        return;
+    }
+    __android_log_print(ANDROID_LOG_INFO,kLogTag,"Retained application ready");
+#endif
     for (;;)
     {
         int events = 0;
@@ -485,6 +606,9 @@ void android_main(android_app* app)
             if (app->destroyRequested)
             {
                 shutdown();
+#ifdef VIMGUI_APPLICATION_HOST
+                end_app();
+#endif
                 return;
             }
         }
@@ -492,6 +616,9 @@ void android_main(android_app* app)
         {
             __android_log_print(ANDROID_LOG_ERROR, kLogTag, "Frame failed; closing window resources");
             shutdown();
+#ifdef VIMGUI_APPLICATION_HOST
+            ANativeActivity_finish(app->activity);
+#endif
         }
     }
 }

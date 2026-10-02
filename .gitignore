@@ -15,3 +15,7 @@ generate
 /lib/
 /build/
 /impl_vulkan/*.assertissues__v__
+/.dependencies/
+
+__pycache__/
+*.pyc

@@ -18,6 +18,10 @@ public final class ImGuiInputView extends View {
         System.loadLibrary("vimgui");
     }
 
+    /** Base-font pixels per sp, including system text sizing; no settings are changed. */
+    public static native float nativeUiScale(Context context);
+    /** Notify the rendering backend when an input device disconnects. */
+    public static native void notifyGamepadDisconnected(int deviceId);
     private static native void nativeCommitText(String text);
     private static native void nativeKey(int key, boolean down);
     private static native void nativeSetEditingState(String text, int start, int end, int serial, int generation);
