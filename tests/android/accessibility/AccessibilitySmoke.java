@@ -131,6 +131,12 @@ public final class AccessibilitySmoke extends Instrumentation {
             Activity activity=startActivitySync(intent);
             runOnMainSync(() -> activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
             node("Search files");
+            for(String label:new String[]{"Accessible file review", "Search files", "Keep selected", "High contrast"}) {
+                if(!node(label).isImportantForAccessibility())
+                    throw new AssertionError("TalkBack would skip virtual node: "+label);
+            }
+            if(node("Accessible file review").getParent()==null)
+                throw new AssertionError("Virtual root is detached from the Android hierarchy");
             runOnMainSync(()->((android.hardware.input.InputManager.InputDeviceListener)activity).onInputDeviceRemoved(-1234));
             // Test isolated Context configurations, preserving device settings.
             java.lang.reflect.Method scaleMethod=activity.getClassLoader().loadClass("io.antono2.imgui.ImGuiInputView").getMethod("nativeUiScale",android.content.Context.class);
