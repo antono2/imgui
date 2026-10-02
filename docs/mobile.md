@@ -269,3 +269,23 @@ Touch dragging from empty space scrolls the hovered application window or
 panel when content exceeds its height. Buttons, editable fields, and scrollbars
 retain their own gestures; list content also supports its existing drag scroll.
 Back controls include a native arrow without relying on a font's arrow glyph.
+
+### External V example UI
+
+The Android demo packaging script can reuse its native host with a consumer's V
+UI and manifest:
+
+```sh
+VIMGUI_ANDROID_UI_SOURCE=/absolute/path/to/ui.v \
+VIMGUI_ANDROID_MANIFEST=/absolute/path/to/AndroidManifest.xml \
+ANDROID_ABI=arm64-v8a scripts/run_android_demo.sh --build-only
+```
+
+A source directory is also accepted. The UI must export
+`vimgui_android_demo_draw_ui` with the same borrowed arguments as
+`examples/android_vulkan/ui.v`. Return true when its zoom argument changes so
+the host can update the style scale. The custom manifest can use a distinct
+package ID, but must name `io.antono2.vimgui.demo.ImGuiActivity` and the
+`vimgui_android_demo` native library. Keep the sample's Vulkan requirement and
+minimum API. Run mode reads the launcher component from the packaged APK.
+Omitting both variables retains the built-in sample.

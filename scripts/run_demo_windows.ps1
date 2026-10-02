@@ -2,6 +2,7 @@ param(
     [switch]$BuildOnly,
     [switch]$NativeOnly,
     [string]$DemoDirectory,
+    [string]$DemoSource,
     [string]$DemoRevision = "1e444971dd4f70a6edf281ce648e136c01d08ab6"
 )
 
@@ -88,6 +89,8 @@ Copy-Item $GlfwImportLibrary.FullName (Join-Path $LinkDirectory "glfw3.lib") -Fo
 $env:GLFW_INCLUDE = Split-Path -Parent (Split-Path -Parent $GlfwHeader.FullName)
 $env:GLFW_LIB = $LinkDirectory
 
+if (-not $DemoSource) { $DemoSource = $DemoDirectory }
+if (-not (Test-Path -LiteralPath $DemoSource)) { throw "Demo source does not exist: $DemoSource" }
 $Executable = Join-Path $RuntimeDirectory "v_imgui_demo.exe"
 $UsesOnlyCheckedOutModules = @("imgui", "vulkan", "glfw") | ForEach-Object {
     Test-Path (Join-Path $RepositoryParent "$_\v.mod")
@@ -97,7 +100,7 @@ $ModulePath = if ($UsesOnlyCheckedOutModules -eq 0) {
 } else {
     "$RepositoryParent|@vlib|@vmodules"
 }
-& $VCommand -no-memory-limit -path $ModulePath -cc msvc -o $Executable $DemoDirectory
+& $VCommand -no-memory-limit -path $ModulePath -cc msvc -o $Executable $DemoSource
 if ($LASTEXITCODE -ne 0) {
     throw "The demo did not compile. Update to the official vlang/v master branch and review the compiler output above."
 }

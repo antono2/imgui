@@ -5,8 +5,22 @@ repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ndk_dir="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}"
 sdk_dir="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
 mode="${1:-run}"
+ui_source="${VIMGUI_ANDROID_UI_SOURCE:-$repo_dir/examples/android_vulkan/ui.v}"
+manifest="${VIMGUI_ANDROID_MANIFEST:-$repo_dir/examples/android_vulkan/AndroidManifest.xml}"
 if [[ "$mode" != run && "$mode" != --build-only ]]; then
   echo 'Usage: scripts/run_android_demo.sh [--build-only]' >&2
+  exit 2
+fi
+if [[ $# -gt 1 ]]; then
+  echo 'Usage: scripts/run_android_demo.sh [run|--build-only]' >&2
+  exit 2
+fi
+if [[ ! -f "$ui_source" && ! -d "$ui_source" ]]; then
+  echo "Cannot find the V UI source: $ui_source" >&2
+  exit 2
+fi
+if [[ ! -f "$manifest" ]]; then
+  echo "Cannot find the Android manifest: $manifest" >&2
   exit 2
 fi
 if [[ -z "$ndk_dir" || ! -f "$ndk_dir/build/cmake/android.toolchain.cmake" ]]; then
@@ -57,7 +71,7 @@ cp "$build_dir/lib/libvimgui.so" "$repo_dir/lib/android-vulkan/$abi/freetype/lib
 "$v_bin" -path "$build_dir/vmodules|@vlib|@vmodules" \
   -os android -arch "$v_arch" -cc "$ndk_prebuilt/bin/$clang_target" \
   -d use_freetype -gc none -no-memory-limit -shared \
-  -o "$build_dir/libvimgui_android_ui.so" "$repo_dir/examples/android_vulkan/ui.v"
+  -o "$build_dir/libvimgui_android_ui.so" "$ui_source"
 test -f "$build_dir/libvimgui_android_ui.so"
 
 build_tools="$(find "$sdk_dir/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
@@ -86,7 +100,7 @@ unsigned_apk="$build_dir/vimgui-demo-unsigned.apk"
 aligned_apk="$build_dir/vimgui-demo-aligned.apk"
 signed_apk="$build_dir/vimgui-demo-$abi.apk"
 "$build_tools/aapt" package -f \
-  -M "$repo_dir/examples/android_vulkan/AndroidManifest.xml" \
+  -M "$manifest" \
   -I "$android_jar" -A "$package_dir/assets" -F "$unsigned_apk"
 (
   cd "$package_dir"
@@ -107,7 +121,14 @@ fi
 echo "APK: $signed_apk"
 
 if [[ "$mode" == run ]]; then
+  badging="$("$build_tools/aapt" dump badging "$signed_apk")"
+  app_package="$(sed -n "s/^package: name='\([^']*\)'.*/\1/p" <<< "$badging")"
+  app_activity="$(sed -n "s/^launchable-activity: name='\([^']*\)'.*/\1/p" <<< "$badging")"
+  if [[ -z "$app_package" || -z "$app_activity" ]]; then
+    echo 'The APK must declare a launcher activity.' >&2
+    exit 2
+  fi
   adb "${adb_args[@]}" install -r "$signed_apk"
-  adb "${adb_args[@]}" shell am start -n io.antono2.vimgui.demo/.ImGuiActivity
+  adb "${adb_args[@]}" shell am start -n "$app_package/$app_activity"
   echo 'Use adb logcat -s vimgui-android-demo:I to inspect lifecycle/taps.'
 fi

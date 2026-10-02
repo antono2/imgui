@@ -83,3 +83,8 @@ For a reproducible bundled GLFW build:
 ```sh
 v run build_vimgui.vsh --linkage shared --glfw bundled --glfw-version 3.4
 ```
+
+For a desktop example in a subdirectory of an existing checkout, Windows's
+`scripts/run_demo_windows.ps1` accepts `-DemoDirectory` for the checkout root
+and `-DemoSource` for the V source directory. Omitting `-DemoSource` compiles
+the checkout root as before.
