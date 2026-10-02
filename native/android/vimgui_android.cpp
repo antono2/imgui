@@ -530,7 +530,12 @@ extern "C" bool vimgui_android_apply_text_edit(void* callback_data)
     TextState pending;
     {
         std::lock_guard<std::mutex> lock(g_input_mutex);
-        if (g_text_widget != data->ID || data->EventActivated)
+        // Accessibility/programmatic replacements and hardware-key edits can
+        // arrive while Java still holds an older editable snapshot. Start a
+        // new generation so that queued IME state cannot overwrite that edit.
+        const bool native_text_changed = g_text_snapshot.valid &&
+            g_text_snapshot.text != vimgui::utf8_to_utf16(data->Buf, data->BufTextLen);
+        if (g_text_widget != data->ID || data->EventActivated || native_text_changed)
         {
             g_text_widget = data->ID;
             g_pending_text = TextState{};

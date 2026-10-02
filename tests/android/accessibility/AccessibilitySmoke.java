@@ -172,9 +172,23 @@ public final class AccessibilitySmoke extends Instrumentation {
             unicodeSelection.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT,5);
             if(!node("Search files").performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION,unicodeSelection))throw new AssertionError("Unicode selection rejected");
             await(()->{AccessibilityNodeInfo field=find("Search files");return field!=null && field.getTextSelectionStart()==3 && field.getTextSelectionEnd()==5?Boolean.TRUE:null;},"UTF-16 selection did not round-trip across emoji and combining text");
+            // Capture the IME generation before an accessibility replacement.
+            // A late edit from that generation must not undo the newer value.
+            Class<?> bridge=Class.forName("io.antono2.imgui.ImGuiInputView");
+            java.lang.reflect.Method getState=bridge.getDeclaredMethod("nativeGetEditingState");
+            getState.setAccessible(true);
+            Object oldState=getState.invoke(null);
+            java.lang.reflect.Field oldGeneration=oldState.getClass().getDeclaredField("generation");
+            oldGeneration.setAccessible(true);
+            int staleGeneration=oldGeneration.getInt(oldState);
             Bundle text=new Bundle(); text.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,"0007");
             if (!node("Search files").performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,text)) throw new AssertionError("Set text rejected");
             await(()->{AccessibilityNodeInfo field=find("Search files");return field!=null && "0007".contentEquals(field.getText()==null?"":field.getText())?Boolean.TRUE:null;},"Filtered text did not settle after Unicode selection");
+            java.lang.reflect.Method setState=bridge.getDeclaredMethod("nativeSetEditingState",String.class,int.class,int.class,int.class,int.class);
+            setState.setAccessible(true);
+            setState.invoke(null,"stale keyboard text",0,0,100000,staleGeneration);
+            SystemClock.sleep(300);
+            if (!"0007".contentEquals(node("Search files").getText())) throw new AssertionError("Stale IME generation overwrote accessibility text");
             node("Files").performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.getId());
             node("Photo 0007.jpg - 3 copies");
             Bundle selection=new Bundle();
