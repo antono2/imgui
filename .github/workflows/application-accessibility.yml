@@ -1,0 +1,64 @@
+name: Application accessibility
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [master, standard]
+permissions:
+  contents: read
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: recursive
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libvulkan-dev libdbus-1-dev mesa-vulkan-drivers xvfb
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install glfw
+      - name: Prepare pinned AccessKit
+        run: python3 scripts/prepare-accesskit.py
+      - name: Compile Windows accessibility bridge
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake -S native/accessibility -B build/accessibility -A x64 "-DACCESSKIT_DIR=$pwd/.dependencies/accesskit/accesskit-c-0.23.1"
+          cmake --build build/accessibility --config Release --parallel 2
+          ctest --test-dir build/accessibility -C Release --output-on-failure
+      - name: Compile desktop application host
+        if: runner.os != 'Windows'
+        run: scripts/build-appui.sh
+      - name: Test native tree
+        if: runner.os != 'Windows'
+        run: ctest --test-dir build/appui/accessibility --output-on-failure
+      - name: Render Linux application frame
+        if: runner.os == 'Linux'
+        run: |
+          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          if [ ! -f "$VK_ICD_FILENAMES" ]; then export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json; fi
+          xvfb-run -a build/appui/application_host_smoke
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: recursive
+      - run: python3 scripts/prepare-accesskit.py --prebuilt
+      - name: Compile application widgets and accessibility for iOS Simulator
+        run: |
+          cmake -S . -B build/appui-ios \
+            -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphonesimulator \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
+            -DVIMGUI_PROFILE=apple-metal -DVIMGUI_APPLICATION_UI=ON \
+            -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release \
+            -DACCESSKIT_DIR="$PWD/.dependencies/accesskit/accesskit-c-0.23.1"
+          cmake --build build/appui-ios --parallel 2

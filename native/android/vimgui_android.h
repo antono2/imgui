@@ -9,6 +9,11 @@ extern "C" {
 
 // Opaque NDK pointers keep the V-facing header usable by a C compiler.
 bool vimgui_android_init(void* native_window);
+// Convert the base 16sp font to pixels through Android TypedValue, including
+// density and system text size. Context is a borrowed JNI jobject. Query on
+// startup/configuration changes; returns fallback when unavailable. No UI
+// context is required and no device setting is changed.
+float vimgui_android_ui_scale(void* java_vm, void* context, float fallback);
 // Install Android's ClipboardManager after init. The context is a JNI jobject
 // (for example ANativeActivity.clazz); the VM is a JavaVM*. Call on the ImGui
 // thread while both objects are alive. shutdown releases the JNI references.
