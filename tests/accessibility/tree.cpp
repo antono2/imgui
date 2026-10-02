@@ -46,6 +46,14 @@ int main() {
     assert(!vimgui_accessibility_request(ctx, 100001, VIMGUI_AX_CLICK, nullptr));
     assert(!vimgui_accessibility_commit(ctx, 1, 100001));
     assert(vimgui_accessibility_focus(ctx) == 2);
+    double x, y, width, height;
+    assert(!vimgui_accessibility_visual_focus(ctx, &x, &y, &width, &height));
+    vimgui_accessibility_set_visual_focus(ctx, true, 10, 20, 30, 40);
+    assert(vimgui_accessibility_visual_focus(ctx, &x, &y, &width, &height));
+    assert(x == 10 && y == 20 && width == 30 && height == 40);
+    assert(vimgui_accessibility_focus(ctx) == 2); // Reading focus must not enter/edit a text field.
+    vimgui_accessibility_set_visual_focus(ctx, false, 0, 0, 0, 0);
+    assert(!vimgui_accessibility_visual_focus(ctx, &x, &y, &width, &height));
     vimgui_accessibility_retain(ctx);
     vimgui_accessibility_free(ctx);
     assert(vimgui_accessibility_node_count(ctx) == 2);

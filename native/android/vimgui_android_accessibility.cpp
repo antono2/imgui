@@ -27,3 +27,9 @@ extern "C" JNIEXPORT void JNICALL
 Java_io_antono2_imgui_ImGuiAccessibility_nativeUpdate(JNIEnv *, jclass, jlong value) {
     vimgui_accessibility_update(context(value));
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_io_antono2_imgui_ImGuiAccessibility_nativeVisualFocus(JNIEnv *, jclass, jlong value,
+                                                        jboolean visible, jint x, jint y, jint width, jint height) {
+    vimgui_accessibility_set_visual_focus(context(value), visible, x, y, width, height);
+}

@@ -57,6 +57,11 @@ void vimgui_accessibility_abort(vimgui_accessibility *context);
 const char *vimgui_accessibility_error(vimgui_accessibility *context);
 size_t vimgui_accessibility_node_count(vimgui_accessibility *context);
 uint64_t vimgui_accessibility_focus(vimgui_accessibility *context);
+// Screen-reader focus is separate from keyboard/edit focus. Bounds are in host pixels.
+void vimgui_accessibility_set_visual_focus(vimgui_accessibility *context, bool visible,
+                                         double x, double y, double width, double height);
+bool vimgui_accessibility_visual_focus(vimgui_accessibility *context, double *x, double *y,
+                                     double *width, double *height);
 bool vimgui_accessibility_poll(vimgui_accessibility *context,
                              vimgui_accessibility_event *event);
 // Native handle: HWND, NSWindow*, UIView*, or Android View. Linux uses NULL.
