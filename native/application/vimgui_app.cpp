@@ -168,6 +168,16 @@ bool vimgui_app_frame_end() {
         state->error = "Unbalanced application panels."; return false;
     }
     touch_scroll();
+    double focus_x, focus_y, focus_width, focus_height;
+    if (vimgui_accessibility_visual_focus(state->ax, &focus_x, &focus_y, &focus_width, &focus_height)) {
+        const auto origin = ImGui::GetMainViewport()->Pos;
+        ImVec2 a(origin.x + float(focus_x), origin.y + float(focus_y));
+        ImVec2 b(a.x + float(focus_width), a.y + float(focus_height));
+        auto *draw = ImGui::GetForegroundDrawList();
+        const float stroke = std::max(2.0f, ImGui::GetFontSize() / 8.0f);
+        draw->AddRect(a, b, IM_COL32(0,0,0,255), 0.0f, stroke * 3);
+        draw->AddRect(a, b, IM_COL32(255,255,0,255), 0.0f, stroke);
+    }
     state->root_scroll = ImGui::GetScrollY();
     auto root = state->groups.back();
     publish(1, VIMGUI_AX_WINDOW, state->title.c_str(), "", root.origin, ImGui::GetWindowSize(),
