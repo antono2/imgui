@@ -269,12 +269,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
-          ref: f59b886d2564e37d8626d715236fdfa928e13dda
+          ref: efae23e85b3772a28e62884d554c1e88f91f52f4
           path: toolchain/v
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
-          ref: 4598bc7e4894c154b27391e4442005fff2fbbd68
+          ref: 2cbaf6bc2367937cd5f0b4ef923d1ef9aad613b3
           path: toolchain/v/vc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
