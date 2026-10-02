@@ -350,7 +350,7 @@ if(VIMGUI_BUILD_IOS_APPLICATION_HOST)
 	target_compile_options(vimgui_ios_application PRIVATE -fobjc-arc)
 	target_include_directories(vimgui_ios_application PRIVATE native/accessibility)
 	target_link_libraries(vimgui_ios_application PRIVATE ${NAME} "${VIMGUI_IOS_APPLICATION_LIBRARY}"
-		"-framework UIKit" "-framework MetalKit")
+		"-framework UIKit" "-framework MetalKit" "-framework CoreGraphics")
 	target_link_options(vimgui_ios_application PRIVATE -Wl,-undefined,error)
 	set_target_properties(vimgui_ios_application PROPERTIES
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/native/application/ios_application.plist"
