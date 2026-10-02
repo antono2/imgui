@@ -76,6 +76,7 @@ cp "$repo_dir/cimgui/imgui/misc/fonts/Roboto-Medium.ttf" "$package_dir/assets/Ro
 javac_bin="${JAVAC:-javac}"
 "$javac_bin" -source 8 -target 8 -Xlint:-options -cp "$android_jar" -d "$package_dir/classes" \
   "$repo_dir/android/java/io/antono2/imgui/ImGuiInputView.java" \
+  "$repo_dir/android/java/io/antono2/imgui/ImGuiAccessibility.java" \
   "$repo_dir/examples/android_vulkan/java/io/antono2/vimgui/demo/ImGuiActivity.java"
 mapfile -d '' class_files < <(find "$package_dir/classes" -name '*.class' -print0)
 "$build_tools/d8" --min-api 24 --lib "$android_jar" \

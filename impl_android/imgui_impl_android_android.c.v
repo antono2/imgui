@@ -6,6 +6,7 @@ import antono2.imgui
 #include "vimgui_android.h"
 
 fn C.vimgui_android_init(native_window voidptr) bool
+fn C.vimgui_android_ui_scale(java_vm voidptr, context voidptr, fallback f32) f32
 fn C.vimgui_android_set_clipboard_context(java_vm voidptr, context voidptr) bool
 fn C.vimgui_android_handle_input_event(input_event voidptr) int
 fn C.vimgui_android_new_frame()
@@ -26,6 +27,12 @@ pub fn init(native_window voidptr) bool {
 // Call after init on the ImGui thread; shutdown releases the JNI references.
 pub fn set_clipboard_context(java_vm voidptr, context voidptr) bool {
 	return C.vimgui_android_set_clipboard_context(java_vm, context)
+}
+
+// ui_scale combines display density and the system text-size preference.
+// Query at startup and on configuration changes using a live Context jobject.
+pub fn ui_scale(java_vm voidptr, context voidptr, fallback f32) f32 {
+    return C.vimgui_android_ui_scale(java_vm, context, fallback)
 }
 
 // handle_input_event forwards an AInputEvent from the application's input loop.
