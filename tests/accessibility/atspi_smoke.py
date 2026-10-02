@@ -59,13 +59,14 @@ try:
     app.set_cache_mask(Atspi.Cache.NONE)
     window = wait_for(lambda: app.get_child_at_index(0) if app.get_child_count() else None, "No accessible window")
     files = wait_for(lambda: named(window, "Files"), "No accessible file list")
-    assert 0 < files.get_child_count() < 100000, files.get_child_count()
+    assert 0 < files.get_child_count() < 100, files.get_child_count()
     # The retained tree has 100,000 rows. Native adapters expose the viewport
     # and neighboring rows, with scroll actions and total/position metadata.
     jump = named(window, "Focus last file")
     assert jump.get_action_iface().do_action(0)
     last = wait_for(lambda: next((row for row in children(files) if row and "Photo 099999.jpg" in row.get_name()), None), "Jumping to the final retained row failed")
     assert "Photo 099999.jpg" in last.get_name(), last.get_name()
+    assert 0 < files.get_child_count() < 100, files.get_child_count()
     action = last.get_action_iface()
     assert action is not None, "Off-screen row has no action interface"
     assert action.do_action(0), "Off-screen row action failed"

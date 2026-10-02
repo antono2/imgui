@@ -16,13 +16,9 @@ struct Group { uint64_t id; std::string label; std::vector<uint64_t> children; I
 struct Row { uint64_t id; std::string label; };
 struct List {
     std::vector<Row> rows;
-    std::vector<uint64_t> ids;
     std::unordered_map<uint64_t, int> indices;
-    bool dirty = true;
     bool touch_tracking = false, touch_dragging = false;
     int last_frame = -2;
-    uint64_t selected = 0;
-    float x = 0, y = 0, width = 0, height = 0, row_height = 0;
     float scroll_y = 0, scroll_max = 0;
 };
 struct State {
@@ -401,7 +397,7 @@ void vimgui_app_list_reset(uint64_t id) { state->lists[id]=List{}; }
 bool vimgui_app_list_add(uint64_t list_id,uint64_t id,const char *label) {
     auto &list=state->lists[list_id];
     if (!id || (id & (uint64_t(1)<<63)) || id==list_id || id==1 || list.indices.count(id)) { state->error="Duplicate or reserved list row ID."; return false; }
-    list.indices[id]=static_cast<int>(list.rows.size());list.rows.push_back({id,label});list.ids.push_back(id);list.dirty=true;return true;
+    list.indices[id]=static_cast<int>(list.rows.size());list.rows.push_back({id,label});return true;
 }
 uint64_t vimgui_app_list(uint64_t id,const char *label,uint64_t selected,float height) {
     append(id);push_id(id);
@@ -428,25 +424,25 @@ uint64_t vimgui_app_list(uint64_t id,const char *label,uint64_t selected,float h
     const float scroll_y=ImGui::GetScrollY(),scroll_max=ImGui::GetScrollMaxY();
     auto content_origin=ImGui::GetCursorScreenPos(); content_origin.y+=scroll_y;
     const float content_width=ImGui::GetContentRegionAvail().x;
-    const bool rebuild=list.dirty||list.last_frame!=state->frame-1||list.row_height!=row_height||list.x!=origin.x||list.y!=origin.y||list.width!=size.x;
-    if (rebuild) {
-        for (size_t index=0;index<list.rows.size();++index) {
-            const auto &row=list.rows[index];
-            publish(row.id,VIMGUI_AX_LIST_ITEM,row.label.c_str(),"",{content_origin.x,content_origin.y+index*row_height},
-                {content_width,row_height},VIMGUI_AX_CLICK|VIMGUI_AX_FOCUS|VIMGUI_AX_SCROLL_INTO_VIEW,row.id==selected?VIMGUI_AX_SELECTED:0,nullptr,0,0,0,0,index+1,list.rows.size());
-        }
-    }
-    if (!rebuild && list.selected != selected) {
-        for (uint64_t changed_id : {list.selected, selected}) {
-            auto found = list.indices.find(changed_id);
-            if (found == list.indices.end()) continue;
-            const auto &row = list.rows[found->second];
-            publish(row.id,VIMGUI_AX_LIST_ITEM,row.label.c_str(),"",{content_origin.x,content_origin.y+found->second*row_height},
-                {content_width,row_height},VIMGUI_AX_CLICK|VIMGUI_AX_FOCUS|VIMGUI_AX_SCROLL_INTO_VIEW,row.id==selected?VIMGUI_AX_SELECTED:0,nullptr,0,0,0,0,found->second+1,list.rows.size());
-        }
-    }
-    if(rebuild||list.height!=size.y||list.scroll_y!=scroll_y||list.scroll_max!=scroll_max)
-        publish(id,VIMGUI_AX_LIST,label,"",origin,size,VIMGUI_AX_SCROLL_UP|VIMGUI_AX_SCROLL_DOWN|VIMGUI_AX_SCROLL_INTO_VIEW,0,&list.ids,0,0,scroll_y,scroll_max);
+    // Retain every row in the application, but keep the OS tree bounded.
+    // Publishing all off-screen rows makes native adapter filtering expensive
+    // even when the renderer itself is clipped. Neighbor rows remain available
+    // for assistive-technology scroll-into-view actions.
+    const int first=std::max(0,static_cast<int>(scroll_y/row_height)-1);
+    const int end=std::min(static_cast<int>(list.rows.size()),
+        static_cast<int>((scroll_y+size.y)/row_height)+2);
+    std::vector<uint64_t> exposed;
+    auto expose=[&](int index) {
+        const auto &row=list.rows[index];
+        exposed.push_back(row.id);
+        publish(row.id,VIMGUI_AX_LIST_ITEM,row.label.c_str(),"",{content_origin.x,content_origin.y+index*row_height},
+            {content_width,row_height},VIMGUI_AX_CLICK|VIMGUI_AX_FOCUS|VIMGUI_AX_SCROLL_INTO_VIEW,row.id==selected?VIMGUI_AX_SELECTED:0,nullptr,0,0,0,0,index+1,list.rows.size());
+    };
+    for(int index=first;index<end;++index) expose(index);
+    // Keep the focused row alive until the requested scroll takes effect.
+    auto focused=list.indices.find(state->focus);
+    if(focused!=list.indices.end() && (focused->second<first||focused->second>=end)) expose(focused->second);
+    publish(id,VIMGUI_AX_LIST,label,"",origin,size,VIMGUI_AX_SCROLL_UP|VIMGUI_AX_SCROLL_DOWN|VIMGUI_AX_SCROLL_INTO_VIEW,0,&exposed,0,0,scroll_y,scroll_max);
     uint64_t activated=0;
     for (auto it=state->actions.begin();it!=state->actions.end();) {
         if (it->id==id && (it->action==VIMGUI_AX_SCROLL_UP || it->action==VIMGUI_AX_SCROLL_DOWN)) {
@@ -473,9 +469,8 @@ uint64_t vimgui_app_list(uint64_t id,const char *label,uint64_t selected,float h
         if(ImGui::IsItemFocused()) state->focus=row.id;
         ImGui::PopID();
     }
-    list.dirty=false;list.last_frame=state->frame;list.selected=selected;
+    list.last_frame=state->frame;
     if (!ImGui::IsMouseDown(0)) { list.touch_tracking=false; list.touch_dragging=false; }
-    list.x=origin.x;list.y=origin.y;list.width=size.x;list.height=size.y;list.row_height=row_height;
     list.scroll_y=scroll_y; list.scroll_max=scroll_max;
     ImGui::EndChild();reveal_item(id);ImGui::PopID();return activated;
 }
