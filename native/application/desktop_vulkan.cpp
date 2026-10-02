@@ -419,11 +419,13 @@ int vimgui_app_run(const char *title, int width, int height, vimgui_app_frame fr
     // io.ConfigDpiScaleViewports = true;      // [Experimental] Scale Dear ImGui and Platform Windows when Monitor DPI changes.
 
     // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+#ifdef IMGUI_HAS_VIEWPORT
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
+#endif
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForVulkan(window, true);
@@ -530,11 +532,13 @@ int vimgui_app_run(const char *title, int width, int height, vimgui_app_frame fr
             FrameRender(wd, main_draw_data);
 
         // Update and Render additional Platform Windows
+#ifdef IMGUI_HAS_VIEWPORT
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
         }
+#endif
 
         // Present Main Platform Window
         if (!main_is_minimized)

@@ -92,7 +92,9 @@ static void apply_text_edit(void *data,void *owner) {
     ImGui::GetIO().IniFilename=nullptr;
     ImGui::GetIO().ConfigFlags|=ImGuiConfigFlags_NavEnableKeyboard|ImGuiConfigFlags_NavEnableGamepad;
 #ifdef IMGUI_HAS_DOCK
+#ifdef IMGUI_HAS_VIEWPORT
     ImGui::GetIO().ConfigFlags&=~ImGuiConfigFlags_ViewportsEnable;
+#endif
 #endif
     _queue=[device newCommandQueue];
     _platform=vimgui_ios_init(); _renderer=vimgui_metal_init((__bridge void *)device);

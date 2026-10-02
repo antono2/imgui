@@ -155,10 +155,14 @@ touch scrollbar drags, list swipes without selection, last-row geometry,
 text replacement/selection, IME editing, high contrast,
 text scaling, and Activity recreation. This does not replace human TalkBack
 and switch-access testing.
-macOS/Windows/iOS have prepared CI checks but no completed validation in this work.
+Downstream consuming-application checks have also built the macOS Metal and
+Windows Vulkan hosts and passed their retained accessibility-tree tests. The
+iOS UIKit/Metal host completed simulator UI frames and a process restart while
+retaining application data. These checks do not replace VoiceOver, Narrator,
+physical-device, or platform folder-dialog interaction tests.
 
 Outstanding work includes mobile host lifecycle and IME integration, Unicode
 text segmentation beyond code points,
 large-tree startup/filter latency across platforms, and a full assistive
-technology/device test matrix. The duplicate-finder migration remains separate
-application work; its Flutter frontend has not yet been removed.
+technology/device test matrix. Applications own their file operations, persistent
+jobs, navigation history, localization, and platform storage permissions.
