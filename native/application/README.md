@@ -147,9 +147,9 @@ cancellation, and errors. Actual platform dialogs still need device validation.
 
 This is a development preview, not a claim of complete platform accessibility.
 Linux AT-SPI has been exercised end to end with 100,000 retained rows, off-screen
-selection, scrolled bounds, button invocation, and editable search. A translated
-content container exposes the viewport and adjacent rows without republishing
-every row on each scroll. Android arm64 cross-builds; the 32-bit test host also
+selection, scrolled bounds, button invocation, and editable search. The application retains every row; the native accessibility tree contains only
+the viewport, adjacent rows, and any focused row awaiting a scroll. Stable row
+identities and position/total metadata survive materialization. Android arm64 cross-builds; the 32-bit test host also
 passes device instrumentation on an Android tablet: accessibility actions,
 touch scrollbar drags, list swipes without selection, last-row geometry,
 text replacement/selection, IME editing, high contrast,
