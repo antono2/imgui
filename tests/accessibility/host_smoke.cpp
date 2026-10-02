@@ -94,4 +94,38 @@ static void frame(void *) {
         vimgui_app_theme(true,false,1,true);
     }
 }
-int main() { return vimgui_app_run("Application host smoke test",800,900,frame,nullptr,10); }
+// Exercise the same table ID through wide, stacked, and rotated layouts. A
+// stacked first field must not seed a larger stretch weight when columns return.
+static void column_scaling_regression() {
+    ImGui::CreateContext();
+    ImGuiIO &io=ImGui::GetIO(); io.IniFilename=nullptr;
+    io.BackendFlags|=ImGuiBackendFlags_RendererHasTextures;
+    io.Fonts->AddFontDefault();
+    if (!vimgui_app_initialize("Column scaling regression")) std::abort();
+    char minimum[32]="1MiB",sample[32]="64KiB";
+    for (int cycle=0;cycle<3;++cycle) {
+        for (int frame=0;frame<15;++frame) {
+            const float scale=frame>=4 && frame<8?2.0f:1.0f;
+            io.DisplaySize={frame>=11?900.0f:700.0f,600}; io.DeltaTime=1.0f/60;
+            vimgui_app_theme(true,false,scale,false);
+            ImGui::NewFrame(); vimgui_app_frame_begin();
+            vimgui_app_begin_columns(900,200*scale,0);
+            vimgui_app_set_width(-1); vimgui_app_input(901,"Minimum size",minimum,sizeof(minimum));
+            const ImVec2 first_min=ImGui::GetItemRectMin(),first_max=ImGui::GetItemRectMax();
+            vimgui_app_next_column(false);
+            vimgui_app_set_width(-1); vimgui_app_input(902,"Sample size",sample,sizeof(sample));
+            const ImVec2 second_min=ImGui::GetItemRectMin(),second_max=ImGui::GetItemRectMax();
+            if (scale==1 && (std::fabs((first_max.x-first_min.x)-(second_max.x-second_min.x))>2
+                || second_min.x<=first_max.x || std::fabs(first_min.y-second_min.y)>1)) {
+                std::fprintf(stderr,"Unequal columns after scaling: cycle %d frame %d, widths %.1f/%.1f\n",cycle,frame,first_max.x-first_min.x,second_max.x-second_min.x);
+                std::abort();
+            }
+            if (scale==2 && second_min.y<first_max.y) { std::fprintf(stderr,"Scaled fields did not stack\n"); std::abort(); }
+            vimgui_app_end_columns();
+            if (!vimgui_app_frame_end()) std::abort();
+            ImGui::Render();
+        }
+    }
+    vimgui_app_shutdown(); ImGui::DestroyContext();
+}
+int main() { column_scaling_regression(); return vimgui_app_run("Application host smoke test",800,900,frame,nullptr,10); }

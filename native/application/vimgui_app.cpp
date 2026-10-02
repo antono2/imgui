@@ -357,11 +357,12 @@ void vimgui_app_begin_columns(uint64_t id,float minimum,float trailing) {
     const float available=ImGui::GetContentRegionAvail().x;
     const float second=trailing>0?trailing:minimum;
     const int count=available>=minimum+second+ImGui::GetStyle().ItemSpacing.x?2:1;
-    bool active=ImGui::BeginTable("##columns",count,ImGuiTableFlags_SizingStretchProp|ImGuiTableFlags_NoSavedSettings|ImGuiTableFlags_NoPadOuterX);
+    bool active=ImGui::BeginTable("##columns",count,ImGuiTableFlags_SizingStretchSame|ImGuiTableFlags_NoSavedSettings|ImGuiTableFlags_NoPadOuterX);
     state->columns.push_back(active?count:0);
     if (active) {
-        ImGui::TableSetupColumn("first",ImGuiTableColumnFlags_WidthStretch);
-        if (count==2) ImGui::TableSetupColumn("second",trailing>0?ImGuiTableColumnFlags_WidthFixed:ImGuiTableColumnFlags_WidthStretch,trailing>0?trailing:0);
+        // Equal stretch weights must not inherit content widths from stacked frames.
+        ImGui::TableSetupColumn("first",ImGuiTableColumnFlags_WidthStretch,1.0f);
+        if (count==2) ImGui::TableSetupColumn("second",trailing>0?ImGuiTableColumnFlags_WidthFixed:ImGuiTableColumnFlags_WidthStretch,trailing>0?trailing:1.0f);
         ImGui::TableNextColumn();
     }
 }
