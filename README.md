@@ -13,10 +13,12 @@ The cross-platform setup entry point installs prerequisites and builds the
 native library without regenerating bindings:
 
 ```sh
-v run setup.vsh
+./setup.vsh
 ```
 
-Use `v run setup.vsh --check` for read-only diagnostics.
+Use `./setup.vsh --check` for read-only diagnostics. The scripts are executable on
+Linux and macOS with V on `PATH`. On Windows, run the same files with
+`v run setup.vsh` or `v run scripts/run_demo.vsh` from a Developer PowerShell.
 
 The V bindings are already generated and committed. Installing the module does
 not require the binding generators; see [Maintaining](MAINTAINING.md) if you
@@ -53,6 +55,9 @@ The configuration functions return `false` on the standard branch. Dockspace
 and secondary-viewport rendering helpers become safe no-ops there.
 
 ## Dependencies
+The setup and build tooling uses V, CMake, Git, and a C/C++ toolchain. Python,
+Rust, and Cargo are not required.
+
 `v install antono2.vulkan@v3.2.0`<br>
 `v install antono2.glfw@v2.0.0`
 
@@ -61,7 +66,7 @@ and secondary-viewport rendering helpers become safe no-ops there.
 v install antono2.imgui
 # Build libvimgui for this machine (without regenerating V bindings)
 cd ~/.vmodules/antono2/imgui
-v run build_vimgui.vsh
+./build_vimgui.vsh
 ```
 
 ### Native-library choices
@@ -69,13 +74,13 @@ v run build_vimgui.vsh
 The default uses a shared `libvimgui` and the system GLFW development package:
 
 ```bash
-v run build_vimgui.vsh --linkage shared --glfw system
+./build_vimgui.vsh --linkage shared --glfw system
 ```
 
 To build a static archive and select it from V:
 
 ```bash
-v run build_vimgui.vsh --linkage static --glfw system
+./build_vimgui.vsh --linkage static --glfw system
 v -d imgui_static run your_app.v
 ```
 
@@ -83,7 +88,7 @@ GLFW can instead be downloaded at a chosen release tag. This is useful for a
 reproducible application bundle:
 
 ```bash
-v run build_vimgui.vsh --linkage shared --glfw bundled --glfw-version 3.4
+./build_vimgui.vsh --linkage shared --glfw bundled --glfw-version 3.4
 ```
 
 `VIMGUI_LINKAGE`, `VIMGUI_GLFW_PROVIDER`, and `VIMGUI_GLFW_VERSION` provide the
@@ -118,7 +123,7 @@ platform viewports, while `v-imgui-demo-standard-ubuntu24-amd64.zip` retains
 normal independent floating windows. Each archive also contains `VARIANT.txt`.
 
 Compiling the generated ImGui and ImPlot V bindings can currently require about
-11 GiB of memory. Use `scripts/run_demo.sh` to build and run the demo from source.
+11 GiB of memory. Use `scripts/run_demo.vsh` to build and run the demo from source.
 
 Release binaries are built for Ubuntu 24.04 x86_64 and Windows 10/11 x64.
 Native-library linkage and the GLFW provider remain build-time choices for
@@ -126,7 +131,7 @@ developers; they do not need to multiply the end-user demo downloads.
 
 For binding regeneration, upstream updates, and CI/release procedures, see
 [Maintaining](MAINTAINING.md). To rebuild only the native library after a
-system upgrade, run `v run build_vimgui.vsh`.
+system upgrade, run `./build_vimgui.vsh`.
 
 ## Thanks
 Thank you [@ryoskzypu](https://github.com/ryoskzypu) from #regex on

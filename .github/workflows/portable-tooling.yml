@@ -1,0 +1,69 @@
+name: Portable V tooling
+
+on:
+  pull_request:
+    branches: [master, standard]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scripts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/v
+          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          path: toolchain/v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/vc
+          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          path: toolchain/v/vc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: vlang/tccbin
+          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          path: toolchain/v/thirdparty/tcc
+      - name: Build V on Unix
+        if: runner.os != 'Windows'
+        run: |
+          make -C toolchain/v local=1
+          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Build V on Windows
+        if: runner.os == 'Windows'
+        shell: cmd
+        working-directory: toolchain/v
+        run: makev.bat -msvc --local
+      - name: Test executable scripts on Unix
+        if: runner.os != 'Windows'
+        run: |
+          ./setup.vsh --help
+          ./build_vimgui.vsh --help
+          ./generate.vsh --help
+          ./scripts/run_demo.vsh --help
+          ./scripts/check_prerequisites.vsh --help
+          ./scripts/build_appui.vsh --help
+          ./scripts/extract_zip.vsh --help
+          ./scripts/setup_vulkan_ci.vsh --help
+          test -x scripts/check_mobile_parity.sh
+          v test scripts/tooling
+      - name: Test the same scripts on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $V = "$env:GITHUB_WORKSPACE\toolchain\v\v.exe"
+          foreach ($Script in @('setup.vsh', 'build_vimgui.vsh', 'generate.vsh', 'scripts/run_demo.vsh', 'scripts/check_prerequisites.vsh', 'scripts/build_appui.vsh', 'scripts/extract_zip.vsh', 'scripts/setup_vulkan_ci.vsh')) {
+            & $V -cc msvc run $Script --help
+            if ($LASTEXITCODE -ne 0) { throw "$Script failed" }
+          }
+          & $V -cc msvc test scripts/tooling
+          if ($LASTEXITCODE -ne 0) { throw 'Portable tooling tests failed' }

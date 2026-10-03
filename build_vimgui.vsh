@@ -1,11 +1,11 @@
-#!/usr/bin/env -S v
+#!/usr/bin/env -S v run
 
 import os
 
 const repo_dir = @DIR
 
 fn usage() {
-	println('Usage: v run build_vimgui.vsh [--profile desktop|android-vulkan|apple-metal] [--linkage shared|static] [--glfw system|bundled] [--glfw-version VERSION] [--android-abi ABI] [--android-api LEVEL] [--ndk PATH] [--apple-sdk macosx|iphonesimulator|iphoneos] [--apple-arch ARCH] [--freetype off|system|bundled]')
+	println('Usage: ./build_vimgui.vsh [--profile desktop|android-vulkan|apple-metal] [--linkage shared|static] [--glfw system|bundled] [--glfw-version VERSION] [--android-abi ABI] [--android-api LEVEL] [--ndk PATH] [--apple-sdk macosx|iphonesimulator|iphoneos] [--apple-arch ARCH] [--freetype off|system|bundled]')
 }
 
 fn option_value(args []string, index int, option string) string {

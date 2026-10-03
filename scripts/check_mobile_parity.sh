@@ -29,6 +29,14 @@ shared_paths=(
   scripts/run_android_demo.sh
   scripts/run_android_probes.sh
   scripts/run_ios_simulator_smoke.sh
+  scripts/tooling
+  scripts/build_appui.vsh
+  scripts/check_prerequisites.vsh
+  scripts/run_demo.vsh
+  scripts/extract_zip.vsh
+  scripts/setup_vulkan_ci.vsh
+  setup.vsh
+  .github/workflows/portable-tooling.yml
   tests/android
   tests/apple
   tests/desktop/moving_dependencies_smoke.v
