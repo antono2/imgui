@@ -16,11 +16,14 @@ try {
     if ($Text.DocumentRange.GetText(-1) -ne $Expected) { throw 'Document text mismatch' }
     Write-Output 'PASS: managed document range GetText'
     $Range = $Text.DocumentRange.Clone()
+    if ($Range.GetText(-1) -ne $Expected) { throw 'Cloned document text mismatch' }
+    Write-Output 'PASS: managed cloned document GetText'
     $Range.MoveEndpointByRange([System.Windows.Automation.Text.TextPatternRangeEndpoint]::End, $Range, [System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start)
     $null = $Range.MoveEndpointByUnit([System.Windows.Automation.Text.TextPatternRangeEndpoint]::Start, [System.Windows.Automation.Text.TextUnit]::Character, 1)
     $null = $Range.MoveEndpointByUnit([System.Windows.Automation.Text.TextPatternRangeEndpoint]::End, [System.Windows.Automation.Text.TextUnit]::Character, 1)
     if ($Range.GetText(-1) -ne $Camera) { throw 'Moved range text mismatch' }
     $Range.Select()
+    Write-Output 'PASS: managed moved range GetText and Select'
     for ($Attempt = 0; $Attempt -lt 50; $Attempt++) {
         $Selection = $Text.GetSelection()
         if ($Selection.Count -ne 1 -or $Selection[0].GetText(-1) -ne $Camera) { throw 'Selected text mismatch' }

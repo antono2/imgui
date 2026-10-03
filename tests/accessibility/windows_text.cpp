@@ -45,6 +45,12 @@ static void read_ranges(HWND window) {
     Com<IUIAutomationTextRange> document;check(text->get_DocumentRange(document.out()));
     BSTR content=nullptr;check(document->GetText(-1,&content));if(!content||std::wstring(content)!=L"A\xd83d\xdcf7" L"e\x0301Z")throw std::runtime_error("Document text mismatch");SysFreeString(content);
     std::puts("PASS: document range GetText");std::fflush(stdout);
+    Com<IUIAutomationTextRange> moved;check(document->Clone(moved.out()));
+    check(moved->MoveEndpointByRange(TextPatternRangeEndpoint_End,moved.value,TextPatternRangeEndpoint_Start));
+    int distance=0;check(moved->MoveEndpointByUnit(TextPatternRangeEndpoint_Start,TextUnit_Character,1,&distance));
+    check(moved->MoveEndpointByUnit(TextPatternRangeEndpoint_End,TextUnit_Character,1,&distance));
+    content=nullptr;check(moved->GetText(-1,&content));if(!content||std::wstring(content)!=L"\xd83d\xdcf7")throw std::runtime_error("Moved range text mismatch");SysFreeString(content);
+    std::puts("PASS: cloned and moved native range GetText");std::fflush(stdout);
     for(int attempt=0;attempt<50;++attempt) {
         Com<IUIAutomationTextRangeArray> selection;check(text->GetSelection(selection.out()));
         int count=0;check(selection->get_Length(&count));if(count!=1)throw std::runtime_error("Selection count mismatch");
