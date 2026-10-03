@@ -13,10 +13,11 @@ The cross-platform setup entry point installs prerequisites and builds the
 native library without regenerating bindings:
 
 ```sh
-v run setup.vsh
+./setup.vsh
 ```
 
-Use `v run setup.vsh --check` for read-only diagnostics.
+Use `./setup.vsh --check` for read-only diagnostics. On Windows use
+`v run setup.vsh` (and append `--check` for diagnostics).
 
 The V bindings are already generated and committed. Installing the module does
 not require the binding generators; see [Maintaining](MAINTAINING.md) if you
@@ -111,11 +112,18 @@ prototype path with Volk's global dispatch table in the same application.
 ## Examples
 Using GLFW and Dear ImGui [antono2/v_imgui_examples](https://github.com/antono2/v_imgui_examples)
 
-Release archives containing the already compiled demo and its runtime libraries
-provide a low-friction validation path. The archive name identifies the
-upstream line: `v-imgui-demo-docking-ubuntu24-amd64.zip` supports docking and
-platform viewports, while `v-imgui-demo-standard-ubuntu24-amd64.zip` retains
-normal independent floating windows. Each archive also contains `VARIANT.txt`.
+The [example releases](https://github.com/antono2/v_imgui_examples/releases)
+contain the compiled GLFW/Vulkan example, widget gallery and ImPlot dashboard,
+with their application libraries. Open `examples.exe` on Windows or run
+`./run.sh` on Linux to choose an example. Docking packages support docking and
+platform viewports; standard packages retain independent floating windows.
+Press F11 for borderless fullscreen and Escape to quit after an active edit or
+popup consumes it.
+
+The Android touch/text APK includes its native libraries and font. See the
+[installation guide](https://github.com/antono2/v_imgui_examples/blob/master/docs/installing-releases.md)
+for desktop requirements, Android installation without a Play Store, and the
+gallery's integrated accessibility controls.
 
 Compiling the generated ImGui and ImPlot V bindings can currently require about
 11 GiB of memory. Use `scripts/run_demo.sh` to build and run the demo from source.
