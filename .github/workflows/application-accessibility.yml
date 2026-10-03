@@ -19,17 +19,15 @@ jobs:
           submodules: recursive
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libvulkan-dev libdbus-1-dev mesa-vulkan-drivers xvfb
+        run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libvulkan-dev libdbus-1-dev libatk1.0-dev libatk-bridge2.0-dev mesa-vulkan-drivers xvfb
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
         run: brew install glfw
-      - name: Prepare pinned AccessKit
-        run: python3 scripts/prepare-accesskit.py
       - name: Compile Windows accessibility bridge
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          cmake -S native/accessibility -B build/accessibility -A x64 "-DACCESSKIT_DIR=$pwd/.dependencies/accesskit/accesskit-c-0.23.1"
+          cmake -S native/accessibility -B build/accessibility -A x64
           cmake --build build/accessibility --config Release --parallel 2
           ctest --test-dir build/accessibility -C Release --output-on-failure
       - name: Compile desktop application host
@@ -51,7 +49,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           submodules: recursive
-      - run: python3 scripts/prepare-accesskit.py --prebuilt
       - name: Compile application widgets and accessibility for iOS Simulator
         run: |
           cmake -S . -B build/appui-ios \
@@ -59,6 +56,5 @@ jobs:
             -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
             -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
             -DVIMGUI_PROFILE=apple-metal -DVIMGUI_APPLICATION_UI=ON \
-            -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release \
-            -DACCESSKIT_DIR="$PWD/.dependencies/accesskit/accesskit-c-0.23.1"
+            -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release
           cmake --build build/appui-ios --parallel 2

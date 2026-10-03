@@ -300,10 +300,10 @@ The host also forwards these insets to the optional application layer.
 
 
 To publish native accessibility semantics from an external `appui` UI, also set
-`VIMGUI_ANDROID_APPLICATION_UI=1`. The script prepares the pinned Android
-AccessKit bridge, enables `VIMGUI_APPLICATION_UI` and
+`VIMGUI_ANDROID_APPLICATION_UI=1`. The script builds the native Android
+accessibility bridge, enables `VIMGUI_APPLICATION_UI` and
 `VIMGUI_ANDROID_EXTERNAL_ACCESSIBILITY`, and passes `-d appui_embedded -d
-release_accessibility` to V. Rust and its Android target are build prerequisites.
+release_accessibility` to V. It uses the Android SDK/NDK and Java toolchain.
 The native host owns `appui.initialize`/`shutdown`, accessibility attachment,
 selection-aware IME forwarding, and safe-area updates. The callback calls
 `appui.begin_frame`/`end_frame` and draws labelled controls with stable IDs. Raw
