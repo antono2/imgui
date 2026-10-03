@@ -350,7 +350,8 @@ bool initialize(android_app* app)
     ImGui::StyleColorsDark();
     const float scale = configured_ui_scale(app);
     g.density_scale = scale;
-    if (!vimgui_mobile_set_ui_scale(scale))
+    // The retained sample state survives native window/context recreation.
+    if (!vimgui_mobile_set_ui_scale(scale * g.zoom))
         return false;
     load_font(app->activity->assetManager);
     if (!vimgui_android_init(g.native_window))
