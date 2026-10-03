@@ -26,9 +26,10 @@ fn observe_text_selection(mut data imgui.InputTextCallbackData) i32 {
 // Its arguments are borrowed for this call and stay owned by the host.
 @[export: 'vimgui_android_demo_draw_ui']
 fn draw_ui(zoom &f32, tap_count &int, text &char, text_capacity int, clipboard_preview &char, clipboard_capacity int, display_width f32, display_height f32) bool {
-	imgui.set_next_window_pos(imgui.ImVec2_c{ x: 24, y: 24 }, imgui.Cond(imgui.Cond_.first_use_ever), imgui.ImVec2_c{})
-	imgui.set_next_window_size(imgui.ImVec2_c{ x: 700, y: 420 }, imgui.Cond(imgui.Cond_.first_use_ever))
-	imgui.begin(c'Android Vulkan + FreeType', unsafe { nil }, 0)
+	imgui.set_next_window_pos(imgui.get_main_viewport().WorkPos, imgui.Cond(imgui.Cond_.always), imgui.ImVec2_c{})
+	imgui.set_next_window_size(imgui.ImVec2_c{ x: display_width, y: display_height }, imgui.Cond(imgui.Cond_.always))
+	flags := imgui.WindowFlags(int(imgui.WindowFlags_.no_move) | int(imgui.WindowFlags_.no_resize))
+	imgui.begin(c'Android Vulkan + FreeType', unsafe { nil }, flags)
 	imgui.text_unformatted(c'Tap the button; rotate or background the app.', unsafe { nil })
 	if imgui.button(c'Tap here', imgui.ImVec2_c{}) {
 		unsafe { *tap_count = *tap_count + 1 }
@@ -71,7 +72,7 @@ fn draw_ui(zoom &f32, tap_count &int, text &char, text_capacity int, clipboard_p
 	imgui.text_unformatted(selection_label.str, unsafe { nil })
 	unsafe { selection_label.free() }
 	changed := imgui.slider_float(c'UI zoom', zoom, 0.75, 2.0, c'%.3f', 0)
-	size_label := 'Display ${int(display_width)} x ${int(display_height)}'
+	size_label := 'Usable area ${int(display_width)} x ${int(display_height)}'
 	imgui.text_unformatted(size_label.str, unsafe { nil })
 	unsafe { size_label.free() }
 	io := imgui.get_io_nil()
