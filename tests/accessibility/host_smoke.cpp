@@ -1,5 +1,6 @@
 #include "vimgui_app.h"
 #include "imgui.h"
+#include "platform.h"
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
@@ -128,4 +129,28 @@ static void column_scaling_regression() {
     }
     vimgui_app_shutdown(); ImGui::DestroyContext();
 }
-int main() { column_scaling_regression(); return vimgui_app_run("Application host smoke test",800,900,frame,nullptr,10); }
+static void exact_scroll_regression() {
+    ImGui::CreateContext();
+    auto &io=ImGui::GetIO(); io.IniFilename=nullptr;
+    io.BackendFlags|=ImGuiBackendFlags_RendererHasTextures;
+    io.Fonts->AddFontDefault(); io.DisplaySize={800,900}; io.DeltaTime=1.0f/60;
+    if (!vimgui_app_initialize("Exact scrolling")) std::abort();
+    vimgui_app_theme(true,false,2,false);
+    vimgui_app_list_reset(40);
+    for (uint64_t id=1000;id<2000;++id) vimgui_app_list_add(40,id,"Retained row");
+    for (int frame=0;frame<25;++frame) {
+        if(frame==3) vimgui_app_focus(1999);
+        if(frame==8 && !accessibility_enqueue(vimgui_app_accessibility(),{40,VIMGUI_AX_SET_SCROLL_PERCENT,"50"})) std::abort();
+        ImGui::NewFrame(); vimgui_app_frame_begin();
+        vimgui_app_list(40,"Files",1999,240);
+        if(!vimgui_app_frame_end()) std::abort();
+        ImGui::Render();
+        if(frame>=10) {
+            auto node=accessibility_node(vimgui_app_accessibility(),40);
+            const double percent=node->scroll_y/node->scroll_y_max*100;
+            if(std::fabs(percent-50)>1) { std::fprintf(stderr,"Exact scrolling reverted: frame %d, %.3f%%\n",frame,percent); std::abort(); }
+        }
+    }
+    vimgui_app_shutdown(); ImGui::DestroyContext();
+}
+int main() { column_scaling_regression(); exact_scroll_regression(); return vimgui_app_run("Application host smoke test",800,900,frame,nullptr,10); }
