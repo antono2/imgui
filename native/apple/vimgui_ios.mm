@@ -199,6 +199,12 @@ extern "C" bool vimgui_ios_keyboard_set_visible(void* handle, bool visible)
     if (handle == nullptr || ![NSThread isMainThread])
         return false;
     VImGuiKeyboardView* keyboard = (__bridge VImGuiKeyboardView*)handle;
+    for (UIView* sibling in keyboard.superview.subviews)
+        if ([sibling.accessibilityIdentifier isEqualToString:@"vimgui-native-accessible-editor"] && sibling.isFirstResponder)
+        {
+            if (!visible) [sibling resignFirstResponder];
+            return true;
+        }
     if (visible && !keyboard.isFirstResponder)
         [keyboard becomeFirstResponder];
     else if (!visible && keyboard.isFirstResponder)
