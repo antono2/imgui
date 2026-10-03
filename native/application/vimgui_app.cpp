@@ -168,6 +168,16 @@ bool vimgui_app_frame_end() {
         state->error = "Unbalanced application panels."; return false;
     }
     touch_scroll();
+    double focus_x, focus_y, focus_width, focus_height;
+    if (vimgui_accessibility_visual_focus(state->ax, &focus_x, &focus_y, &focus_width, &focus_height)) {
+        const auto origin = ImGui::GetMainViewport()->Pos;
+        ImVec2 a(origin.x + float(focus_x), origin.y + float(focus_y));
+        ImVec2 b(a.x + float(focus_width), a.y + float(focus_height));
+        auto *draw = ImGui::GetForegroundDrawList();
+        const float stroke = std::max(2.0f, ImGui::GetFontSize() / 8.0f);
+        draw->AddRect(a, b, IM_COL32(0,0,0,255), 0.0f, stroke * 3);
+        draw->AddRect(a, b, IM_COL32(255,255,0,255), 0.0f, stroke);
+    }
     state->root_scroll = ImGui::GetScrollY();
     auto root = state->groups.back();
     publish(1, VIMGUI_AX_WINDOW, state->title.c_str(), "", root.origin, ImGui::GetWindowSize(),
@@ -357,11 +367,12 @@ void vimgui_app_begin_columns(uint64_t id,float minimum,float trailing) {
     const float available=ImGui::GetContentRegionAvail().x;
     const float second=trailing>0?trailing:minimum;
     const int count=available>=minimum+second+ImGui::GetStyle().ItemSpacing.x?2:1;
-    bool active=ImGui::BeginTable("##columns",count,ImGuiTableFlags_SizingStretchProp|ImGuiTableFlags_NoSavedSettings|ImGuiTableFlags_NoPadOuterX);
+    bool active=ImGui::BeginTable("##columns",count,ImGuiTableFlags_SizingStretchSame|ImGuiTableFlags_NoSavedSettings|ImGuiTableFlags_NoPadOuterX);
     state->columns.push_back(active?count:0);
     if (active) {
-        ImGui::TableSetupColumn("first",ImGuiTableColumnFlags_WidthStretch);
-        if (count==2) ImGui::TableSetupColumn("second",trailing>0?ImGuiTableColumnFlags_WidthFixed:ImGuiTableColumnFlags_WidthStretch,trailing>0?trailing:0);
+        // Equal stretch weights must not inherit content widths from stacked frames.
+        ImGui::TableSetupColumn("first",ImGuiTableColumnFlags_WidthStretch,1.0f);
+        if (count==2) ImGui::TableSetupColumn("second",trailing>0?ImGuiTableColumnFlags_WidthFixed:ImGuiTableColumnFlags_WidthStretch,trailing>0?trailing:1.0f);
         ImGui::TableNextColumn();
     }
 }

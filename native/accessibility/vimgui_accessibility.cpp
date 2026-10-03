@@ -113,6 +113,8 @@ struct vimgui_accessibility {
     std::deque<Event> events;
     Event current{};
     uint64_t root = 0, focus = 0;
+    bool visual_focus = false;
+    double focus_x = 0, focus_y = 0, focus_width = 0, focus_height = 0;
     bool structure_changed = false, pending = false;
     std::string error;
 #if defined(__ANDROID__)
@@ -302,6 +304,21 @@ size_t vimgui_accessibility_node_count(vimgui_accessibility *ctx) {
 uint64_t vimgui_accessibility_focus(vimgui_accessibility *ctx) {
     if (!ctx) return 0;
     std::lock_guard<std::mutex> lock(ctx->mutex); return ctx->focus;
+}
+void vimgui_accessibility_set_visual_focus(vimgui_accessibility *ctx, bool visible,
+                                         double x, double y, double width, double height) {
+    if (!ctx) return;
+    std::lock_guard<std::mutex> lock(ctx->mutex);
+    ctx->visual_focus = visible && width > 0 && height > 0;
+    ctx->focus_x = x; ctx->focus_y = y; ctx->focus_width = width; ctx->focus_height = height;
+}
+bool vimgui_accessibility_visual_focus(vimgui_accessibility *ctx, double *x, double *y,
+                                     double *width, double *height) {
+    if (!ctx || !x || !y || !width || !height) return false;
+    std::lock_guard<std::mutex> lock(ctx->mutex);
+    if (!ctx->visual_focus) return false;
+    *x = ctx->focus_x; *y = ctx->focus_y; *width = ctx->focus_width; *height = ctx->focus_height;
+    return true;
 }
 bool vimgui_accessibility_request(vimgui_accessibility *ctx, uint64_t id, int requested, const char *value) {
     if (!ctx || (requested != VIMGUI_AX_FOCUS && requested != VIMGUI_AX_CLICK &&

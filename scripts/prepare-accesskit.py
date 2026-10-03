@@ -64,7 +64,8 @@ def prepare(linux, android=False):
             patch_paths += [ROOT / 'patches/accesskit/linux-atspi.patch',
                             ROOT / 'patches/accesskit/linux-focus-cache.patch']
         if android:
-            patch_paths += [ROOT / 'patches/accesskit/android-set-text.patch']
+            patch_paths += [ROOT / 'patches/accesskit/android-set-text.patch',
+                            ROOT / 'patches/accesskit/android-important-nodes.patch']
         revision = hashlib.sha256(b''.join(path.read_bytes() for path in patch_paths)).hexdigest()
         refresh_sources = any(
             not (sources / crate / '.codex-patches.sha256').exists() or
@@ -88,6 +89,7 @@ def prepare(linux, android=False):
             patch(sources, ROOT / 'patches/accesskit/linux-focus-cache.patch')
         if android and refresh_sources:
             patch(sources, ROOT / 'patches/accesskit/android-set-text.patch')
+            patch(sources, ROOT / 'patches/accesskit/android-important-nodes.patch')
         for crate in selected:
             (sources / crate / '.codex-patches.sha256').write_text(revision)
         manifest = release / 'Cargo.toml'

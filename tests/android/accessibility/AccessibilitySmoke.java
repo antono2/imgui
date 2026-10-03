@@ -119,6 +119,28 @@ public final class AccessibilitySmoke extends Instrumentation {
         }
     }
 
+    private void checkAccessibilityOutline(String label) {
+        // Drawing follows a real touch-exploration service, not automation focus alone.
+        android.view.accessibility.AccessibilityManager manager=(android.view.accessibility.AccessibilityManager)
+            getTargetContext().getSystemService(android.content.Context.ACCESSIBILITY_SERVICE);
+        if(manager==null || !manager.isTouchExplorationEnabled())return;
+        if(!node(label).performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS))
+            throw new AssertionError("Accessibility focus rejected");
+        await(()->{
+            Rect rectangle=new Rect(); node(label).getBoundsInScreen(rectangle);
+            android.graphics.Bitmap image=automation.takeScreenshot();
+            if(image==null || rectangle.isEmpty()) return null;
+            int hits=0;
+            int[][] points={{rectangle.left,rectangle.centerY()},{rectangle.right-1,rectangle.centerY()},
+                {rectangle.centerX(),rectangle.top},{rectangle.centerX(),rectangle.bottom-1}};
+            for(int[] point:points) {
+                if(point[0]>=0 && point[0]<image.getWidth() && point[1]>=0 && point[1]<image.getHeight()
+                    && (image.getPixel(point[0],point[1]) & 0x00ffffff)==0x00ffff00) hits++;
+            }
+            image.recycle(); return hits>=2?Boolean.TRUE:null;
+        },"Accessibility focus outline was not rendered");
+    }
+
     @Override public void onStart() {
         Bundle result=new Bundle();
         try {
@@ -131,6 +153,13 @@ public final class AccessibilitySmoke extends Instrumentation {
             Activity activity=startActivitySync(intent);
             runOnMainSync(() -> activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
             node("Search files");
+            for(String label:new String[]{"Accessible file review", "Search files", "Keep selected", "High contrast"}) {
+                if(!node(label).isImportantForAccessibility())
+                    throw new AssertionError("TalkBack would skip virtual node: "+label);
+            }
+            if(node("Accessible file review").getParent()==null)
+                throw new AssertionError("Virtual root is detached from the Android hierarchy");
+            checkAccessibilityOutline("Keep selected");
             runOnMainSync(()->((android.hardware.input.InputManager.InputDeviceListener)activity).onInputDeviceRemoved(-1234));
             // Test isolated Context configurations, preserving device settings.
             java.lang.reflect.Method scaleMethod=activity.getClassLoader().loadClass("io.antono2.imgui.ImGuiInputView").getMethod("nativeUiScale",android.content.Context.class);

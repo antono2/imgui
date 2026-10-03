@@ -6,6 +6,10 @@ import android.view.Choreographer;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.util.Log;
+import android.graphics.Rect;
+import android.view.accessibility.AccessibilityManager;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityNodeProvider;
 
 /** Owns the UI-thread accessibility adapter for an application-rendered View.
  * The native context is retained before crossing threads. close() must be
@@ -17,10 +21,26 @@ public final class ImGuiAccessibility implements AutoCloseable {
     private volatile boolean failed;
     private long context;
     private int originalImportance;
+    private void updateVisualFocus() {
+        AccessibilityManager manager = (AccessibilityManager) host.getContext().getSystemService(android.content.Context.ACCESSIBILITY_SERVICE);
+        AccessibilityNodeProvider provider = host.getAccessibilityNodeProvider();
+        AccessibilityNodeInfo focused = manager != null && manager.isTouchExplorationEnabled() && provider != null
+                ? provider.findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY) : null;
+        Rect bounds = new Rect();
+        if (focused != null) {
+            focused.getBoundsInScreen(bounds);
+            int[] location = new int[2]; host.getLocationOnScreen(location);
+            bounds.offset(-location[0], -location[1]);
+            if (!bounds.intersect(0, 0, host.getWidth(), host.getHeight())) bounds.setEmpty();
+            focused.recycle();
+        }
+        nativeVisualFocus(context, !bounds.isEmpty(), bounds.left, bounds.top, bounds.width(), bounds.height());
+    }
     private final Choreographer.FrameCallback update = new Choreographer.FrameCallback() {
         @Override public void doFrame(long frameTimeNanos) {
             if (!closed && context != 0) {
                 nativeUpdate(context);
+                updateVisualFocus();
                 Choreographer.getInstance().postFrameCallback(this);
             }
         }
@@ -75,6 +95,7 @@ public final class ImGuiAccessibility implements AutoCloseable {
     private void detach() {
         Choreographer.getInstance().removeFrameCallback(update);
         if (context != 0) {
+            nativeVisualFocus(context, false, 0, 0, 0, 0);
             nativeDetach(context);
             nativeRelease(context);
             context = 0;
@@ -98,4 +119,5 @@ public final class ImGuiAccessibility implements AutoCloseable {
     private static native boolean nativeAttach(long context, View host);
     private static native void nativeDetach(long context);
     private static native void nativeUpdate(long context);
+    private static native void nativeVisualFocus(long context, boolean visible, int x, int y, int width, int height);
 }
