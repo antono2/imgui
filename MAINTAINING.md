@@ -16,7 +16,7 @@ line; `standard` uses cimgui's `master` line. Keep each branch's
 sources together.
 
 To regenerate against the submodule revisions already checked out, run
-`v run generate.vsh`. It also builds `libvimgui`. The normal path uses the
+`./generate.vsh`. It also builds `libvimgui`. The normal path uses the
 committed generated C API and does not need Perl or LuaJIT. Use
 `--regenerate-c` only when intentionally rerunning upstream's Lua generators;
 that mode needs LuaJIT. `C2V_BIN` can point to a previously built C2V executable
@@ -58,12 +58,12 @@ the required matrix.
 
 [The mobile parity workflow](.github/workflows/mobile-parity.yml) compares
 hand-maintained mobile integration on `master` and `standard` weekly and on
-manual dispatch. Run `bash scripts/check_mobile_parity.sh` locally after
+manual dispatch. Run `./scripts/check_mobile_parity.sh` locally after
 coordinated changes to both branches. Generated APIs, upstream submodules, and
 variant-specific Vulkan bindings are deliberately excluded.
 
 [The demo workflow](.github/workflows/demo-release.yml) builds Ubuntu 24.04
 x86_64 and Windows 10/11 x64 artifacts. The source path remains
-`scripts/run_demo.sh`; prebuilding a demo is not a requirement for every
+`scripts/run_demo.vsh`; prebuilding a demo is not a requirement for every
 release. Keep the archive variant marker and the pinned demo/compiler revisions
 aligned when changing release packaging.

@@ -19,4 +19,4 @@ jobs:
       - name: Compare shared mobile files
         run: |
           git fetch origin master standard
-          bash scripts/check_mobile_parity.sh origin/master origin/standard
+          ./scripts/check_mobile_parity.sh origin/master origin/standard

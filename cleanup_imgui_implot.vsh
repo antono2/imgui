@@ -3,7 +3,7 @@
 // V-native cleanup for bindings produced by `v translate` from cimgui/cimplot.
 //
 // Usage:
-//   v run cleanup_imgui_implot.vsh input.v output.v imgui|implot
+//   ./cleanup_imgui_implot.vsh input.v output.v imgui|implot
 
 import os
 
@@ -37,9 +37,9 @@ mut:
 }
 
 fn usage() {
-	eprintln('Usage: v run cleanup_imgui_implot.vsh input.v output.v imgui|implot')
-	eprintln('       v run cleanup_imgui_implot.vsh --self-test')
-	eprintln('       v run cleanup_imgui_implot.vsh --v3-fixed-arrays binding.v')
+	eprintln('Usage: ./cleanup_imgui_implot.vsh input.v output.v imgui|implot')
+	eprintln('       ./cleanup_imgui_implot.vsh --self-test')
+	eprintln('       ./cleanup_imgui_implot.vsh --v3-fixed-arrays binding.v')
 }
 
 fn config_for(kind string) !Config {
