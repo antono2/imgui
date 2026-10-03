@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)] [string] $Executable, [switch] $SystemControl)
+param([Parameter(Mandatory)] [string] $Executable, [switch] $SystemControl, [switch] $LegacySelection)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
@@ -36,6 +36,10 @@ try {
     if ($Range.GetText(-1) -ne $Camera) { throw 'Moved range text mismatch' }
     $Range.Select()
     Write-Output 'PASS: managed moved range GetText and Select'
+    # The native client regression covers selected-range reads. Opt in to this
+    # legacy-wrapper diagnostic, which also crashes against system RichEdit on
+    # affected Windows versions: https://github.com/microsoft/Microsoft-UI-UIAutomation/issues/100
+    if (-not $LegacySelection) { return }
     for ($Attempt = 0; $Attempt -lt 50; $Attempt++) {
         $Selection = $Text.GetSelection()
         if ($Selection.Count -ne 1 -or $Selection[0].GetText(-1) -ne $Camera) { throw 'Selected text mismatch' }

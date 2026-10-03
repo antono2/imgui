@@ -17,7 +17,7 @@ static std::shared_ptr<const Node> find_node(const std::shared_ptr<WindowsState>
 static UiaRect rectangle(const AccessibilitySnapshot &tree,const Node &n){auto bounds=accessibility_bounds(tree,n);return {tree.x+bounds.x,tree.y+bounds.y,bounds.width,bounds.height};}
 static bool visible(const AccessibilitySnapshot &tree,const Node &n){auto bounds=accessibility_bounds(tree,n);double left=std::max(0.0,bounds.x),top=std::max(0.0,bounds.y),right=std::min(tree.width,bounds.x+bounds.width),bottom=std::min(tree.height,bounds.y+bounds.height);
     for(auto parent=accessibility_parent(tree,n.id);parent;parent=accessibility_parent(tree,parent)){auto ancestor=tree.nodes.at(parent);if(ancestor->role!=VIMGUI_AX_LIST)continue;auto clip=accessibility_bounds(tree,*ancestor);left=std::max(left,clip.x);top=std::max(top,clip.y);right=std::min(right,clip.x+clip.width);bottom=std::min(bottom,clip.y+clip.height);}return right>left&&bottom>top;}
-static SAFEARRAY *array_of(IUnknown *value){auto *array=SafeArrayCreateVectorEx(VT_UNKNOWN,0,value?1:0,const_cast<IID *>(&__uuidof(ITextRangeProvider)));if(value){LONG index=0;SafeArrayPutElement(array,&index,value);}return array;}
+static SAFEARRAY *array_of(IUnknown *value){auto *array=SafeArrayCreateVector(VT_UNKNOWN,0,value?1:0);if(value){LONG index=0;SafeArrayPutElement(array,&index,value);}return array;}
 class Provider;
 static IRawElementProviderSimple *simple(const std::shared_ptr<WindowsState> &,uint64_t);
 static IRawElementProviderFragment *fragment(const std::shared_ptr<WindowsState> &,uint64_t);
