@@ -119,7 +119,7 @@ the Java helper; hosts should report `hasFailed()` and offer a retry.
 test app with a 1,000-row list, editable search, and keeper action. Set
 `ANDROID_SDK_ROOT`, `ANDROID_NDK_HOME`, and `ANDROID_ABI`; omit `--build-only` to
 install and run it. It builds the native C++ bridge and Java node provider,
-including `armeabi-v7a`; no Rust or Cargo toolchain is required.
+including `armeabi-v7a`.
 This validates the reusable native widgets; it is not the duplicate-finder app.
 `scripts/test_android_accessible.sh` builds and installs this app plus a separate
 instrumentation package to exercise native accessibility and input. Set
