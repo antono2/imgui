@@ -135,15 +135,17 @@ static void exact_scroll_regression() {
     io.BackendFlags|=ImGuiBackendFlags_RendererHasTextures;
     io.Fonts->AddFontDefault(); io.DisplaySize={800,900}; io.DeltaTime=1.0f/60;
     if (!vimgui_app_initialize("Exact scrolling")) std::abort();
-    vimgui_app_theme(true,false,2,false);
+    vimgui_app_theme(true,false,1,false);
     vimgui_app_list_reset(40);
     for (uint64_t id=1000;id<2000;++id) vimgui_app_list_add(40,id,"Retained row");
     for (int frame=0;frame<25;++frame) {
-        if(frame==3) vimgui_app_focus(1999);
-        if(frame==8 && !accessibility_enqueue(vimgui_app_accessibility(),{40,VIMGUI_AX_SET_SCROLL_PERCENT,"50"})) std::abort();
+        if(frame==3) { vimgui_app_focus(1999); vimgui_app_reveal(40); }
+        if(frame==4 && !accessibility_enqueue(vimgui_app_accessibility(),{40,VIMGUI_AX_SET_SCROLL_PERCENT,"50"})) std::abort();
         ImGui::NewFrame(); vimgui_app_frame_begin();
+        ImGui::Dummy({0,1000});
         vimgui_app_list(40,"Files",1999,240);
         if(!vimgui_app_frame_end()) std::abort();
+        if(frame==3) vimgui_app_theme(true,false,2,false);
         ImGui::Render();
         if(frame>=10) {
             auto node=accessibility_node(vimgui_app_accessibility(),40);
