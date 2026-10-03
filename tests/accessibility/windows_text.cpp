@@ -24,7 +24,8 @@ static int provider(bool initialize_com,bool system_control=false) {
     if(initialize_com)check(CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED));
     WNDCLASSW klass{};klass.lpfnWndProc=window_proc;klass.hInstance=GetModuleHandleW(nullptr);klass.lpszClassName=L"VImGuiTextTest";
     RegisterClassW(&klass);
-    HWND window=CreateWindowW(klass.lpszClassName,L"Native text regression",WS_OVERLAPPEDWINDOW,0,0,400,300,nullptr,nullptr,klass.hInstance,nullptr);
+    const auto title=L"Native text regression "+std::to_wstring(GetCurrentProcessId());
+    HWND window=CreateWindowW(klass.lpszClassName,title.c_str(),WS_OVERLAPPEDWINDOW,0,0,400,300,nullptr,nullptr,klass.hInstance,nullptr);
     if(!window)return 1;
     if(system_control) {
         if(!LoadLibraryW(L"Msftedit.dll"))return 1;
@@ -82,7 +83,8 @@ int main(int argc,char **argv) {
     if(!CreateProcessW(nullptr,command.data(),nullptr,nullptr,FALSE,0,nullptr,nullptr,&startup,&process))return 1;
     HWND window=nullptr;int result=0;
     try {
-        for(int attempt=0;attempt<100&&!window;++attempt){window=FindWindowW(L"VImGuiTextTest",L"Native text regression");if(!window)Sleep(50);}
+        const auto title=L"Native text regression "+std::to_wstring(process.dwProcessId);
+        for(int attempt=0;attempt<100&&!window;++attempt){window=FindWindowW(L"VImGuiTextTest",title.c_str());if(!window)Sleep(50);}
         if(!window)throw std::runtime_error("Provider window did not open");
         read_ranges(window);
     }catch(const std::exception &error){std::fprintf(stderr,"%s\n",error.what());result=1;}

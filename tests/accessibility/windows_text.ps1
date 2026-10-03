@@ -2,13 +2,21 @@ param([Parameter(Mandatory)] [string] $Executable, [switch] $SystemControl)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class TextTestWindow {
+    [DllImport("user32.dll", CharSet=CharSet.Unicode)]
+    public static extern IntPtr FindWindow(string className, string title);
+}
+'@
 $ProviderArgument = if ($SystemControl) { '--system-control' } else { '--provider' }
 $Process = Start-Process -FilePath $Executable -ArgumentList $ProviderArgument -PassThru
 try {
     $Deadline = [DateTime]::UtcNow.AddSeconds(10)
-    do { $Process.Refresh(); if ($Process.HasExited) { throw 'Provider exited' }; Start-Sleep -Milliseconds 50 } while ($Process.MainWindowHandle -eq 0 -and [DateTime]::UtcNow -lt $Deadline)
-    if ($Process.MainWindowHandle -eq 0) { throw 'No provider window' }
-    $Root = [System.Windows.Automation.AutomationElement]::FromHandle($Process.MainWindowHandle)
+    do { $Process.Refresh(); if ($Process.HasExited) { throw 'Provider exited' }; $Handle = [TextTestWindow]::FindWindow('VImGuiTextTest', "Native text regression $($Process.Id)"); if ($Handle -eq [IntPtr]::Zero) { Start-Sleep -Milliseconds 50 } } while ($Handle -eq [IntPtr]::Zero -and [DateTime]::UtcNow -lt $Deadline)
+    if ($Handle -eq [IntPtr]::Zero) { throw 'No provider window' }
+    $Root = [System.Windows.Automation.AutomationElement]::FromHandle($Handle)
     $Condition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty, 'Name')
     if ($SystemControl) { $Condition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::IsTextPatternAvailableProperty, $true) }
     do { $Field = $Root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $Condition); if (-not $Field) { Start-Sleep -Milliseconds 50 } } while (-not $Field -and [DateTime]::UtcNow -lt $Deadline)
@@ -17,7 +25,7 @@ try {
     $Camera = [string][char]0xd83d + [char]0xdcf7
     $Expected = 'A' + $Camera + 'e' + [char]0x0301 + 'Z'
     $DocumentText = $Text.DocumentRange.GetText(-1).TrimEnd([char[]] "`r`n")
-    if ($DocumentText -ne $Expected) { throw "Document text mismatch: '$DocumentText'" }
+    if ($DocumentText -ne $Expected) { throw "Document text mismatch (length $($DocumentText.Length))" }
     Write-Output 'PASS: managed document range GetText'
     $Range = $Text.DocumentRange.Clone()
     if ($Range.GetText(-1).TrimEnd([char[]] "`r`n") -ne $Expected) { throw 'Cloned document text mismatch' }
