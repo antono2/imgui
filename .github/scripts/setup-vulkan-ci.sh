@@ -37,16 +37,10 @@ curl --fail --location --retry 5 --retry-all-errors --silent --show-error \
 	"$download_base/$sdk_archive" --output "$install_root/$sdk_archive"
 curl --fail --location --retry 5 --retry-all-errors --silent --show-error \
 	"$download_base/$swiftshader_archive" --output "$install_root/$swiftshader_archive"
-if command -v python3 >/dev/null 2>&1; then
-	archive_python='python3'
-elif command -v python >/dev/null 2>&1; then
-	archive_python='python'
-else
-	echo 'Python is required to extract Vulkan CI artifacts' >&2
-	exit 1
-fi
-"$archive_python" -m zipfile -e "$install_root/$sdk_archive" "$sdk_root"
-"$archive_python" -m zipfile -e "$install_root/$swiftshader_archive" "$swiftshader_root"
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+v_bin="${V_BIN:-v}"
+"$v_bin" run "$repo_root/.github/scripts/extract_zip.v" "$install_root/$sdk_archive" "$sdk_root"
+"$v_bin" run "$repo_root/.github/scripts/extract_zip.v" "$install_root/$swiftshader_archive" "$swiftshader_root"
 
 sdk_path="$sdk_root/$sdk_version"
 test -d "$sdk_path/include"
