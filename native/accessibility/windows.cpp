@@ -21,6 +21,7 @@ static SAFEARRAY *array_of(IUnknown *value){auto *array=SafeArrayCreateVector(VT
 class Provider;
 static IRawElementProviderSimple *simple(const std::shared_ptr<WindowsState> &,uint64_t);
 static IRawElementProviderFragment *fragment(const std::shared_ptr<WindowsState> &,uint64_t);
+static IUnknown *text_pattern(const std::shared_ptr<WindowsState> &,uint64_t);
 static int utf16_offset(const std::wstring &text,size_t points){size_t offset=0;while(offset<text.size()&&points--){if(text[offset]>=0xd800&&text[offset]<=0xdbff&&offset+1<text.size()&&text[offset+1]>=0xdc00&&text[offset+1]<=0xdfff)++offset;++offset;}return int(offset);}
 static size_t point_offset(const std::wstring &text,int units){size_t points=0;for(int i=0;i<std::min(units,int(text.size()));++i){if(text[i]>=0xd800&&text[i]<=0xdbff&&i+1<units&&text[i+1]>=0xdc00&&text[i+1]<=0xdfff)++i;++points;}return points;}
 class TextRange final:public ITextRangeProvider {
@@ -61,7 +62,7 @@ public:
 };
 class Provider final:public IRawElementProviderSimple,public IRawElementProviderFragment,public IRawElementProviderFragmentRoot,public IInvokeProvider,
     public IToggleProvider,public IValueProvider,public IRangeValueProvider,public ISelectionItemProvider,public ISelectionProvider,
-    public IScrollItemProvider,public IScrollProvider,public ITextProvider {
+    public IScrollItemProvider,public IScrollProvider {
     std::atomic<ULONG> references{1};std::shared_ptr<WindowsState> state;uint64_t id;
 public:
     Provider(std::shared_ptr<WindowsState> s,uint64_t n):state(std::move(s)),id(n){}
@@ -77,7 +78,6 @@ public:
         else if(iid==__uuidof(ISelectionProvider))*out=static_cast<ISelectionProvider *>(this);
         else if(iid==__uuidof(IScrollItemProvider))*out=static_cast<IScrollItemProvider *>(this);
         else if(iid==__uuidof(IScrollProvider))*out=static_cast<IScrollProvider *>(this);
-        else if(iid==__uuidof(ITextProvider))*out=static_cast<ITextProvider *>(this);
         else return E_NOINTERFACE;AddRef();return S_OK;}
     ULONG STDMETHODCALLTYPE AddRef()override{return ++references;}ULONG STDMETHODCALLTYPE Release()override{ULONG count=--references;if(!count)delete this;return count;}
     HRESULT STDMETHODCALLTYPE get_ProviderOptions(ProviderOptions *out)override{if(!out)return E_POINTER;*out=ProviderOptions_ServerSideProvider;return S_OK;}
@@ -85,7 +85,7 @@ public:
         if(pattern==UIA_InvokePatternId && (n->actions&VIMGUI_AX_CLICK) && n->role!=VIMGUI_AX_CHECKBOX&&n->role!=VIMGUI_AX_RADIO)*out=static_cast<IInvokeProvider *>(this);
         if(pattern==UIA_TogglePatternId && n->role==VIMGUI_AX_CHECKBOX)*out=static_cast<IToggleProvider *>(this);
         if(pattern==UIA_ValuePatternId && n->role==VIMGUI_AX_TEXT_INPUT)*out=static_cast<IValueProvider *>(this);
-        if(pattern==UIA_TextPatternId && n->role==VIMGUI_AX_TEXT_INPUT)*out=static_cast<ITextProvider *>(this);
+        if(pattern==UIA_TextPatternId && n->role==VIMGUI_AX_TEXT_INPUT){*out=text_pattern(state,id);return S_OK;}
         if(pattern==UIA_RangeValuePatternId && n->role==VIMGUI_AX_PROGRESS && !(n->flags&VIMGUI_AX_INDETERMINATE))*out=static_cast<IRangeValueProvider *>(this);
         if(pattern==UIA_SelectionItemPatternId && (n->role==VIMGUI_AX_LIST_ITEM||n->role==VIMGUI_AX_RADIO))*out=static_cast<ISelectionItemProvider *>(this);
         if(pattern==UIA_SelectionPatternId && n->role==VIMGUI_AX_LIST)*out=static_cast<ISelectionProvider *>(this);
@@ -156,12 +156,30 @@ public:
     HRESULT STDMETHODCALLTYPE get_VerticalViewSize(double *out)override{if(!out)return E_POINTER;auto n=find_node(state,id);if(!n)return UIA_E_ELEMENTNOTAVAILABLE;*out=n->height+n->scroll_y_max>0?n->height/(n->height+n->scroll_y_max)*100:100;return S_OK;}
     HRESULT STDMETHODCALLTYPE get_HorizontallyScrollable(BOOL *out)override{if(!out)return E_POINTER;*out=false;return S_OK;}
     HRESULT STDMETHODCALLTYPE get_VerticallyScrollable(BOOL *out)override{if(!out)return E_POINTER;auto n=find_node(state,id);if(!n)return UIA_E_ELEMENTNOTAVAILABLE;*out=n->scroll_y_max>0;return S_OK;}
-    HRESULT STDMETHODCALLTYPE GetVisibleRanges(SAFEARRAY **out)override{if(!out)return E_POINTER;auto tree=snapshot(state);auto found=tree.nodes.find(id);if(found==tree.nodes.end())return UIA_E_ELEMENTNOTAVAILABLE;auto *range=visible(tree,*found->second)?new TextRange(state,id,0,int(wide(found->second->value).size())):nullptr;*out=array_of(range);if(range)range->Release();return S_OK;}
-    HRESULT STDMETHODCALLTYPE RangeFromChild(IRawElementProviderSimple *,ITextRangeProvider **out)override{if(!out)return E_POINTER;*out=nullptr;return E_INVALIDARG;}
-    HRESULT STDMETHODCALLTYPE RangeFromPoint(UiaPoint point,ITextRangeProvider **out)override{if(!out)return E_POINTER;auto tree=snapshot(state);auto found=tree.nodes.find(id);if(found==tree.nodes.end())return UIA_E_ELEMENTNOTAVAILABLE;auto value=wide(found->second->value);auto bounds=rectangle(tree,*found->second);int offset=bounds.width>0?std::clamp(int((point.x-bounds.left)/bounds.width*value.size()),0,int(value.size())):0;offset=utf16_offset(value,point_offset(value,offset));*out=new TextRange(state,id,offset,offset);return S_OK;}
-    HRESULT STDMETHODCALLTYPE get_DocumentRange(ITextRangeProvider **out)override{if(!out)return E_POINTER;auto n=find_node(state,id);if(!n)return UIA_E_ELEMENTNOTAVAILABLE;*out=new TextRange(state,id,0,int(wide(n->value).size()));return S_OK;}
-    HRESULT STDMETHODCALLTYPE get_SupportedTextSelection(SupportedTextSelection *out)override{if(!out)return E_POINTER;*out=SupportedTextSelection_Single;return S_OK;}
+    HRESULT GetVisibleRanges(SAFEARRAY **out){if(!out)return E_POINTER;auto tree=snapshot(state);auto found=tree.nodes.find(id);if(found==tree.nodes.end())return UIA_E_ELEMENTNOTAVAILABLE;auto *range=visible(tree,*found->second)?new TextRange(state,id,0,int(wide(found->second->value).size())):nullptr;*out=array_of(range);if(range)range->Release();return S_OK;}
+    HRESULT RangeFromChild(IRawElementProviderSimple *,ITextRangeProvider **out){if(!out)return E_POINTER;*out=nullptr;return E_INVALIDARG;}
+    HRESULT RangeFromPoint(UiaPoint point,ITextRangeProvider **out){if(!out)return E_POINTER;auto tree=snapshot(state);auto found=tree.nodes.find(id);if(found==tree.nodes.end())return UIA_E_ELEMENTNOTAVAILABLE;auto value=wide(found->second->value);auto bounds=rectangle(tree,*found->second);int offset=bounds.width>0?std::clamp(int((point.x-bounds.left)/bounds.width*value.size()),0,int(value.size())):0;offset=utf16_offset(value,point_offset(value,offset));*out=new TextRange(state,id,offset,offset);return S_OK;}
+    HRESULT get_DocumentRange(ITextRangeProvider **out){if(!out)return E_POINTER;auto n=find_node(state,id);if(!n)return UIA_E_ELEMENTNOTAVAILABLE;*out=new TextRange(state,id,0,int(wide(n->value).size()));return S_OK;}
+    HRESULT get_SupportedTextSelection(SupportedTextSelection *out){if(!out)return E_POINTER;*out=SupportedTextSelection_Single;return S_OK;}
 };
+// Text and list selection return different interface arrays. Keep their COM
+// identities separate so clients cannot confuse the two GetSelection methods.
+class TextPattern final:public ITextProvider {
+    std::atomic<ULONG> references{1};Provider *owner;
+public:
+    TextPattern(std::shared_ptr<WindowsState> state,uint64_t id):owner(new Provider(std::move(state),id)){}
+    ~TextPattern(){owner->Release();}
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid,void **out)override{if(!out)return E_POINTER;*out=nullptr;if(iid!=__uuidof(IUnknown)&&iid!=__uuidof(ITextProvider))return E_NOINTERFACE;*out=static_cast<ITextProvider *>(this);AddRef();return S_OK;}
+    ULONG STDMETHODCALLTYPE AddRef()override{return ++references;}
+    ULONG STDMETHODCALLTYPE Release()override{ULONG count=--references;if(!count)delete this;return count;}
+    HRESULT STDMETHODCALLTYPE GetSelection(SAFEARRAY **out)override{return owner->GetSelection(out);}
+    HRESULT STDMETHODCALLTYPE GetVisibleRanges(SAFEARRAY **out)override{return owner->GetVisibleRanges(out);}
+    HRESULT STDMETHODCALLTYPE RangeFromChild(IRawElementProviderSimple *child,ITextRangeProvider **out)override{return owner->RangeFromChild(child,out);}
+    HRESULT STDMETHODCALLTYPE RangeFromPoint(UiaPoint point,ITextRangeProvider **out)override{return owner->RangeFromPoint(point,out);}
+    HRESULT STDMETHODCALLTYPE get_DocumentRange(ITextRangeProvider **out)override{return owner->get_DocumentRange(out);}
+    HRESULT STDMETHODCALLTYPE get_SupportedTextSelection(SupportedTextSelection *out)override{return owner->get_SupportedTextSelection(out);}
+};
+static IUnknown *text_pattern(const std::shared_ptr<WindowsState> &state,uint64_t id){return static_cast<ITextProvider *>(new TextPattern(state,id));}
 static IRawElementProviderSimple *simple(const std::shared_ptr<WindowsState> &state,uint64_t id){return find_node(state,id)?static_cast<IRawElementProviderSimple *>(new Provider(state,id)):nullptr;}
 static IRawElementProviderFragment *fragment(const std::shared_ptr<WindowsState> &state,uint64_t id){return find_node(state,id)?static_cast<IRawElementProviderFragment *>(new Provider(state,id)):nullptr;}
 struct WindowsAdapter {std::shared_ptr<WindowsState> state;};
