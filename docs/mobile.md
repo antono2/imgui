@@ -297,3 +297,30 @@ frame. NativeActivity's content rectangle updates this area when visible system
 bars, the keyboard, or orientation change; hardware-button devices need no
 fixed navigation padding. Rendering and touch input retain surface coordinates.
 The host also forwards these insets to the optional application layer.
+
+
+To publish native accessibility semantics from an external `appui` UI, also set
+`VIMGUI_ANDROID_APPLICATION_UI=1`. The script prepares the pinned Android
+AccessKit bridge, enables `VIMGUI_APPLICATION_UI` and
+`VIMGUI_ANDROID_EXTERNAL_ACCESSIBILITY`, and passes `-d appui_embedded -d
+release_accessibility` to V. Rust and its Android target are build prerequisites.
+The native host owns `appui.initialize`/`shutdown`, accessibility attachment,
+selection-aware IME forwarding, and safe-area updates. The callback calls
+`appui.begin_frame`/`end_frame` and draws labelled controls with stable IDs. Raw
+ImGui widgets still require explicit semantics; enabling the adapter alone does
+not make them accessible. If the callback manages its own `appui.theme`, return
+false so the host does not overwrite its contrast and touch settings.
+
+## Installing prebuilt examples
+
+Users do not need V, CMake, Rust, an Android SDK, or additional application
+libraries to run the release downloads. The companion
+[v_imgui_examples releases](https://github.com/antono2/v_imgui_examples/releases)
+include the desktop gallery, ImPlot dashboard, GLFW/Vulkan sample, and Android
+touch/text app. The gallery and Android app integrate the accessibility controls
+in their normal release builds. Follow the companion
+[installation guide](https://github.com/antono2/v_imgui_examples/blob/master/docs/installing-releases.md)
+for desktop extraction and Android installation outside a Play Store.
+Android APKs include their libraries and fonts. A supported OS and Vulkan-capable
+graphics driver are still required. iOS remains a source integration sample;
+there is no installable iOS release until signing and device testing are covered.
