@@ -12,5 +12,5 @@ required. The Vulkan loader and GPU driver come from the operating system and
 are not bundled.
 
 The prebuilt package avoids compiling the large generated ImGui and ImPlot V
-bindings locally. Developers can build from source with scripts/run_demo.sh in
+bindings locally. Developers can build from source with scripts/run_demo.vsh in
 the antono2/imgui repository.

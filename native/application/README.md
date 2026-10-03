@@ -8,10 +8,11 @@ The existing raw bindings and mobile backend profiles remain available.
 ## Desktop build
 
 Install CMake, a C++17 compiler, and GLFW; Linux also needs Vulkan, D-Bus,
-ATK and ATK Bridge development headers, and a driver. Run `scripts/build-appui.sh`
+ATK and ATK Bridge development headers, and a driver. Run `./scripts/build_appui.vsh`
 from the repository. Native adapters use AT-SPI on Linux, UI Automation on Windows,
 AppKit on macOS, UIKit on iOS, and AccessibilityNodeProvider on Android. Windows currently
-uses the CMake build directly with GLFW and the Vulkan SDK configured.
+runs the same script with `v run scripts/build_appui.vsh` from a developer shell,
+with GLFW and the Vulkan SDK configured.
 The desktop folder chooser uses Native File Dialog Extended 1.3.0 (Zlib license),
 downloaded by CMake with a pinned SHA-256. Its Linux portal backend uses the
 desktop's configured chooser; the running desktop must provide that portal.
