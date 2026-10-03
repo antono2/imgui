@@ -59,7 +59,7 @@ public:
     HRESULT STDMETHODCALLTYPE ScrollIntoView(BOOL)override{return enqueue(state,{id,VIMGUI_AX_SCROLL_INTO_VIEW})?S_OK:UIA_E_INVALIDOPERATION;}
     HRESULT STDMETHODCALLTYPE GetChildren(SAFEARRAY **out)override{if(!out)return E_POINTER;*out=array_of(nullptr);return S_OK;}
 };
-class Provider final:public IRawElementProviderSimple,public IRawElementProviderFragmentRoot,public IInvokeProvider,
+class Provider final:public IRawElementProviderSimple,public IRawElementProviderFragment,public IRawElementProviderFragmentRoot,public IInvokeProvider,
     public IToggleProvider,public IValueProvider,public IRangeValueProvider,public ISelectionItemProvider,public ISelectionProvider,
     public IScrollItemProvider,public IScrollProvider,public ITextProvider {
     std::atomic<ULONG> references{1};std::shared_ptr<WindowsState> state;uint64_t id;
@@ -96,7 +96,7 @@ public:
         if(property==UIA_NamePropertyId||property==UIA_AutomationIdPropertyId||property==UIA_FrameworkIdPropertyId){auto value=property==UIA_NamePropertyId?wide(n.label):property==UIA_AutomationIdPropertyId?std::to_wstring(id):L"V ImGui";out->vt=VT_BSTR;out->bstrVal=SysAllocString(value.c_str());}
         else if(property==UIA_ControlTypePropertyId){static const int types[]={UIA_WindowControlTypeId,UIA_GroupControlTypeId,UIA_ButtonControlTypeId,UIA_CheckBoxControlTypeId,UIA_RadioButtonControlTypeId,UIA_EditControlTypeId,UIA_TextControlTypeId,UIA_ListControlTypeId,UIA_ListItemControlTypeId,UIA_ProgressBarControlTypeId,UIA_WindowControlTypeId};out->vt=VT_I4;out->lVal=types[n.role];}
         else if(property==UIA_IsEnabledPropertyId||property==UIA_IsKeyboardFocusablePropertyId||property==UIA_HasKeyboardFocusPropertyId||property==UIA_IsOffscreenPropertyId||property==UIA_IsControlElementPropertyId||property==UIA_IsContentElementPropertyId){out->vt=VT_BOOL;bool value=property==UIA_IsEnabledPropertyId?!(n.flags&VIMGUI_AX_DISABLED):property==UIA_IsKeyboardFocusablePropertyId?bool(n.actions&VIMGUI_AX_FOCUS):property==UIA_HasKeyboardFocusPropertyId?tree.focused&&tree.focus==id:property==UIA_IsOffscreenPropertyId?!visible(tree,n):true;out->boolVal=value?VARIANT_TRUE:VARIANT_FALSE;}
-        else if(property==UIA_LiveSettingPropertyId){out->vt=VT_I4;out->lVal=(n.flags&VIMGUI_AX_LIVE)?LiveSetting_Polite:LiveSetting_Off;}
+        else if(property==UIA_LiveSettingPropertyId){out->vt=VT_I4;out->lVal=(n.flags&VIMGUI_AX_LIVE)?1:0;}
         else if(property==UIA_PositionInSetPropertyId||property==UIA_SizeOfSetPropertyId){out->vt=VT_I4;out->lVal=LONG(property==UIA_PositionInSetPropertyId?n.position_in_set:n.size_of_set);}
         return S_OK;}
     HRESULT STDMETHODCALLTYPE get_HostRawElementProvider(IRawElementProviderSimple **out)override{if(!out)return E_POINTER;*out=nullptr;auto tree=snapshot(state);return id==tree.root?UiaHostProviderFromHwnd(state->window,out):S_OK;}

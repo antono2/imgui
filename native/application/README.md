@@ -130,15 +130,17 @@ Linux end-to-end checks must run inside an isolated D-Bus session and X server:
 
 ```
 GSETTINGS_BACKEND=memory dbus-run-session -- xvfb-run -a \
-  /usr/bin/python3 tests/accessibility/atspi_smoke.py build/accessible-review
+  build/native-atspi-smoke build/accessible-review
 ```
 
-The test requires PyGObject and AT-SPI. Native retained-tree tests are available
+Compile the probe with `c++ -std=c++17 tests/accessibility/atspi_smoke.cpp $(pkg-config --cflags --libs atspi-2 gio-2.0) -o build/native-atspi-smoke`.
+It requires the native AT-SPI development headers and the desktop accessibility bus. Native retained-tree tests are available
 through CTest in `build/appui/accessibility`.
 The desktop portal client can be checked without opening the user's chooser:
 
 ```
-dbus-run-session -- /usr/bin/python3 tests/accessibility/portal_picker.py lib/appui/libvimgui_app.so
+c++ -std=c++17 tests/accessibility/portal_picker.cpp $(pkg-config --cflags --libs gio-2.0) -ldl -pthread -o build/native-portal-check
+GSETTINGS_BACKEND=memory dbus-run-session -- build/native-portal-check lib/appui/libvimgui_app.so
 ```
 
 This uses a controlled portal to verify UTF-8 selection, initial-folder handling,
