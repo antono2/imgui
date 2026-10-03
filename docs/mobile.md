@@ -313,7 +313,7 @@ false so the host does not overwrite its contrast and touch settings.
 
 ## Installing prebuilt examples
 
-Users do not need V, CMake, Rust, an Android SDK, or additional application
+Users do not need V, CMake, an Android SDK, or additional application
 libraries to run the release downloads. The companion
 [v_imgui_examples releases](https://github.com/antono2/v_imgui_examples/releases)
 include the desktop gallery, ImPlot dashboard, GLFW/Vulkan sample, and Android
