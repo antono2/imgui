@@ -21,6 +21,7 @@ extern "C" bool vimgui_android_accessible_draw(float*,int*,char*,int,char*,int,f
 #include <jni.h>
 #include <vulkan/vulkan.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <cstdint>
@@ -414,13 +415,26 @@ bool draw_frame()
     ImGui_ImplVulkan_NewFrame();
     vimgui_android_new_frame();
     ImGui::NewFrame();
+    // NativeActivity reports the usable rectangle when system bars, the IME,
+    // or the window layout change. Keep rendering/input in surface coordinates;
+    // only the GUI work area is inset, so touch positions need no translation.
+    ARect content;
+    pthread_mutex_lock(&g.app->mutex);
+    content = g.app->contentRect;
+    pthread_mutex_unlock(&g.app->mutex);
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    const ImVec2 display = ImGui::GetIO().DisplaySize;
+    const float left = std::max(0.0f, std::min(static_cast<float>(content.left), display.x));
+    const float top = std::max(0.0f, std::min(static_cast<float>(content.top), display.y));
+    const float right = std::max(left, std::min(static_cast<float>(content.right), display.x));
+    const float bottom = std::max(top, std::min(static_cast<float>(content.bottom), display.y));
+    const bool valid_content = right > left && bottom > top;
+    viewport->WorkPos = valid_content ? ImVec2(left, top) : viewport->Pos;
+    viewport->WorkSize = valid_content ? ImVec2(right - left, bottom - top) : display;
 #if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
-    const ARect &content=g.app->contentRect;
-    if (content.right>content.left && content.bottom>content.top) {
-        const ImVec2 display=ImGui::GetIO().DisplaySize;
-        vimgui_app_safe_area(static_cast<float>(content.left),static_cast<float>(content.top),
-            display.x-content.right,display.y-content.bottom);
-    }
+    vimgui_app_safe_area(viewport->WorkPos.x, viewport->WorkPos.y,
+        display.x - viewport->WorkPos.x - viewport->WorkSize.x,
+        display.y - viewport->WorkPos.y - viewport->WorkSize.y);
 #endif
 #ifdef VIMGUI_APPLICATION_HOST
     const bool application_ok=draw_app();
@@ -429,7 +443,7 @@ bool draw_frame()
     const int previous_tap_count = g.tap_count;
     const bool zoom_changed = draw_ui(&g.zoom, &g.tap_count, g.text, sizeof(g.text),
                                       g.clipboard_preview, sizeof(g.clipboard_preview),
-                                      ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y);
+                                      viewport->WorkSize.x, viewport->WorkSize.y);
     if (g.tap_count != previous_tap_count)
         __android_log_print(ANDROID_LOG_INFO, kLogTag, "V UI tap count: %d", g.tap_count);
 #endif

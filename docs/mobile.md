@@ -289,3 +289,11 @@ package ID, but must name `io.antono2.vimgui.demo.ImGuiActivity` and the
 `vimgui_android_demo` native library. Keep the sample's Vulkan requirement and
 minimum API. Run mode reads the launcher component from the packaged APK.
 Omitting both variables retains the built-in sample.
+
+The callback's final width/height arguments describe the current usable content
+area, rather than the full Vulkan surface. Place the GUI at
+`imgui.get_main_viewport().WorkPos` and size it to these dimensions on every
+frame. NativeActivity's content rectangle updates this area when visible system
+bars, the keyboard, or orientation change; hardware-button devices need no
+fixed navigation padding. Rendering and touch input retain surface coordinates.
+The host also forwards these insets to the optional application layer.
