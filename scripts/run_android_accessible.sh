@@ -30,6 +30,7 @@ cmake --build "$build" --target vimgui_android_demo --parallel 2
 build_tools=$(printf '%s\n' "$sdk"/build-tools/* | sort -V | tail -n 1)
 android_jar=$(printf '%s\n' "$sdk"/platforms/*/android.jar | sort -V | tail -n 1)
 package=$build/package
+rm -rf -- "$package/classes" "$package/dex"
 mkdir -p "$package/lib/$abi" "$package/assets" "$package/classes" "$package/dex"
 cp "$build/lib/libvimgui.so" "$package/lib/$abi/libvimgui.so"
 cp "$build/libvimgui_android_demo.so" "$package/lib/$abi/libvimgui_android_demo.so"

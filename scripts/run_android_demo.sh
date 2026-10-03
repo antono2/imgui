@@ -89,6 +89,7 @@ if [[ -z "$build_tools" || -z "$android_jar" ]]; then
 fi
 
 package_dir="$build_dir/package"
+rm -rf -- "$package_dir/classes" "$package_dir/dex"
 mkdir -p "$package_dir/lib/$abi" "$package_dir/assets" "$package_dir/classes" "$package_dir/dex"
 cp "$build_dir/lib/libvimgui.so" "$package_dir/lib/$abi/libvimgui.so"
 cp "$build_dir/libvimgui_android_demo.so" "$package_dir/lib/$abi/libvimgui_android_demo.so"
