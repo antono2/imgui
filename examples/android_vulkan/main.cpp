@@ -5,7 +5,7 @@
 #include "../../cimgui/imgui/backends/imgui_impl_vulkan.h"
 #include "../../native/android/vimgui_android.h"
 #include "../../native/mobile/vimgui_scale.h"
-#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST) || defined(VIMGUI_EXTERNAL_ACCESSIBLE_UI)
 #include "../../native/application/vimgui_app.h"
 #ifdef VIMGUI_ACCESSIBLE_DEMO
 extern "C" bool vimgui_android_accessible_draw(float*,int*,char*,int,char*,int,float,float);
@@ -120,7 +120,7 @@ bool load_v_ui()
 #endif
 }
 
-#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST) || defined(VIMGUI_EXTERNAL_ACCESSIBLE_UI)
 void set_accessibility_context(vimgui_accessibility *context) {
     JavaVM *vm=g.app->activity->vm;
     JNIEnv *env=nullptr;
@@ -199,7 +199,7 @@ void shutdown()
     g.platform_ready = false;
     if (g.imgui_context != nullptr)
     {
-#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST) || defined(VIMGUI_EXTERNAL_ACCESSIBLE_UI)
         set_accessibility_context(nullptr);
         vimgui_app_shutdown();
 #endif
@@ -347,7 +347,7 @@ bool initialize(android_app* app)
     if (g.imgui_context == nullptr)
         return false;
     ImGui::GetIO().IniFilename = nullptr;
-    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad | ImGuiConfigFlags_NavEnableKeyboard;
     ImGui::StyleColorsDark();
     const float scale = configured_ui_scale(app);
     g.density_scale = scale;
@@ -375,13 +375,15 @@ bool initialize(android_app* app)
     if (!ImGui_ImplVulkan_Init(&imgui_info))
         return false;
     g.renderer_ready = true;
-#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST) || defined(VIMGUI_EXTERNAL_ACCESSIBLE_UI)
 #ifdef VIMGUI_APPLICATION_HOST
     if (!vimgui_app_initialize(title_app ? title_app() : "Application")) return false;
+#elif defined(VIMGUI_EXTERNAL_ACCESSIBLE_UI)
+    if (!vimgui_app_initialize("V ImGui: touch and text")) return false;
 #else
     if (!vimgui_app_initialize("Accessible file review")) return false;
 #endif
-    vimgui_app_theme(true,false,scale,true);
+    vimgui_app_theme(true,false,scale * g.zoom,true);
     vimgui_app_set_text_edit_handler([](void *data,void *) { vimgui_android_apply_text_edit(data); },nullptr);
     set_accessibility_context(vimgui_app_accessibility());
 #ifdef VIMGUI_APPLICATION_HOST
@@ -431,7 +433,7 @@ bool draw_frame()
     const bool valid_content = right > left && bottom > top;
     viewport->WorkPos = valid_content ? ImVec2(left, top) : viewport->Pos;
     viewport->WorkSize = valid_content ? ImVec2(right - left, bottom - top) : display;
-#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST) || defined(VIMGUI_EXTERNAL_ACCESSIBLE_UI)
     vimgui_app_safe_area(viewport->WorkPos.x, viewport->WorkPos.y,
         display.x - viewport->WorkPos.x - viewport->WorkSize.x,
         display.y - viewport->WorkPos.y - viewport->WorkSize.y);
@@ -552,7 +554,7 @@ void on_command(android_app* app, int32_t command)
             if (g.imgui_context != nullptr)
             {
                 g.density_scale = configured_ui_scale(app);
-#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST)
+#if defined(VIMGUI_ACCESSIBLE_DEMO) || defined(VIMGUI_APPLICATION_HOST) || defined(VIMGUI_EXTERNAL_ACCESSIBLE_UI)
 #ifdef VIMGUI_APPLICATION_HOST
                 mount_app(g.density_scale);
 #else

@@ -43,13 +43,28 @@ case "$abi" in
   *) echo "Set ANDROID_ABI to a supported ABI or connect a tablet (got '$abi')." >&2; exit 2 ;;
 esac
 
+application_options=()
+v_options=()
+if [[ ${VIMGUI_ANDROID_APPLICATION_UI:-0} == 1 ]]; then
+  ANDROID_ABI="$abi" bash "$repo_dir/scripts/build-accesskit-android.sh"
+  case "$abi" in
+    armeabi-v7a) rust_target=armv7-linux-androideabi ;;
+    arm64-v8a) rust_target=aarch64-linux-android ;;
+    x86_64) rust_target=x86_64-linux-android ;;
+  esac
+  accesskit="$repo_dir/.dependencies/accesskit/accesskit-c-0.23.1"
+  application_options=(-DVIMGUI_APPLICATION_UI=ON -DVIMGUI_ANDROID_EXTERNAL_ACCESSIBILITY=ON
+    "-DACCESSKIT_DIR=$accesskit" "-DVIMGUI_ACCESSKIT_STATIC_LIBRARY=$accesskit/target/$rust_target/release/libaccesskit.a")
+  v_options=(-d appui_embedded -d release_accessibility)
+fi
+
 build_dir="${VIMGUI_ANDROID_BUILD_DIR:-$repo_dir/build/android-onscreen-$abi}"
 cmake -S "$repo_dir" -B "$build_dir" -G Ninja \
   -DCMAKE_TOOLCHAIN_FILE="$ndk_dir/build/cmake/android.toolchain.cmake" \
   -DANDROID_ABI="$abi" -DANDROID_PLATFORM=android-24 -DANDROID_STL=c++_static \
   -DVIMGUI_PROFILE=android-vulkan -DIMGUI_FREETYPE=ON \
   -DVIMGUI_FREETYPE_PROVIDER=bundled -DVIMGUI_BUILD_ANDROID_DEMO=ON \
-  -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release
+  -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release "${application_options[@]}"
 cmake --build "$build_dir" --target vimgui_android_demo --parallel 4
 
 # The host deliberately only owns Vulkan and Android lifecycle. The widgets
@@ -68,7 +83,7 @@ v_bin="${V_BIN:-v}"
 mkdir -p "$build_dir/vmodules/antono2" "$repo_dir/lib/android-vulkan/$abi/freetype"
 ln -sfn "$repo_dir" "$build_dir/vmodules/antono2/imgui"
 cp "$build_dir/lib/libvimgui.so" "$repo_dir/lib/android-vulkan/$abi/freetype/libvimgui.so"
-"$v_bin" -path "$build_dir/vmodules|@vlib|@vmodules" \
+"$v_bin" "${v_options[@]}" -path "$build_dir/vmodules|@vlib|@vmodules" \
   -os android -arch "$v_arch" -cc "$ndk_prebuilt/bin/$clang_target" \
   -d use_freetype -gc none -no-memory-limit -shared \
   -o "$build_dir/libvimgui_android_ui.so" "$ui_source"
