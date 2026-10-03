@@ -32,7 +32,9 @@ jobs:
           ctest --test-dir build/accessibility -C Release --output-on-failure
       - name: Compile desktop application host
         if: runner.os != 'Windows'
-        run: scripts/build-appui.sh
+        run: |
+          cmake -S native/application -B build/appui -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/appui --parallel 2
       - name: Test native tree
         if: runner.os != 'Windows'
         run: ctest --test-dir build/appui/accessibility --output-on-failure
