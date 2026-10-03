@@ -19,17 +19,15 @@ jobs:
           submodules: recursive
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libvulkan-dev libdbus-1-dev mesa-vulkan-drivers xvfb
+        run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libvulkan-dev libdbus-1-dev libatk1.0-dev libatk-bridge2.0-dev libatspi2.0-dev libglib2.0-dev at-spi2-core dbus-x11 xdotool mesa-vulkan-drivers xvfb
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
         run: brew install glfw
-      - name: Prepare pinned AccessKit
-        run: python3 scripts/prepare-accesskit.py
       - name: Compile Windows accessibility bridge
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          cmake -S native/accessibility -B build/accessibility -A x64 "-DACCESSKIT_DIR=$pwd/.dependencies/accesskit/accesskit-c-0.23.1"
+          cmake -S native/accessibility -B build/accessibility -A x64
           cmake --build build/accessibility --config Release --parallel 2
           ctest --test-dir build/accessibility -C Release --output-on-failure
       - name: Compile desktop application host
@@ -43,7 +41,12 @@ jobs:
         run: |
           export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
           if [ ! -f "$VK_ICD_FILENAMES" ]; then export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json; fi
-          xvfb-run -a build/appui/application_host_smoke
+          GSETTINGS_BACKEND=memory dbus-run-session -- xvfb-run -a build/appui/application_host_smoke
+      - name: Exercise native folder portal client
+        if: runner.os == 'Linux'
+        run: |
+          c++ -std=c++17 tests/accessibility/portal_picker.cpp $(pkg-config --cflags --libs gio-2.0) -ldl -pthread -o build/native-portal-check
+          GSETTINGS_BACKEND=memory dbus-run-session -- build/native-portal-check lib/appui/libvimgui_app.so
   ios:
     runs-on: macos-15
     timeout-minutes: 30
@@ -51,7 +54,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           submodules: recursive
-      - run: python3 scripts/prepare-accesskit.py --prebuilt
       - name: Compile application widgets and accessibility for iOS Simulator
         run: |
           cmake -S . -B build/appui-ios \
@@ -59,6 +61,5 @@ jobs:
             -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
             -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
             -DVIMGUI_PROFILE=apple-metal -DVIMGUI_APPLICATION_UI=ON \
-            -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release \
-            -DACCESSKIT_DIR="$PWD/.dependencies/accesskit/accesskit-c-0.23.1"
+            -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release
           cmake --build build/appui-ios --parallel 2

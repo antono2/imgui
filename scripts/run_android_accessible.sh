@@ -15,24 +15,22 @@ if [[ -n ${ANDROID_SERIAL:-} ]]; then adb+=(-s "$ANDROID_SERIAL"); fi
 abi=${ANDROID_ABI:-}
 if [[ -z "$abi" && "$mode" == run ]]; then abi=$("${adb[@]}" shell getprop ro.product.cpu.abi | tr -d '\r'); fi
 case "$abi" in
-  armeabi-v7a) target=armv7-linux-androideabi ;;
-  arm64-v8a) target=aarch64-linux-android ;;
-  x86_64) target=x86_64-linux-android ;;
+  armeabi-v7a) ;;
+  arm64-v8a) ;;
+  x86_64) ;;
   *) echo 'Set ANDROID_ABI to a supported ABI.' >&2; exit 2 ;;
 esac
-ANDROID_ABI=$abi bash "$repo_root/scripts/build-accesskit-android.sh"
-release=$repo_root/.dependencies/accesskit/accesskit-c-0.23.1
 build=$repo_root/build/android-accessible-$abi
 cmake -S "$repo_root" -B "$build" -G Ninja \
   -DCMAKE_TOOLCHAIN_FILE="$ndk/build/cmake/android.toolchain.cmake" \
   -DANDROID_ABI="$abi" -DANDROID_PLATFORM=android-24 -DANDROID_STL=c++_static \
   -DVIMGUI_PROFILE=android-vulkan -DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=Release \
-  -DVIMGUI_APPLICATION_UI=ON -DVIMGUI_BUILD_ANDROID_DEMO=ON -DVIMGUI_ANDROID_ACCESSIBLE_DEMO=ON \
-  -DACCESSKIT_DIR="$release" -DVIMGUI_ACCESSKIT_STATIC_LIBRARY="$release/target/$target/release/libaccesskit.a"
+  -DVIMGUI_APPLICATION_UI=ON -DVIMGUI_BUILD_ANDROID_DEMO=ON -DVIMGUI_ANDROID_ACCESSIBLE_DEMO=ON
 cmake --build "$build" --target vimgui_android_demo --parallel 2
 build_tools=$(printf '%s\n' "$sdk"/build-tools/* | sort -V | tail -n 1)
 android_jar=$(printf '%s\n' "$sdk"/platforms/*/android.jar | sort -V | tail -n 1)
 package=$build/package
+rm -rf -- "$package/classes" "$package/dex"
 mkdir -p "$package/lib/$abi" "$package/assets" "$package/classes" "$package/dex"
 cp "$build/lib/libvimgui.so" "$package/lib/$abi/libvimgui.so"
 cp "$build/libvimgui_android_demo.so" "$package/lib/$abi/libvimgui_android_demo.so"

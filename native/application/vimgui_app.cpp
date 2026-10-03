@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 #include <unordered_map>
@@ -58,6 +59,15 @@ void scroll_actions(uint64_t id) {
     const float step=std::max(1.0f,ImGui::GetWindowHeight()*0.85f);
     if (requested(id,VIMGUI_AX_SCROLL_UP)) ImGui::SetScrollY(ImGui::GetScrollY()-step);
     if (requested(id,VIMGUI_AX_SCROLL_DOWN)) ImGui::SetScrollY(ImGui::GetScrollY()+step);
+    for (auto it=state->actions.begin();it!=state->actions.end();) {
+        if (it->id==id && it->action==VIMGUI_AX_SET_SCROLL_PERCENT) {
+            char *end=nullptr;
+            const float percentage=std::strtof(it->value.c_str(),&end);
+            if (end && *end=='\0' && std::isfinite(percentage) && percentage>=0 && percentage<=100)
+                ImGui::SetScrollY(ImGui::GetScrollMaxY()*percentage/100);
+            it=state->actions.erase(it);
+        } else ++it;
+    }
 }
 // Empty-space gestures belong to the hovered scroll container. Interactive
 // controls and scrollbars keep their normal press/edit behavior.
@@ -181,7 +191,7 @@ bool vimgui_app_frame_end() {
     state->root_scroll = ImGui::GetScrollY();
     auto root = state->groups.back();
     publish(1, VIMGUI_AX_WINDOW, state->title.c_str(), "", root.origin, ImGui::GetWindowSize(),
-            VIMGUI_AX_SCROLL_UP|VIMGUI_AX_SCROLL_DOWN, 0, &root.children,0,0,ImGui::GetScrollY(),ImGui::GetScrollMaxY());
+            VIMGUI_AX_SCROLL_UP|VIMGUI_AX_SCROLL_DOWN|VIMGUI_AX_SET_SCROLL_PERCENT, 0, &root.children,0,0,ImGui::GetScrollY(),ImGui::GetScrollMaxY());
     ImGui::End();
     for (auto it=state->pending_selections.begin(); it!=state->pending_selections.end();) {
         if (!state->frame_ids.count(it->first)) it=state->pending_selections.erase(it);
@@ -401,7 +411,7 @@ void vimgui_app_end_panel() {
     touch_scroll();
     auto group=state->groups.back(); state->groups.pop_back();
     publish(group.id,VIMGUI_AX_GROUP,group.label.c_str(),"",group.origin,ImGui::GetWindowSize(),
-            VIMGUI_AX_SCROLL_UP|VIMGUI_AX_SCROLL_DOWN,0,&group.children,0,0,ImGui::GetScrollY(),ImGui::GetScrollMaxY());
+            VIMGUI_AX_SCROLL_UP|VIMGUI_AX_SCROLL_DOWN|VIMGUI_AX_SET_SCROLL_PERCENT,0,&group.children,0,0,ImGui::GetScrollY(),ImGui::GetScrollMaxY());
     ImGui::EndChild(); reveal_item(group.id); ImGui::PopID();
 }
 void vimgui_app_list_reset(uint64_t id) { state->lists[id]=List{}; }
@@ -453,7 +463,8 @@ uint64_t vimgui_app_list(uint64_t id,const char *label,uint64_t selected,float h
     // Keep the focused row alive until the requested scroll takes effect.
     auto focused=list.indices.find(state->focus);
     if(focused!=list.indices.end() && (focused->second<first||focused->second>=end)) expose(focused->second);
-    publish(id,VIMGUI_AX_LIST,label,"",origin,size,VIMGUI_AX_SCROLL_UP|VIMGUI_AX_SCROLL_DOWN|VIMGUI_AX_SCROLL_INTO_VIEW,0,&exposed,0,0,scroll_y,scroll_max);
+    publish(id,VIMGUI_AX_LIST,label,"",origin,size,VIMGUI_AX_SCROLL_UP|VIMGUI_AX_SCROLL_DOWN|VIMGUI_AX_SET_SCROLL_PERCENT|VIMGUI_AX_SCROLL_INTO_VIEW,0,&exposed,0,0,scroll_y,scroll_max);
+    scroll_actions(id);
     uint64_t activated=0;
     for (auto it=state->actions.begin();it!=state->actions.end();) {
         if (it->id==id && (it->action==VIMGUI_AX_SCROLL_UP || it->action==VIMGUI_AX_SCROLL_DOWN)) {
