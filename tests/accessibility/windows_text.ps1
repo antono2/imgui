@@ -10,8 +10,9 @@ try {
     if ($Process.MainWindowHandle -eq 0) { throw 'No provider window' }
     $Root = [System.Windows.Automation.AutomationElement]::FromHandle($Process.MainWindowHandle)
     $Condition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty, 'Name')
-    if ($SystemControl) { $Condition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Edit) }
-    $Field = $Root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $Condition)
+    if ($SystemControl) { $Condition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::IsTextPatternAvailableProperty, $true) }
+    do { $Field = $Root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $Condition); if (-not $Field) { Start-Sleep -Milliseconds 50 } } while (-not $Field -and [DateTime]::UtcNow -lt $Deadline)
+    if (-not $Field) { throw 'No text provider field' }
     $Text = $Field.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
     $Camera = [string][char]0xd83d + [char]0xdcf7
     $Expected = 'A' + $Camera + 'e' + [char]0x0301 + 'Z'
