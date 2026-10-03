@@ -3,6 +3,7 @@
 #include "vimgui_accessibility.h"
 #include <windows.h>
 #include <UIAutomation.h>
+#include <richedit.h>
 #include <cstdio>
 #include <string>
 #include <stdexcept>
@@ -19,12 +20,21 @@ static LRESULT CALLBACK window_proc(HWND window,UINT message,WPARAM wparam,LPARA
     if(message==WM_DESTROY){PostQuitMessage(0);return 0;}
     return DefWindowProcW(window,message,wparam,lparam);
 }
-static int provider(bool initialize_com) {
+static int provider(bool initialize_com,bool system_control=false) {
     if(initialize_com)check(CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED));
     WNDCLASSW klass{};klass.lpfnWndProc=window_proc;klass.hInstance=GetModuleHandleW(nullptr);klass.lpszClassName=L"VImGuiTextTest";
     RegisterClassW(&klass);
     HWND window=CreateWindowW(klass.lpszClassName,L"Native text regression",WS_OVERLAPPEDWINDOW,0,0,400,300,nullptr,nullptr,klass.hInstance,nullptr);
     if(!window)return 1;
+    if(system_control) {
+        if(!LoadLibraryW(L"Msftedit.dll"))return 1;
+        HWND edit=CreateWindowW(MSFTEDIT_CLASS,L"A\xd83d\xdcf7" L"e\x0301Z",WS_CHILD|WS_VISIBLE|ES_MULTILINE,0,0,300,100,window,nullptr,klass.hInstance,nullptr);
+        if(!edit)return 1;
+        CHARRANGE selection{1,3};SendMessageW(edit,EM_EXSETSEL,0,reinterpret_cast<LPARAM>(&selection));
+        ShowWindow(window,SW_SHOW);
+        MSG message;while(GetMessageW(&message,nullptr,0,0)>0){TranslateMessage(&message);DispatchMessageW(&message);}
+        if(initialize_com)CoUninitialize();return 0;
+    }
     auto *context=vimgui_accessibility_create();
     const uint64_t children[]={2};
     vimgui_accessibility_node root{};root.id=1;root.role=VIMGUI_AX_WINDOW;root.label="Text regression";root.children=children;root.child_count=1;root.width=400;root.height=300;
@@ -60,6 +70,7 @@ static void read_ranges(HWND window) {
     std::puts("PASS: repeated selection range GetText across native UIA");
 }
 int main(int argc,char **argv) {
+    if(argc>1&&std::string(argv[1])=="--system-control")return provider(true,true);
     if(argc>1&&std::string(argv[1])=="--provider")return provider(true);
     if(argc>1&&std::string(argv[1])=="--provider-no-com")return provider(false);
     check(CoInitializeEx(nullptr,COINIT_MULTITHREADED));
