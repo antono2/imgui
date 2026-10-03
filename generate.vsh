@@ -8,7 +8,7 @@ const repo_dir = @DIR
 const c2v_flags = '-DSTATIC_BUILD=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCIMGUI_DEFINE_ENUMS_AND_STRUCTS=ON -DIMGUI_STATIC=OFF -DCIMGUI_NO_EXPORT=ON -DCIMGUI_USE_GLFW=ON'
 
 fn usage() {
-	println('Usage: v run generate.vsh [--regenerate-c|--self-test]')
+	println('Usage: ./generate.vsh [--regenerate-c|--self-test]')
 	println('By default, translate the generated C API committed by cimgui/cimplot.')
 }
 

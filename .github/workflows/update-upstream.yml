@@ -74,8 +74,8 @@ jobs:
       - name: Regenerate and compare committed bindings
         run: |
           set -euo pipefail
-          v run generate.vsh
-          v run scripts/check_upstream_variant.vsh
+          ./generate.vsh
+          ./scripts/check_upstream_variant.vsh
           git diff --check
           git diff --exit-code
 
@@ -164,11 +164,11 @@ jobs:
         if: steps.upstream.outputs.changed == 'true'
         run: |
           set -euo pipefail
-          v run generate.vsh --self-test
+          ./generate.vsh --self-test
           scripts/update_upstream.sh "$VARIANT"
-          v run scripts/check_upstream_variant.vsh
-          v run scripts/configure_variant.vsh --self-test
-          v run cleanup_imgui_implot.vsh --self-test
+          ./scripts/check_upstream_variant.vsh
+          ./scripts/configure_variant.vsh --self-test
+          ./cleanup_imgui_implot.vsh --self-test
           v -check-syntax imgui.v
           mkdir -p "$RUNNER_TEMP/vmodules/antono2"
           ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
