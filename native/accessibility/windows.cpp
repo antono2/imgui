@@ -98,6 +98,14 @@ public:
         else if(property==UIA_IsEnabledPropertyId||property==UIA_IsKeyboardFocusablePropertyId||property==UIA_HasKeyboardFocusPropertyId||property==UIA_IsOffscreenPropertyId||property==UIA_IsControlElementPropertyId||property==UIA_IsContentElementPropertyId){out->vt=VT_BOOL;bool value=property==UIA_IsEnabledPropertyId?!(n.flags&VIMGUI_AX_DISABLED):property==UIA_IsKeyboardFocusablePropertyId?bool(n.actions&VIMGUI_AX_FOCUS):property==UIA_HasKeyboardFocusPropertyId?tree.focused&&tree.focus==id:property==UIA_IsOffscreenPropertyId?!visible(tree,n):true;out->boolVal=value?VARIANT_TRUE:VARIANT_FALSE;}
         else if(property==UIA_LiveSettingPropertyId){out->vt=VT_I4;out->lVal=(n.flags&VIMGUI_AX_LIVE)?1:0;}
         else if(property==UIA_PositionInSetPropertyId||property==UIA_SizeOfSetPropertyId){out->vt=VT_I4;out->lVal=LONG(property==UIA_PositionInSetPropertyId?n.position_in_set:n.size_of_set);}
+        else if(property==UIA_ScrollHorizontalScrollPercentPropertyId||property==UIA_ScrollVerticalScrollPercentPropertyId||property==UIA_ScrollHorizontalViewSizePropertyId||property==UIA_ScrollVerticalViewSizePropertyId){
+            out->vt=VT_R8;
+            if(property==UIA_ScrollHorizontalScrollPercentPropertyId)out->dblVal=UIA_ScrollPatternNoScroll;
+            else if(property==UIA_ScrollVerticalScrollPercentPropertyId)out->dblVal=n.scroll_y_max>0?n.scroll_y/n.scroll_y_max*100:UIA_ScrollPatternNoScroll;
+            else if(property==UIA_ScrollHorizontalViewSizePropertyId)out->dblVal=100;
+            else out->dblVal=n.height+n.scroll_y_max>0?n.height/(n.height+n.scroll_y_max)*100:100;
+        }
+        else if(property==UIA_ScrollHorizontallyScrollablePropertyId||property==UIA_ScrollVerticallyScrollablePropertyId){out->vt=VT_BOOL;out->boolVal=property==UIA_ScrollVerticallyScrollablePropertyId&&n.scroll_y_max>0?VARIANT_TRUE:VARIANT_FALSE;}
         return S_OK;}
     HRESULT STDMETHODCALLTYPE get_HostRawElementProvider(IRawElementProviderSimple **out)override{if(!out)return E_POINTER;*out=nullptr;auto tree=snapshot(state);return id==tree.root?UiaHostProviderFromHwnd(state->window,out):S_OK;}
     HRESULT STDMETHODCALLTYPE Navigate(NavigateDirection direction,IRawElementProviderFragment **out)override{if(!out)return E_POINTER;*out=nullptr;auto tree=snapshot(state);auto found=tree.nodes.find(id);if(found==tree.nodes.end())return UIA_E_ELEMENTNOTAVAILABLE;uint64_t target=0;

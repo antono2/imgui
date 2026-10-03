@@ -145,7 +145,7 @@ void *accessibility_platform_attach(vimgui_accessibility *ctx,void *,void *){
     state->bridge=atk_bridge_adaptor_init(nullptr,nullptr)==0;
     return new std::shared_ptr<LinuxState>(state);
 }
-void accessibility_platform_detach(void *adapter){auto &state=*static_cast<std::shared_ptr<LinuxState> *>(adapter);state->context=nullptr;application_root=nullptr;if(state->bridge)atk_bridge_adaptor_cleanup();
+void accessibility_platform_detach(void *adapter){auto &state=*static_cast<std::shared_ptr<LinuxState> *>(adapter);state->context=nullptr;if(state->bridge)atk_bridge_adaptor_cleanup();application_root=nullptr;
     for(auto &entry:state->objects)g_object_unref(entry.second);state->objects.clear();delete static_cast<std::shared_ptr<LinuxState> *>(adapter);}
 void accessibility_platform_update(void *adapter){auto state=*static_cast<std::shared_ptr<LinuxState> *>(adapter);auto tree=accessibility_snapshot(state->context);
     if(tree.revision!=state->tree.revision){auto previous=state->tree;state->tree=tree;
