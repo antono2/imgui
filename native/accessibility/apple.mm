@@ -54,10 +54,10 @@ static size_t codepointOffset(NSString *text,NSUInteger limit){size_t points=0;l
     if(self){self.delegate=self;self.textColor=UIColor.clearColor;self.tintColor=UIColor.clearColor;
         self.backgroundColor=UIColor.clearColor;self.borderStyle=UITextBorderStyleNone;
         self.accessibilityIdentifier=@"vimgui-native-accessible-editor";
-        self.userInteractionEnabled=NO;
         [self addTarget:self action:@selector(changed) forControlEvents:UIControlEventEditingChanged];}
     return self;
 }
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {return NO;}
 - (BOOL)accessibilityActivate {if(!request(owner,VIMGUI_AX_FOCUS))return NO;return [self becomeFirstResponder];}
 - (void)textFieldDidBeginEditing:(UITextField *)field {request(owner,VIMGUI_AX_FOCUS);}
 - (void)changed {
@@ -84,8 +84,8 @@ static void syncEditor(VimguiElement *element) {
     field.enabled=!(n->flags&(VIMGUI_AX_DISABLED|VIMGUI_AX_READ_ONLY));
     if(!field.markedTextRange){field->syncing=YES;NSString *value=string(n->value);
         if(![field.text isEqualToString:value])field.text=value;
-        UITextPosition *start=[field positionFromPosition:field.beginningOfDocument offset:utf16Offset(value,n->text_anchor)];
-        UITextPosition *end=[field positionFromPosition:field.beginningOfDocument offset:utf16Offset(value,n->text_focus)];
+        UITextPosition *start=[field positionFromPosition:field.beginningOfDocument offset:utf16Offset(value,std::min(n->text_anchor,n->text_focus))];
+        UITextPosition *end=[field positionFromPosition:field.beginningOfDocument offset:utf16Offset(value,std::max(n->text_anchor,n->text_focus))];
         if(start && end)field.selectedTextRange=[field textRangeFromPosition:start toPosition:end];
         field->syncing=NO;}
     if(field.isFirstResponder && element->state->tree.focus!=element->identity)[field resignFirstResponder];
