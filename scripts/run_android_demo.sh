@@ -46,15 +46,7 @@ esac
 application_options=()
 v_options=()
 if [[ ${VIMGUI_ANDROID_APPLICATION_UI:-0} == 1 ]]; then
-  ANDROID_ABI="$abi" bash "$repo_dir/scripts/build-accesskit-android.sh"
-  case "$abi" in
-    armeabi-v7a) rust_target=armv7-linux-androideabi ;;
-    arm64-v8a) rust_target=aarch64-linux-android ;;
-    x86_64) rust_target=x86_64-linux-android ;;
-  esac
-  accesskit="$repo_dir/.dependencies/accesskit/accesskit-c-0.23.1"
-  application_options=(-DVIMGUI_APPLICATION_UI=ON -DVIMGUI_ANDROID_EXTERNAL_ACCESSIBILITY=ON
-    "-DACCESSKIT_DIR=$accesskit" "-DVIMGUI_ACCESSKIT_STATIC_LIBRARY=$accesskit/target/$rust_target/release/libaccesskit.a")
+  application_options=(-DVIMGUI_APPLICATION_UI=ON -DVIMGUI_ANDROID_EXTERNAL_ACCESSIBILITY=ON)
   v_options=(-d appui_embedded -d release_accessibility)
 fi
 
@@ -97,6 +89,7 @@ if [[ -z "$build_tools" || -z "$android_jar" ]]; then
 fi
 
 package_dir="$build_dir/package"
+rm -rf -- "$package_dir/classes" "$package_dir/dex"
 mkdir -p "$package_dir/lib/$abi" "$package_dir/assets" "$package_dir/classes" "$package_dir/dex"
 cp "$build_dir/lib/libvimgui.so" "$package_dir/lib/$abi/libvimgui.so"
 cp "$build_dir/libvimgui_android_demo.so" "$package_dir/lib/$abi/libvimgui_android_demo.so"

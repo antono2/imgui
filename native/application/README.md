@@ -1,15 +1,16 @@
 # Application UI (development preview)
 
-This optional layer supplies stable widget identities, a retained AccessKit tree,
+This optional layer supplies stable widget identities, a retained accessibility tree,
 virtualized lists, high-contrast styling, text scaling, and native action routing.
 `appui/` is a small V module independent of the generated ImGui/ImPlot bindings.
 The existing raw bindings and mobile backend profiles remain available.
 
 ## Desktop build
 
-Install CMake, Python 3, Rust/Cargo, and GLFW; Linux also needs Vulkan headers,
-D-Bus development headers, and a driver. Run `scripts/build-appui.sh` from the repository. AccessKit 0.23.1 and
-its Linux source patches are downloaded and verified by SHA-256. Windows currently
+Install CMake, a C++17 compiler, and GLFW; Linux also needs Vulkan, D-Bus,
+ATK and ATK Bridge development headers, and a driver. Run `scripts/build-appui.sh`
+from the repository. Native adapters use AT-SPI on Linux, UI Automation on Windows,
+AppKit on macOS, UIKit on iOS, and AccessibilityNodeProvider on Android. Windows currently
 uses the CMake build directly with GLFW and the Vulkan SDK configured.
 The desktop folder chooser uses Native File Dialog Extended 1.3.0 (Zlib license),
 downloaded by CMake with a pinned SHA-256. Its Linux portal backend uses the
@@ -117,8 +118,8 @@ the Java helper; hosts should report `hasFailed()` and offer a retry.
 `scripts/run_android_accessible.sh --build-only` packages an independent Android
 test app with a 1,000-row list, editable search, and keeper action. Set
 `ANDROID_SDK_ROOT`, `ANDROID_NDK_HOME`, and `ANDROID_ABI`; omit `--build-only` to
-install and run it. It builds AccessKit from source with its embedded DEX helper,
-including `armeabi-v7a`, which the upstream binary archive does not provide.
+install and run it. It builds the native C++ bridge and Java node provider,
+including `armeabi-v7a`.
 This validates the reusable native widgets; it is not the duplicate-finder app.
 `scripts/test_android_accessible.sh` builds and installs this app plus a separate
 instrumentation package to exercise native accessibility and input. Set
@@ -129,15 +130,17 @@ Linux end-to-end checks must run inside an isolated D-Bus session and X server:
 
 ```
 GSETTINGS_BACKEND=memory dbus-run-session -- xvfb-run -a \
-  /usr/bin/python3 tests/accessibility/atspi_smoke.py build/accessible-review
+  build/native-atspi-smoke build/accessible-review
 ```
 
-The test requires PyGObject and AT-SPI. Native retained-tree tests are available
+Compile the probe with `c++ -std=c++17 tests/accessibility/atspi_smoke.cpp $(pkg-config --cflags --libs atspi-2 gio-2.0) -o build/native-atspi-smoke`.
+It requires the native AT-SPI development headers and the desktop accessibility bus. Native retained-tree tests are available
 through CTest in `build/appui/accessibility`.
 The desktop portal client can be checked without opening the user's chooser:
 
 ```
-dbus-run-session -- /usr/bin/python3 tests/accessibility/portal_picker.py lib/appui/libvimgui_app.so
+c++ -std=c++17 tests/accessibility/portal_picker.cpp $(pkg-config --cflags --libs gio-2.0) -ldl -pthread -o build/native-portal-check
+GSETTINGS_BACKEND=memory dbus-run-session -- build/native-portal-check lib/appui/libvimgui_app.so
 ```
 
 This uses a controlled portal to verify UTF-8 selection, initial-folder handling,

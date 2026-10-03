@@ -7,12 +7,7 @@ if [[ -z "$app_bundle" || ! -d "$app_bundle" ]]; then
   exit 2
 fi
 
-device_id="$(xcrun simctl list -j devices available | python3 -c '
-import json, sys
-devices = [device for group in json.load(sys.stdin)["devices"].values() for device in group]
-phones = [device for device in devices if device["name"].startswith("iPhone")]
-print(phones[0]["udid"] if phones else "")
-')"
+device_id="$(xcrun simctl list devices available | sed -nE '/iPhone/s/.*\(([0-9A-Fa-f-]{36})\).*/\1/p' | sed -n '1p')"
 if [[ -z "$device_id" ]]; then
   echo '::warning::No available iPhone Simulator runtime; compile/link checks passed.'
   exit 0

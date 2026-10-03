@@ -86,6 +86,14 @@ extern "C" bool vimgui_ios_text_view_set_visible(void* handle, bool visible)
     if (handle == nullptr || ![NSThread isMainThread])
         return false;
     VImGuiTextView* view = (__bridge VImGuiTextView*)handle;
+    // A retained accessible input uses UIKit's own text field and forwards its
+    // edits through the action queue. Keep this fallback IME from taking focus.
+    for (UIView* sibling in view.superview.subviews)
+        if ([sibling.accessibilityIdentifier isEqualToString:@"vimgui-native-accessible-editor"] && sibling.isFirstResponder)
+        {
+            if (!visible) [sibling resignFirstResponder];
+            return true;
+        }
     if (visible && !view.isFirstResponder)
         [view becomeFirstResponder];
     else if (!visible && view.isFirstResponder)
