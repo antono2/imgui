@@ -68,12 +68,12 @@ jobs:
       - name: Verify generated upstream variant
         working-directory: source/modules/antono2/imgui
         run: |
-          v run setup.vsh --check
-          v run generate.vsh --help
-          v run generate.vsh --self-test
-          v run scripts/check_upstream_variant.vsh
-          v run cleanup_imgui_implot.vsh --self-test
-          v run scripts/configure_variant.vsh --self-test
+          ./setup.vsh --check
+          ./generate.vsh --help
+          ./generate.vsh --self-test
+          ./scripts/check_upstream_variant.vsh
+          ./cleanup_imgui_implot.vsh --self-test
+          ./scripts/configure_variant.vsh --self-test
       - name: Select package variant
         id: variant
         working-directory: source/modules/antono2/imgui
@@ -84,13 +84,14 @@ jobs:
             *) echo "Unsupported ImGui variant: $variant" >&2; exit 1 ;;
           esac
           echo "name=$variant" >> "$GITHUB_OUTPUT"
-      - name: Build native ImGui library
+      - name: Check native build entry point
         working-directory: source/modules/antono2/imgui
         run: |
-          v run build_vimgui.vsh --help
-          v run build_vimgui.vsh --linkage shared --glfw system
+          ./build_vimgui.vsh --help
       - name: Compile V demo
-        run: v -no-memory-limit -path "$GITHUB_WORKSPACE/source/modules/antono2|@vlib|@vmodules" -cc gcc -o "$RUNNER_TEMP/v_imgui_demo" source/demo
+        run: |
+          ./source/modules/antono2/imgui/scripts/run_demo.vsh --build-only --demo-directory "$GITHUB_WORKSPACE/source/demo"
+          cp source/modules/antono2/imgui/build/desktop-demo/v_imgui_demo "$RUNNER_TEMP/v_imgui_demo"
       - name: Package and verify
         run: |
           set -euo pipefail
@@ -174,8 +175,8 @@ jobs:
         run: |
           "$env:GITHUB_WORKSPACE\toolchain\v" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install Vulkan SDK and SwiftShader test artifacts
-        shell: bash
-        run: bash source/modules/antono2/imgui/.github/scripts/setup-vulkan-ci.sh 1.4.309.0 v1.2
+        shell: pwsh
+        run: v run source/modules/antono2/imgui/scripts/setup_vulkan_ci.vsh 1.4.309.0 v1.2
       - name: Install matching Volk header
         shell: pwsh
         run: |
@@ -200,7 +201,7 @@ jobs:
           Import-Module (Join-Path $InstallPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
           Enter-VsDevShell -VsInstallPath $InstallPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
           v -check-syntax ./source/modules/antono2/imgui/setup.vsh
-          ./source/modules/antono2/imgui/scripts/run_demo_windows.ps1 -BuildOnly -DemoDirectory "$env:GITHUB_WORKSPACE\source\demo"
+          v run ./source/modules/antono2/imgui/scripts/run_demo.vsh --build-only --demo-directory "$env:GITHUB_WORKSPACE\source\demo"
       - name: Package and verify
         shell: pwsh
         run: |
@@ -359,7 +360,7 @@ jobs:
       - name: Build and link moving-dependency consumer
         run: |
           cd source/modules/antono2/imgui
-          v run build_vimgui.vsh --linkage shared --glfw system
+          ./build_vimgui.vsh --linkage shared --glfw system
           cd "$GITHUB_WORKSPACE"
           v -new-compiler -no-memory-limit -path "$VMODULES/antono2|@vlib|@vmodules" \
             -cc gcc -o "$RUNNER_TEMP/v_imgui_moving_deps" \

@@ -10,7 +10,7 @@ const init_begin = '\t// VIMGUI_DOCKING_INIT_BEGIN'
 const init_end = '\t// VIMGUI_DOCKING_INIT_END'
 
 fn usage() {
-	eprintln('Usage: v run scripts/configure_variant.vsh standard|docking')
+	eprintln('Usage: ./scripts/configure_variant.vsh standard|docking')
 }
 
 fn remove_marked_block(lines []string, begin string, end string) ![]string {

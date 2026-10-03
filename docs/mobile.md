@@ -10,7 +10,7 @@ Initialize the submodules first (`git submodule update --init --recursive`).
 Android requires NDK r27c and Vulkan-capable API 24 or newer:
 
 ```sh
-v run build_vimgui.vsh --profile android-vulkan --linkage shared \
+./build_vimgui.vsh --profile android-vulkan --linkage shared \
   --android-abi armeabi-v7a --android-api 24 --ndk "$ANDROID_NDK_HOME" \
   --freetype bundled
 ```
@@ -22,11 +22,11 @@ for a build using stb_truetype; it goes in `lib/android-vulkan/<abi>/`.
 On macOS with Xcode installed:
 
 ```sh
-v run build_vimgui.vsh --profile apple-metal --apple-sdk macosx \
+./build_vimgui.vsh --profile apple-metal --apple-sdk macosx \
   --apple-arch arm64 --freetype bundled
-v run build_vimgui.vsh --profile apple-metal --apple-sdk iphonesimulator \
+./build_vimgui.vsh --profile apple-metal --apple-sdk iphonesimulator \
   --apple-arch arm64 --freetype bundled
-v run build_vimgui.vsh --profile apple-metal --apple-sdk iphoneos \
+./build_vimgui.vsh --profile apple-metal --apple-sdk iphoneos \
   --apple-arch arm64 --freetype bundled
 ```
 
