@@ -43,7 +43,7 @@ jobs:
         run: |
           export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
           if [ ! -f "$VK_ICD_FILENAMES" ]; then export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json; fi
-          GSETTINGS_BACKEND=memory dbus-run-session -- xvfb-run -a build/appui/application_host_smoke
+          G_DEBUG=fatal-criticals GSETTINGS_BACKEND=memory dbus-run-session -- xvfb-run -a build/appui/application_host_smoke
       - name: Exercise native folder portal client
         if: runner.os == 'Linux'
         run: |
