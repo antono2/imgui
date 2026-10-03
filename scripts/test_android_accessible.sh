@@ -24,6 +24,8 @@ mapfile -d '' class_files < <(find "$package/classes" -name '*.class' -print0)
 "$build_tools/apksigner" verify "$package/test.apk"
 "${adb[@]}" install -r "$build/accessible-$abi.apk"
 "${adb[@]}" install -r "$package/test.apk"
+"${adb[@]}" shell input keyevent 224
+"${adb[@]}" shell wm dismiss-keyguard
 "${adb[@]}" shell am instrument -w \
   io.antono2.vimgui.accessible.test/io.antono2.vimgui.accessible.test.AccessibilitySmoke | tee "$build/instrumentation.log"
 rg -q 'result=PASS:' "$build/instrumentation.log"
