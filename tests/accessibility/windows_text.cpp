@@ -30,6 +30,7 @@ static int provider(bool initialize_com,bool system_control=false) {
         if(!LoadLibraryW(L"Msftedit.dll"))return 1;
         HWND edit=CreateWindowW(MSFTEDIT_CLASS,L"A\xd83d\xdcf7" L"e\x0301Z",WS_CHILD|WS_VISIBLE|ES_MULTILINE,0,0,300,100,window,nullptr,klass.hInstance,nullptr);
         if(!edit)return 1;
+        SetWindowTextW(edit,L"A\xd83d\xdcf7" L"e\x0301Z");
         CHARRANGE selection{1,3};SendMessageW(edit,EM_EXSETSEL,0,reinterpret_cast<LPARAM>(&selection));
         ShowWindow(window,SW_SHOW);
         MSG message;while(GetMessageW(&message,nullptr,0,0)>0){TranslateMessage(&message);DispatchMessageW(&message);}

@@ -16,7 +16,8 @@ try {
     $Text = $Field.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
     $Camera = [string][char]0xd83d + [char]0xdcf7
     $Expected = 'A' + $Camera + 'e' + [char]0x0301 + 'Z'
-    if ($Text.DocumentRange.GetText(-1).TrimEnd([char[]] "`r`n") -ne $Expected) { throw 'Document text mismatch' }
+    $DocumentText = $Text.DocumentRange.GetText(-1).TrimEnd([char[]] "`r`n")
+    if ($DocumentText -ne $Expected) { throw "Document text mismatch: '$DocumentText'" }
     Write-Output 'PASS: managed document range GetText'
     $Range = $Text.DocumentRange.Clone()
     if ($Range.GetText(-1).TrimEnd([char[]] "`r`n") -ne $Expected) { throw 'Cloned document text mismatch' }
