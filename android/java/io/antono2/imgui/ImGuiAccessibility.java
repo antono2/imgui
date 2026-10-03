@@ -241,6 +241,12 @@ public final class ImGuiAccessibility implements AutoCloseable {
                 if(motion.getAction()!=android.view.MotionEvent.ACTION_HOVER_EXIT) {
                     for(int i=0;i<nodes.size();i++) {
                         org.json.JSONObject item=nodes.valueAt(i);Rect rectangle=bounds(item);
+                        if(!rectangle.intersect(0,0,host.getWidth(),host.getHeight()))continue;
+                        boolean visible=true;long ancestor=item.optLong("parent");
+                        while(ancestor!=0){org.json.JSONObject parent=nodes.get(virtualId(ancestor));if(parent==null)break;
+                            if(parent.optInt("role")==7 && !rectangle.intersect(bounds(parent))){visible=false;break;}
+                            ancestor=parent.optLong("parent");}
+                        if(!visible)continue;
                         long size=(long)rectangle.width()*rectangle.height();
                         if(rectangle.contains((int)motion.getX(),(int)motion.getY())&&size>0&&size<area){hit=nodes.keyAt(i);area=size;}
                     }
