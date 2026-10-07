@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Runs device-side accessibility checks against the Android example.
 set -euo pipefail
 repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 sdk=${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}

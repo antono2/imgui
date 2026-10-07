@@ -1,4 +1,5 @@
 #!/usr/bin/env -S v run
+// Builds the application-widget host and its platform accessibility dependencies.
 
 import os
 import tooling

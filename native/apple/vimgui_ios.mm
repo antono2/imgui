@@ -1,3 +1,4 @@
+// Converts iOS input and frame geometry into ImGui backend state.
 #include "vimgui_ios.h"
 
 #include "../../cimgui/imgui/imgui.h"

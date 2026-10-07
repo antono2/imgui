@@ -1,3 +1,4 @@
+// Exposes iOS touch, keyboard and frame integration to V callers.
 module impl_ios
 
 import antono2.imgui

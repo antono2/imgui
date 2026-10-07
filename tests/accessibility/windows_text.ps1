@@ -1,3 +1,4 @@
+# Builds and runs Windows UI Automation text-provider checks.
 param([Parameter(Mandatory)] [string] $Executable, [switch] $SystemControl, [switch] $LegacySelection)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName UIAutomationClient

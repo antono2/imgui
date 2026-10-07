@@ -1,3 +1,4 @@
+// Prints received arguments so process tests can detect quoting and argument-boundary errors.
 module main
 
 import os

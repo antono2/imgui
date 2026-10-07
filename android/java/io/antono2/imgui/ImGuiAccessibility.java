@@ -1,3 +1,4 @@
+// Exposes native accessibility snapshots as Android virtual views and forwards accessibility actions.
 package io.antono2.imgui;
 
 import android.os.Handler;

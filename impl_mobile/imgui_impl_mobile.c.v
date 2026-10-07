@@ -1,3 +1,4 @@
+// Exposes mobile UI scaling and style-baseline reset independently of the rendering backend.
 module impl_mobile
 
 #flag -I @VMODROOT/native/mobile

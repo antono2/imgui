@@ -1,3 +1,4 @@
+// Renders an offscreen ImGui frame to exercise Vulkan backend initialization and cleanup.
 #undef IMGUI_IMPL_VULKAN_NO_PROTOTYPES
 #include "../../cimgui/imgui/imgui.h"
 #include "../../cimgui/imgui/backends/imgui_impl_vulkan.h"

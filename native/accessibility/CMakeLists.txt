@@ -1,3 +1,4 @@
+# Builds the shared accessibility core with the adapter for the target platform.
 cmake_minimum_required(VERSION 3.20)
 project(vimgui_accessibility LANGUAGES C CXX)
 find_package(Threads REQUIRED)

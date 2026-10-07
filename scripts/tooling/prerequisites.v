@@ -1,3 +1,4 @@
+// Discovers build prerequisites and reports platform-specific setup requirements.
 module tooling
 
 import os

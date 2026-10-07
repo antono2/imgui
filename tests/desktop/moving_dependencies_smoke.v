@@ -1,3 +1,4 @@
+// Exercises desktop binding integration against the advisory moving-dependency configuration.
 module main
 
 import os

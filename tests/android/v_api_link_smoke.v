@@ -1,3 +1,4 @@
+// Checks the V Android API against the native library at link time.
 module main
 
 import antono2.imgui

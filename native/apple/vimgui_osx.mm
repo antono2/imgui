@@ -1,3 +1,4 @@
+// Adapts application-owned Cocoa views to the ImGui macOS backend.
 #include "vimgui_osx.h"
 
 #include "../../cimgui/imgui/backends/imgui_impl_osx.h"

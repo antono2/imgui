@@ -67,3 +67,18 @@ x86_64 and Windows 10/11 x64 artifacts. The source path remains
 `scripts/run_demo.vsh`; prebuilding a demo is not a requirement for every
 release. Keep the archive variant marker and the pinned demo/compiler revisions
 aligned when changing release packaging.
+
+## Source map and file introductions
+
+`appui/` is the V application-widget interface; `native/application/` owns its
+platform hosts and widget implementation. `native/accessibility/` owns the
+shared tree and platform adapters. Android Java/JNI and Apple Objective-C++
+bridges live beside the corresponding native backends. The `impl_*` directories
+expose those backends to V; callers must respect each backend's initialization
+and shutdown order.
+
+Purpose comments cover maintained implementation, tests and tooling. Keep the
+generated API introduction in `cleanup_imgui_implot.vsh`, then regenerate both
+outputs. Preserve upstream submodules and copied upstream files under `include/`;
+document their integration in local wrappers instead of editing their headers.
+Configuration and asset files are not executable-source comment targets.

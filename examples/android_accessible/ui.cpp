@@ -1,3 +1,4 @@
+// Supplies the accessible native UI used by the Android example host.
 #include "../../native/application/vimgui_app.h"
 #include "../../cimgui/imgui/imgui.h"
 #include <cstdio>

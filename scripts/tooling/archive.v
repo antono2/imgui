@@ -1,3 +1,4 @@
+// Extracts archives for build tooling while validating entry paths.
 module tooling
 
 import os

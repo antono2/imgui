@@ -1,3 +1,4 @@
+// Declares the iOS input and keyboard bridge consumed by native hosts and V bindings.
 #pragma once
 
 #include <stdbool.h>

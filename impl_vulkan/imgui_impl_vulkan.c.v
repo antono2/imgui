@@ -1,3 +1,4 @@
+// Wraps the ImGui Vulkan renderer and its initialization structures; load Vulkan entry points before using backend helpers.
 @[translated]
 module impl_vulkan
 

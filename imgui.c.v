@@ -1,3 +1,4 @@
+// Selects ImGui native headers and library linkage for the generated V API.
 module imgui
 
 #flag -I @VMODROOT/include

@@ -1,3 +1,4 @@
+// Checks mobile gamepad normalization and boundary values.
 #include "../../native/mobile/vimgui_gamepad_values.h"
 
 int main()

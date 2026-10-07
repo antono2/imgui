@@ -1,3 +1,4 @@
+// Exposes docking and viewport controls that remain safe to call on either upstream variant.
 module imgui
 
 #flag -I @VMODROOT
