@@ -58,8 +58,11 @@ and secondary-viewport rendering helpers become safe no-ops there.
 The setup and build tooling uses V, CMake, Git, and a C/C++ toolchain. Python,
 Rust, and Cargo are not required.
 
-`v install antono2.vulkan@v3.2.0`<br>
-`v install antono2.glfw@v2.0.0`
+VPM installs the V dependencies listed in [`v.mod`](v.mod) automatically when
+you install `antono2.imgui`; separate dependency installation commands are not
+needed. Those dependencies use release pins to retain the tested Vulkan/GLFW
+combination. They are package dependency choices, not a requirement to pin the
+ImGui installation command below. Change them only after checking compatibility.
 
 ## Install
 ```bash
