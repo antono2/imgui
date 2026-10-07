@@ -14,10 +14,7 @@ fn run() ! {
 	mut native_only := false
 	mut demo_directory := ''
 	mut demo_source := ''
-	mut revision := '5673324866e9825e217dfd1927145250d60f9e84'
-	$if windows {
-		revision = '1e444971dd4f70a6edf281ce648e136c01d08ab6'
-	}
+	mut revision := '573e3935361aa7390769033ba52a1921630f1c03'
 	mut index := 0
 	for index < args.len {
 		match args[index] {
@@ -55,7 +52,6 @@ fn run() ! {
 		index++
 	}
 	root := os.dir(os.dir(os.real_path(@FILE)))
-	parent := os.dir(root)
 	mut bundled := false
 	$if windows {
 		bundled = true
@@ -115,12 +111,8 @@ fn run() ! {
 	}
 	os.mkdir_all(runtime)!
 	demo_binary := os.join_path(runtime, 'v_imgui_demo' + extension)
-	mut module_path := '${parent}|@vlib|@vmodules'
-	// Prefer a complete adjacent dependency checkout over unrelated installed versions.
-	if ['imgui', 'vulkan', 'glfw'].all(os.is_file(os.join_path(parent, it, 'v.mod'))) {
-		module_path = '${parent}|${os.join_path(root, 'modules')}|@vlib'
-	}
-	tooling.command(tooling.compiler(), ['-no-memory-limit', '-path', module_path, '-cc', cc, '-o',
+	module_path := tooling.demo_module_path(root, runtime)!
+	tooling.command(tooling.compiler(), ['-old-compiler', '-path', module_path, '-cc', cc, '-o',
 		demo_binary, demo_source])!
 	println('Built ${demo_binary}')
 	if !build_only { tooling.command(demo_binary, [])! }

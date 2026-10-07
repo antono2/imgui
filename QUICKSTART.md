@@ -6,6 +6,11 @@ checkout on Linux or macOS with `./setup.vsh`, or on Windows with
 the native Dear ImGui/ImPlot library; LuaJIT and the binding generator are not
 required.
 
+Use a current compiler built from the official `vlang/v` repository. The tagged
+V 0.5.2 release lacks process APIs used by these scripts. The exact V and
+bootstrap revisions tested on Linux, macOS and Windows are recorded in
+[the tooling workflow](.github/workflows/portable-tooling.yml).
+
 ## Ubuntu and Debian
 
 Install [V](https://github.com/vlang/v), then clone and run the included setup
@@ -31,7 +36,13 @@ Build the shared native library and launch the pinned GLFW/Vulkan example:
 ```
 
 The demo runner downloads the tested `antono2/v_imgui_examples` revision into
-the ignored `build/` directory. It does not regenerate these bindings.
+the ignored `build/` directory. It installs the pinned V dependencies through
+VPM and resolves `antono2.imgui` to this checkout, including when the clone has
+a custom directory name. The build directory holds a local module link (a
+junction on Windows); existing installed ImGui copies are not replaced. It does
+not regenerate these bindings. The demo uses V’s compatibility compiler
+(`-old-compiler`), which has passed the rendering smoke test. V3 compilation
+is checked separately in CI; its Vulkan rendering path is not yet supported.
 
 ## Fedora
 
