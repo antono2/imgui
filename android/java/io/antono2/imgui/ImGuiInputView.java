@@ -238,6 +238,21 @@ public final class ImGuiInputView extends View {
 
             @Override
             public boolean sendKeyEvent(KeyEvent event) {
+                // Numeric IMEs may send digit keys instead of commitText.
+                // Forwarding them to the native key queue does not insert text.
+                // Use the same editing/selection protocol as committed text,
+                // and consume the release so each press inserts exactly once.
+                int code = event.getKeyCode();
+                int digit = code >= KeyEvent.KEYCODE_0 && code <= KeyEvent.KEYCODE_9
+                        ? code - KeyEvent.KEYCODE_0
+                        : code >= KeyEvent.KEYCODE_NUMPAD_0 && code <= KeyEvent.KEYCODE_NUMPAD_9
+                        ? code - KeyEvent.KEYCODE_NUMPAD_0 : -1;
+                if (digit >= 0 && !event.isCtrlPressed() && !event.isAltPressed()
+                        && !event.isMetaPressed() && !event.isShiftPressed()) {
+                    if (event.getAction() == KeyEvent.ACTION_DOWN)
+                        return commitText(Integer.toString(digit), 1);
+                    if (event.getAction() == KeyEvent.ACTION_UP) return true;
+                }
                 int key;
                 switch (event.getKeyCode()) {
                     case KeyEvent.KEYCODE_DEL: key = 1; break;
