@@ -1,3 +1,4 @@
+// Declares the C application and widget API used by appui and native example hosts.
 #ifndef VIMGUI_APP_H
 #define VIMGUI_APP_H
 #include <stdbool.h>

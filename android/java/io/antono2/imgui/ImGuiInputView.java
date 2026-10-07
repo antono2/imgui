@@ -1,3 +1,4 @@
+// Bridges Android input-method, clipboard and input events to the native ImGui host.
 package io.antono2.imgui;
 
 import android.content.Context;

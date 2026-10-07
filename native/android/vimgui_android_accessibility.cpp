@@ -1,3 +1,4 @@
+// Connects Java accessibility requests to retained native contexts through JNI.
 #include "../accessibility/vimgui_accessibility.h"
 #include <jni.h>
 #include <cstdint>

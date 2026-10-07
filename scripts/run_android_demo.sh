@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Builds and deploys the Android Vulkan touch and text demo.
 set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

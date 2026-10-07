@@ -1,3 +1,4 @@
+// Declares the C accessibility context and node API used by application and platform bridges.
 #ifndef VIMGUI_ACCESSIBILITY_H
 #define VIMGUI_ACCESSIBILITY_H
 #include <stdbool.h>

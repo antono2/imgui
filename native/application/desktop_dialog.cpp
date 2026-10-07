@@ -1,3 +1,4 @@
+// Implements platform file-dialog integration for the desktop application host.
 #include "vimgui_app.h"
 #include "imgui.h"
 #include <nfd.h>

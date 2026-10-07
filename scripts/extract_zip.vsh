@@ -1,4 +1,5 @@
 #!/usr/bin/env -S v run
+// Extracts downloaded tooling archives through the shared archive utility.
 
 import os
 import tooling

@@ -1,3 +1,4 @@
+// Adapts opaque C handles to Metal objects for ImGui renderer lifecycle calls.
 #include "vimgui_metal.h"
 
 #include "../../cimgui/imgui/backends/imgui_impl_metal.h"

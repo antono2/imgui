@@ -1,3 +1,4 @@
+// Declares the shared mobile style-scaling API used by native platform backends.
 #pragma once
 
 #include <stdbool.h>

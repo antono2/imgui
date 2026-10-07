@@ -942,6 +942,10 @@ fn parse_version(src string, header string, kind string) (string, string) {
 
 fn cleanup_notes() string {
 	return '/*
+Generated ImGui/ImPlot API bindings; native context and resource lifetimes follow upstream.
+Regenerate with ./generate.vsh; this preface is emitted by cleanup_imgui_implot.vsh.
+Do not edit generated declarations by hand.
+
 cleanup_imgui_implot.vsh non-regression notes
 
 Keep this block current when changing cleanup rules. Do not hardcode one

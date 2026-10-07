@@ -1,3 +1,4 @@
+// Adapts committed accessibility snapshots and actions to Apple accessibility objects.
 #include "platform.h"
 #include <algorithm>
 #if defined(VIMGUI_IOS)
