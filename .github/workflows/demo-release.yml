@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 1e444971dd4f70a6edf281ce648e136c01d08ab6
+          ref: 573e3935361aa7390769033ba52a1921630f1c03
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -149,7 +149,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 1e444971dd4f70a6edf281ce648e136c01d08ab6
+          ref: 573e3935361aa7390769033ba52a1921630f1c03
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -265,7 +265,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 1e444971dd4f70a6edf281ce648e136c01d08ab6
+          ref: 573e3935361aa7390769033ba52a1921630f1c03
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -320,7 +320,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 1e444971dd4f70a6edf281ce648e136c01d08ab6
+          ref: 573e3935361aa7390769033ba52a1921630f1c03
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
