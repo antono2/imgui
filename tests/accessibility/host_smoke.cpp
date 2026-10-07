@@ -41,10 +41,7 @@ static void frame(void *) {
     vimgui_app_next_column(true); vimgui_app_button(36,"Add folder");
     if (ImGui::GetItemRectMin().x<=input_right) { std::fprintf(stderr,"Host smoke failed at line %d, frame %d\n",__LINE__,frames); std::abort(); }
     vimgui_app_end_columns(); vimgui_app_end_panel();
-    if (frames==6 && ImGui::GetScrollY()<=0) { std::fprintf(stderr,"Host smoke failed at line %d, frame %d\n",__LINE__,frames); std::abort(); }
-    if (frames==3) { vimgui_app_theme(true,false,1,true); ImGui::GetIO().AddMousePosEvent(700,450); ImGui::GetIO().AddMouseButtonEvent(0,true); }
-    if (frames==4) ImGui::GetIO().AddMousePosEvent(700,250);
-    if (frames==6) ImGui::GetIO().AddMouseButtonEvent(0,false);
+    if (frames==3) vimgui_app_theme(true,false,1,true);
     vimgui_app_progress(6,"Known progress",0.4f,"40% complete");
     vimgui_app_progress(7,"Unknown progress",-1,"Collecting files");
     vimgui_app_begin_panel(10,"Narrow layout",280,280);
@@ -156,4 +153,44 @@ static void exact_scroll_regression() {
     }
     vimgui_app_shutdown(); ImGui::DestroyContext();
 }
-int main() { column_scaling_regression(); exact_scroll_regression(); return vimgui_app_run("Application host smoke test",800,900,frame,nullptr,10); }
+// Inject gestures before NewFrame in an owned context. Native GLFW polling can
+// overwrite queued synthetic cursor positions with the real desktop pointer;
+// the window smoke test therefore checks hosting/layout, and this exercises
+// empty-space gestures without depending on desktop focus or pointer location.
+static void empty_space_drag_regression() {
+    for (int child=0;child<2;++child) {
+        ImGui::CreateContext();
+        ImGuiIO &io=ImGui::GetIO(); io.IniFilename=nullptr;
+        io.BackendFlags|=ImGuiBackendFlags_RendererHasTextures;
+        io.Fonts->AddFontDefault(); io.DisplaySize={640,480}; io.DeltaTime=1.0f/60;
+        if (!vimgui_app_initialize("Empty-space gesture regression")) std::abort();
+        // Cover both touch mode with a mouse and an actual touchscreen source.
+        vimgui_app_theme(true,false,1,child==0);
+        for (int step=0;step<10;++step) {
+            if (step==0) {
+                io.AddMouseSourceEvent(child?ImGuiMouseSource_TouchScreen:ImGuiMouseSource_Mouse);
+                io.AddMousePosEvent(200,250);
+            }
+            if (step==2) io.AddMouseButtonEvent(0,true);
+            if (step==4) io.AddMousePosEvent(200,100);
+            if (step==6) io.AddMouseButtonEvent(0,false);
+            ImGui::NewFrame(); vimgui_app_frame_begin();
+            if (child) vimgui_app_begin_panel(100,"Scrollable child",400,350);
+            vimgui_app_text(101,"Drag the empty space below");
+            ImGui::Dummy({0,1200});
+            if (step>=6 && ImGui::GetScrollY()<100) {
+                std::fprintf(stderr,"Empty-space drag did not scroll: child %d step %d, scroll %.1f, source %d, mouse %.1f/%.1f, down %d, hovered %d, delta %.1f, max %.1f\n",child,step,ImGui::GetScrollY(),int(io.MouseSource),io.MousePos.x,io.MousePos.y,int(io.MouseDown[0]),int(ImGui::IsWindowHovered()),ImGui::GetMouseDragDelta(0,0).y,ImGui::GetScrollMaxY());
+                std::abort();
+            }
+            if (child) vimgui_app_end_panel();
+            if (!vimgui_app_frame_end()) std::abort();
+            ImGui::Render();
+        }
+        vimgui_app_shutdown(); ImGui::DestroyContext();
+    }
+}
+int main(int argc,char **argv) {
+    column_scaling_regression(); exact_scroll_regression(); empty_space_drag_regression();
+    if (argc==2 && std::strcmp(argv[1],"--headless")==0) return 0;
+    return vimgui_app_run("Application host smoke test",800,900,frame,nullptr,10);
+}
