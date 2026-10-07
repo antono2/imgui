@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Compares shared mobile integration across the standard and docking branches.
 set -euo pipefail
 
 master_ref=${1:-origin/master}

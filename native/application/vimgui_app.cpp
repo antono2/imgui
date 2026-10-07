@@ -1,3 +1,4 @@
+// Implements application widgets and reconciles their visual state with accessibility actions.
 #include "vimgui_app.h"
 #include "imgui.h"
 #include "imgui_internal.h"

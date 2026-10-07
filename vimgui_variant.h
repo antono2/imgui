@@ -1,3 +1,4 @@
+// Implements variant-independent docking helpers, with no-op fallbacks on the standard branch.
 #ifndef VIMGUI_VARIANT_H
 #define VIMGUI_VARIANT_H
 

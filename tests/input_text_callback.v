@@ -1,3 +1,4 @@
+// Checks text callback state and selection offsets crossing the V/C boundary.
 module main
 
 import antono2.imgui

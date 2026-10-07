@@ -1,3 +1,4 @@
+// Reports Android Vulkan device capabilities for platform smoke validation.
 #include "../../cimgui/imgui/imgui.h"
 #include "../../native/mobile/vimgui_scale.h"
 #include <vulkan/vulkan.h>

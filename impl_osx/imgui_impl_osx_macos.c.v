@@ -1,3 +1,4 @@
+// Wraps the macOS platform backend for an application-owned NSView.
 module impl_osx
 
 #flag -I @VMODROOT/native/apple

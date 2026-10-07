@@ -1,3 +1,4 @@
+// Exercises application-host widgets and their accessibility integration.
 #include "vimgui_app.h"
 #include "imgui.h"
 #include "platform.h"

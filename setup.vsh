@@ -1,4 +1,5 @@
 #!/usr/bin/env -S v run
+// Checks or installs prerequisites and prepares a native-library build for this checkout.
 
 import os
 import scripts.tooling

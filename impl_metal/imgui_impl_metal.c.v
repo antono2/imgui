@@ -1,3 +1,4 @@
+// Wraps the Metal renderer using caller-supplied device, command buffer and render encoder objects.
 module impl_metal
 
 import antono2.imgui

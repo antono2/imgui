@@ -1,4 +1,5 @@
 #!/usr/bin/env -S v run
+// Builds the native ImGui library with the selected linkage, GLFW provider and upstream variant.
 
 import os
 

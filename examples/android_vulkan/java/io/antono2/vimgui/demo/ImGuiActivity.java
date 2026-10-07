@@ -1,3 +1,4 @@
+// Hosts the Android Vulkan demo and connects its input and accessibility views.
 package io.antono2.vimgui.demo;
 
 import android.app.NativeActivity;

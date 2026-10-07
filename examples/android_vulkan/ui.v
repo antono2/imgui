@@ -1,3 +1,4 @@
+// Exports the V touch, text and clipboard demo UI to the Android native host.
 module main
 
 import antono2.imgui

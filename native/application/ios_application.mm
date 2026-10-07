@@ -1,3 +1,4 @@
+// Hosts application widgets on iOS with native lifecycle and Metal presentation.
 #include "ios_application.h"
 #include "vimgui_app.h"
 #include "../../cimgui/imgui/imgui.h"

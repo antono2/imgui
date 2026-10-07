@@ -1,3 +1,4 @@
+# Builds the selected desktop, Android Vulkan or Apple Metal native backend profile.
 cmake_minimum_required(VERSION 3.16)
 
 Project(vimgui)

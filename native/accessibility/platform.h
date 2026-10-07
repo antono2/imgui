@@ -1,3 +1,4 @@
+// Defines the internal snapshot, node and event boundary shared by native accessibility adapters.
 #ifndef VIMGUI_ACCESSIBILITY_PLATFORM_H
 #define VIMGUI_ACCESSIBILITY_PLATFORM_H
 #include "vimgui_accessibility.h"

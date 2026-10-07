@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Builds and launches the Android accessibility example on a selected device.
 set -euo pipefail
 repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 sdk=${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}

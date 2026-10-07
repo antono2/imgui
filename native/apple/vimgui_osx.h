@@ -1,3 +1,4 @@
+// Declares the C boundary for the macOS ImGui platform backend.
 #pragma once
 
 #include <stdbool.h>

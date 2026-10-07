@@ -1,3 +1,4 @@
+// Exposes accessibility snapshots and text through Windows UI Automation providers.
 #define NOMINMAX
 #include "platform.h"
 #include <windows.h>

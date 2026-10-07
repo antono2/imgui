@@ -1,3 +1,4 @@
+// Converts text offsets between platform encodings for selection and composition.
 #pragma once
 
 #include <algorithm>

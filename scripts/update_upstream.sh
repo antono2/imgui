@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Updates the selected upstream variant and regenerates bindings for maintainer review.
 set -euo pipefail
 
 usage() {

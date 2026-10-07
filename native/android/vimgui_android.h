@@ -1,3 +1,4 @@
+// Declares the Android native input and lifecycle bridge shared by V and JNI callers.
 #pragma once
 
 #include <stdbool.h>

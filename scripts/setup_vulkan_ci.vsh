@@ -1,4 +1,5 @@
 #!/usr/bin/env -S v run
+// Prepares the Vulkan SDK dependencies used by CI builds.
 
 import os
 import json2

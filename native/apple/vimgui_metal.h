@@ -1,3 +1,4 @@
+// Declares the C boundary around the Objective-C Metal renderer backend.
 #pragma once
 
 #include <stdbool.h>
