@@ -1,4 +1,5 @@
 #!/usr/bin/env -S v run
+// Prepares and launches the desktop demo with the chosen native-library configuration.
 
 import os
 import tooling

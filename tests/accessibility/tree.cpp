@@ -1,3 +1,4 @@
+// Checks accessibility tree transactions, snapshots and action handling.
 #include "vimgui_accessibility.h"
 #include <cassert>
 #include <chrono>

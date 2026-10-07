@@ -1,3 +1,4 @@
+// Wraps the ImGui GLFW platform backend; initialize for the chosen renderer and shut down before destroying its window.
 module impl_glfw
 
 import antono2.glfw

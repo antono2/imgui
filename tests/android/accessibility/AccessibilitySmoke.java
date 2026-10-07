@@ -1,3 +1,4 @@
+// Exercises the Android accessibility tree and actions on a running demo.
 package io.antono2.vimgui.accessible.test;
 
 import android.app.Activity;

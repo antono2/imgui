@@ -1,3 +1,4 @@
+// Owns accessibility trees, snapshots and queued actions across the public C API and platform adapters.
 #include "platform.h"
 #include <cmath>
 #include <utility>

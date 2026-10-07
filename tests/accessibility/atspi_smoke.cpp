@@ -1,3 +1,4 @@
+// Checks the Linux AT-SPI accessibility surface exposed by a running host.
 #include <atspi/atspi.h>
 #include <gio/gio.h>
 #include <algorithm>

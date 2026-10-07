@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Builds and runs the iOS simulator smoke checks when an appropriate runtime is available.
 set -euo pipefail
 
 app_bundle="${1:-}"

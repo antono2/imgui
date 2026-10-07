@@ -1,4 +1,5 @@
 #!/usr/bin/env -S v run
+// Reports native build-tool and dependency availability for setup diagnostics.
 
 import os
 import tooling

@@ -1,3 +1,4 @@
+// Checks archive extraction, path safety and failure handling with temporary fixtures.
 module tooling
 
 import os

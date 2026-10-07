@@ -1,3 +1,4 @@
+// Exposes Android window, text, clipboard and gamepad integration to V callers.
 module impl_android
 
 import antono2.imgui

@@ -1,3 +1,4 @@
+// Implements UIKit text input, selection and composition for the ImGui keyboard bridge.
 #include "vimgui_ios.h"
 
 #include "../../cimgui/imgui/imgui.h"

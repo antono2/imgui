@@ -1,3 +1,4 @@
+// Connects Android native input, clipboard and frame state to ImGui.
 #include "vimgui_android.h"
 
 #include "../../cimgui/imgui/backends/imgui_impl_android.h"

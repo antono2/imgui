@@ -1,3 +1,4 @@
+// Checks subprocess argument transport and failure reporting through executable fixtures.
 module tooling
 
 import os

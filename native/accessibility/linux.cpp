@@ -1,3 +1,4 @@
+// Publishes accessibility nodes through ATK and forwards assistive-technology actions to the shared queue.
 #include "platform.h"
 #include <atk/atk.h>
 #include <atk-bridge.h>

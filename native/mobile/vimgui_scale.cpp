@@ -1,3 +1,4 @@
+// Applies UI scaling relative to a preserved style baseline to avoid cumulative scaling.
 #include "vimgui_scale.h"
 
 #include "../../cimgui/imgui/imgui.h"

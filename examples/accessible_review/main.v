@@ -1,3 +1,4 @@
+// Demonstrates accessible application widgets, searchable content and frame callbacks through appui.
 module main
 
 import antono2.imgui.appui
