@@ -38,6 +38,9 @@ jobs:
       - name: Test native tree
         if: runner.os != 'Windows'
         run: ctest --test-dir build/appui/accessibility --output-on-failure
+      - name: Test controlled gestures and layout
+        if: runner.os != 'Windows'
+        run: build/appui/application_host_smoke --headless
       - name: Render Linux application frame
         if: runner.os == 'Linux'
         run: |
