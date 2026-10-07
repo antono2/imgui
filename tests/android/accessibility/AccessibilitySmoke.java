@@ -236,6 +236,22 @@ public final class AccessibilitySmoke extends Instrumentation {
                 connection.commitText("0008",1);
             });
             await(() -> { AccessibilityNodeInfo input=find("Search files"); return input!=null && "0008".contentEquals(input.getText()==null?"":input.getText())?Boolean.TRUE:null; },"IME edit did not reach the native widget");
+            // Numeric keyboards can use digit key events instead of commitText.
+            AtomicReference<InputConnection> digits=new AtomicReference<>();
+            for (int code : new int[]{android.view.KeyEvent.KEYCODE_8, android.view.KeyEvent.KEYCODE_NUMPAD_8}) {
+                runOnMainSync(() -> {
+                    InputConnection connection=inputView(activity.getWindow().getDecorView()).onCreateInputConnection(new EditorInfo());
+                    digits.set(connection);
+                    connection.setSelection(0,4);
+                    connection.commitText("000",1);
+                });
+                await(() -> { AccessibilityNodeInfo input=find("Search files"); return input!=null && "000".contentEquals(input.getText())?Boolean.TRUE:null; },"Digit event fixture did not reset");
+                runOnMainSync(() -> {
+                    digits.get().sendKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN,code));
+                    digits.get().sendKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_UP,code));
+                });
+                await(() -> { AccessibilityNodeInfo input=find("Search files"); return input!=null && "0008".contentEquals(input.getText())?Boolean.TRUE:null; },"IME digit key was missing or duplicated");
+            }
             AtomicReference<InputConnection> editor=new AtomicReference<>();
             runOnMainSync(() -> {
                 InputConnection connection=inputView(activity.getWindow().getDecorView()).onCreateInputConnection(new EditorInfo());
