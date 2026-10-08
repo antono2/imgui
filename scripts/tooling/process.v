@@ -16,7 +16,7 @@ fn executable(program string) !string {
 	return os.find_abs_path_of_executable(program)
 }
 
-// Argument vectors preserve spaces, Unicode, and literal V module separators.
+// Argument vectors preserve spaces, Unicode and literal V module separators.
 pub fn command(program string, args []string) ! {
 	mut process := os.new_process(executable(program)!)
 	process.set_args(args)

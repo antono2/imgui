@@ -1,6 +1,6 @@
 #!/usr/bin/env -S v run
 
-// Verify that the checked-in source, ABI layout, and public markers agree.
+// Verify that the checked-in source, ABI layout and public markers agree.
 
 import os
 

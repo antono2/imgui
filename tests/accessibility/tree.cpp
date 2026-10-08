@@ -36,7 +36,7 @@ int main() {
     assert(!vimgui_accessibility_commit(ctx, 1, 2));
     assert(vimgui_accessibility_node_count(ctx) == 100001);
     vimgui_accessibility_abort(ctx);
-    // Filtering removes unreachable rows, repairs focus explicitly, and rejects
+    // Filtering removes unreachable rows, repairs focus explicitly and rejects
     // stale queued actions rather than invoking an action on a recycled index.
     assert(vimgui_accessibility_request(ctx, 100001, VIMGUI_AX_CLICK, nullptr));
     uint64_t retained[] = {2}; root.children = retained; root.child_count = 1;
@@ -61,5 +61,5 @@ int main() {
     vimgui_accessibility_detach(ctx);
     vimgui_accessibility_free(ctx);
     const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
-    std::printf("100,000 retained rows, off-screen action, invalid-tree rollback, and stale-action filtering passed (%lld ms).\n", static_cast<long long>(ms));
+    std::printf("100,000 retained rows, off-screen action, invalid-tree rollback and stale-action filtering passed (%lld ms).\n", static_cast<long long>(ms));
 }

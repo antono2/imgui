@@ -14,7 +14,7 @@ fn no_vulkan_function(function_name &char, user_data voidptr) voidptr {
 	return unsafe { nil }
 }
 
-// The CI job links this against the native library and current V, Vulkan, and
+// The CI job links this against the native library and current V, Vulkan and
 // GLFW modules. No display or GPU is needed to execute the safe path.
 fn main() {
 	context := imgui.create_context(unsafe { nil })

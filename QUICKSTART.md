@@ -47,7 +47,7 @@ is checked separately in CI; its Vulkan rendering path is not yet supported.
 ## Fedora
 
 Install `gcc-c++`, `cmake`, `git`, `glfw-devel`, `vulkan-loader-devel`,
-`vulkan-headers`, `volk-devel`, `vulkan-tools`, and `pkgconf-pkg-config`.
+`vulkan-headers`, `volk-devel`, `vulkan-tools` and `pkgconf-pkg-config`.
 Install the two V dependencies and then use the same build and demo commands:
 
 ```sh
@@ -59,7 +59,7 @@ v install antono2.glfw
 
 ## Windows 10/11 x64
 
-Install V, Git, CMake, Visual Studio Build Tools with C++, and the Vulkan SDK.
+Install V, Git, CMake, Visual Studio Build Tools with C++ and the Vulkan SDK.
 Then run these commands from a Developer PowerShell:
 
 ```powershell
@@ -68,7 +68,7 @@ v run scripts/run_demo.vsh
 ```
 
 The runner downloads GLFW 3.4 through CMake, installs missing V module
-dependencies, checks out the tested demo revision, builds it, and launches it.
+dependencies, checks out the tested demo revision, builds it and launches it.
 Use `--build-only` to compile without opening a window. The required compiler
 support landed upstream through
 [`vlang/v#28368`](https://github.com/vlang/v/pull/28368), so use a current
