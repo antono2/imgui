@@ -1,8 +1,8 @@
 # Maintaining the bindings
 
-This document is for contributors updating generated bindings, release artifacts,
+This document is for contributors updating generated bindings, release artifacts
 or repository automation. For installation and application integration, use the
-[README](README.md), [Quick Start](QUICKSTART.md), and [mobile guide](docs/mobile.md).
+[README](README.md), [Quick Start](QUICKSTART.md) and [mobile guide](docs/mobile.md).
 
 ## Generated API and upstream variants
 
@@ -12,7 +12,7 @@ step. The pipeline starts with [cimgui](https://github.com/cimgui/cimgui) and
 with `v translate`/C2V, then normalizes the V output with
 `cleanup_imgui_implot.vsh`. The `master` branch uses cimgui's `docking_inter`
 line; `standard` uses cimgui's `master` line. Keep each branch's
-`UPSTREAM_VARIANT`, submodule revisions, generated V files, and native library
+`UPSTREAM_VARIANT`, submodule revisions, generated V files and native library
 sources together.
 
 To regenerate against the submodule revisions already checked out, run
@@ -34,14 +34,14 @@ To advance upstream revisions, run the matching command on the matching branch:
 
 Use `--check-only` for a read-only `changed=true` or `changed=false` report.
 The updater refuses dirty submodules and non-fast-forward upstream changes.
-Review the generated diff, variant, native build, and V checks before merging.
+Review the generated diff, variant, native build and V checks before merging.
 
 ## Upstream update automation
 
 [The upstream update workflow](.github/workflows/update-upstream.yml) checks
 both variants weekly or on manual dispatch. When cimgui or cimplot advances,
 it regenerates with pinned V and C2V revisions, validates the generated API and
-native library, and opens or updates a draft pull request. It does not merge
+native library and opens or updates a draft pull request. It does not merge
 automatically. Pull requests also regenerate both bindings with the pinned
 toolchain and compare them byte-for-byte with committed output; translator or
 cleanup changes must therefore be reviewed as API changes.
@@ -50,9 +50,9 @@ cleanup changes must therefore be reviewed as API changes.
 
 [The mobile workflow](.github/workflows/mobile-native.yml) runs an offscreen
 Vulkan/FreeType frame on Ubuntu, cross-builds Android for `armeabi-v7a`,
-`arm64-v8a`, and `x86_64`, and compiles/links Metal for macOS, both iOS Simulator
-architectures, and arm64 iPhoneOS. The arm64 Simulator also attempts basic
-keyboard, marked-text composition, overflow fallback, and Metal-frame smoke
+`arm64-v8a` and `x86_64`, and compiles/links Metal for macOS, both iOS Simulator
+architectures and arm64 iPhoneOS. The arm64 Simulator also attempts basic
+keyboard, marked-text composition, overflow fallback and Metal-frame smoke
 tests. Simulator runtime is advisory because hosted runners may lack a usable
 Metal device; passing it does not validate real Apple hardware or IMEs. Android
 emulator and physical-device tests are separate from the required matrix.
@@ -60,7 +60,7 @@ emulator and physical-device tests are separate from the required matrix.
 [The mobile parity workflow](.github/workflows/mobile-parity.yml) compares
 hand-maintained mobile integration on `master` and `standard` weekly and on
 manual dispatch. Run `./scripts/check_mobile_parity.sh` locally after
-coordinated changes to both branches. Generated APIs, upstream submodules, and
+coordinated changes to both branches. Generated APIs, upstream submodules and
 variant-specific Vulkan bindings are deliberately excluded.
 
 [The demo workflow](.github/workflows/demo-release.yml) builds Ubuntu 24.04

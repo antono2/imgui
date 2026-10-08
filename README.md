@@ -55,8 +55,8 @@ The configuration functions return `false` on the standard branch. Dockspace
 and secondary-viewport rendering helpers become safe no-ops there.
 
 ## Dependencies
-The setup and build tooling uses V, CMake, Git, and a C/C++ toolchain. Python,
-Rust, and Cargo are not required.
+The setup and build tooling uses V, CMake, Git and a C/C++ toolchain. Python,
+Rust and Cargo are not required.
 
 VPM installs the V dependencies listed in [`v.mod`](v.mod) automatically when
 you install `antono2.imgui`; separate dependency installation commands are not
@@ -94,7 +94,7 @@ reproducible application bundle:
 ./build_vimgui.vsh --linkage shared --glfw bundled --glfw-version 3.4
 ```
 
-`VIMGUI_LINKAGE`, `VIMGUI_GLFW_PROVIDER`, and `VIMGUI_GLFW_VERSION` provide the
+`VIMGUI_LINKAGE`, `VIMGUI_GLFW_PROVIDER` and `VIMGUI_GLFW_VERSION` provide the
 same choices as environment variables. System GLFW is preferable for distro
 packages. Bundled GLFW is preferable when shipping a matching `libglfw.so.3`
 beside `libvimgui.so`; use an `$ORIGIN` runtime path in the application package.
@@ -110,7 +110,7 @@ in this order:
 3. Immediately call `imgui.impl_vulkan.load_functions(...)` with a callback
    backed by `vkGetInstanceProcAddr`.
 4. Only then call helpers such as `select_physical_device`,
-   `select_queue_family_index`, or `vkinit`.
+   `select_queue_family_index` or `vkinit`.
 
 Calling an ImGui Vulkan helper before step 3 can produce an early segmentation
 fault with little or no stack trace. Do not combine the directly linked Vulkan
@@ -129,7 +129,7 @@ popup consumes it.
 
 The Android touch/text APK includes its native libraries and font. See the
 [installation guide](https://github.com/antono2/v_imgui_examples/blob/master/docs/installing-releases.md)
-for desktop requirements, Android installation without a Play Store, and the
+for desktop requirements, Android installation without a Play Store and the
 gallery's integrated accessibility controls.
 
 Compiling the generated ImGui and ImPlot V bindings can currently require about
@@ -139,7 +139,7 @@ Release binaries are built for Ubuntu 24.04 x86_64 and Windows 10/11 x64.
 Native-library linkage and the GLFW provider remain build-time choices for
 developers; they do not need to multiply the end-user demo downloads.
 
-For binding regeneration, upstream updates, and CI/release procedures, see
+For binding regeneration, upstream updates and CI/release procedures, see
 [Maintaining](MAINTAINING.md). To rebuild only the native library after a
 system upgrade, run `./build_vimgui.vsh`.
 

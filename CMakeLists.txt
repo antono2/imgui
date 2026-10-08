@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 Project(vimgui)
 set(NAME ${PROJECT_NAME})
 
-set(VIMGUI_PROFILE "desktop" CACHE STRING "Native backend profile: desktop, android-vulkan, or apple-metal")
+set(VIMGUI_PROFILE "desktop" CACHE STRING "Native backend profile: desktop, android-vulkan or apple-metal")
 set_property(CACHE VIMGUI_PROFILE PROPERTY STRINGS desktop android-vulkan apple-metal)
 if(NOT VIMGUI_PROFILE STREQUAL "desktop" AND NOT VIMGUI_PROFILE STREQUAL "android-vulkan" AND NOT VIMGUI_PROFILE STREQUAL "apple-metal")
 	message(FATAL_ERROR "Unsupported VIMGUI_PROFILE: ${VIMGUI_PROFILE}")

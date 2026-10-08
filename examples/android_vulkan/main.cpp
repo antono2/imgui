@@ -417,7 +417,7 @@ bool draw_frame()
     ImGui_ImplVulkan_NewFrame();
     vimgui_android_new_frame();
     ImGui::NewFrame();
-    // NativeActivity reports the usable rectangle when system bars, the IME,
+    // NativeActivity reports the usable rectangle when system bars, the IME
     // or the window layout change. Keep rendering/input in surface coordinates;
     // only the GUI work area is inset, so touch positions need no translation.
     ARect content;

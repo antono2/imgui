@@ -1,23 +1,23 @@
 # Application UI (development preview)
 
 This optional layer supplies stable widget identities, a retained accessibility tree,
-virtualized lists, high-contrast styling, text scaling, and native action routing.
+virtualized lists, high-contrast styling, text scaling and native action routing.
 `appui/` is a small V module independent of the generated ImGui/ImPlot bindings.
 The existing raw bindings and mobile backend profiles remain available.
 
 ## Desktop build
 
-Install CMake, a C++17 compiler, and GLFW; Linux also needs Vulkan, D-Bus,
+Install CMake, a C++17 compiler and GLFW; Linux also needs Vulkan, D-Bus,
 ATK and ATK Bridge development headers, and a driver. Run `./scripts/build_appui.vsh`
 from the repository. Native adapters use AT-SPI on Linux, UI Automation on Windows,
-AppKit on macOS, UIKit on iOS, and AccessibilityNodeProvider on Android. Windows currently
+AppKit on macOS, UIKit on iOS and AccessibilityNodeProvider on Android. Windows currently
 runs the same script with `v run scripts/build_appui.vsh` from a developer shell,
 with GLFW and the Vulkan SDK configured.
 The desktop folder chooser uses Native File Dialog Extended 1.3.0 (Zlib license),
 downloaded by CMake with a pinned SHA-256. Its Linux portal backend uses the
 desktop's configured chooser; the running desktop must provide that portal.
 `pick_folder(initial_path)` returns the selected folder, an empty string for
-cancellation, or an error. Mobile hosts supply their platform picker and grants.
+cancellation or an error. Mobile hosts supply their platform picker and grants.
 
 Build the V example with this checkout available as `antono2/imgui` on V's module
 path. `examples/accessible_review/main.v` exercises 100,000 synthetic rows.
@@ -27,10 +27,10 @@ The standalone desktop host builds its own ImGui core. Do not link it alongside
 a separate `libvimgui` in the same process. Embedding applications instead enable
 `VIMGUI_APPLICATION_UI=ON` in the root CMake project and use `-d appui_embedded`
 with the V module. Their existing host owns the ImGui context and backend loop.
-Call `initialize`, `begin_frame`, the UI callback, `end_frame`, and `shutdown` at
+Call `initialize`, `begin_frame`, the UI callback, `end_frame` and `shutdown` at
 the corresponding lifecycle points.
 
-`next_control_name` supplies context for repeated buttons, checkboxes, and radio
+`next_control_name` supplies context for repeated buttons, checkboxes and radio
 controls without making their visible labels longer. Include the visible label
 in the accessible name so speech-control users can identify the control.
 
@@ -76,7 +76,7 @@ render thread and preserve their frontend state across renderer recreation.
 
 The library exports `vimgui_android_application_begin(const char *state_path,
 float scale)` (bool), `vimgui_android_application_mount(float scale)` (void),
-`vimgui_android_application_draw()` (bool), and
+`vimgui_android_application_draw()` (bool) and
 `vimgui_android_application_end()` (void). Begin/end bracket the NativeActivity
 render-thread lifetime. Mount runs after each application UI context is created
 and when display density changes. Draw constructs widgets between the embedding
@@ -112,13 +112,13 @@ When rendering and native UI use different threads, retain the context before
 passing it across threads. Detach the adapter on the OS UI thread before releasing
 that thread's reference. The render owner can then free its detached reference
 independently. `android/java/io/antono2/imgui/ImGuiAccessibility.java` implements
-this ownership pattern, schedules accessibility updates on the UI thread, and
+this ownership pattern, schedules accessibility updates on the UI thread and
 must be closed before its host View is destroyed. Load `libvimgui` before using
 the Java helper; hosts should report `hasFailed()` and offer a retry.
 
 `scripts/run_android_accessible.sh --build-only` packages an independent Android
-test app with a 1,000-row list, editable search, and keeper action. Set
-`ANDROID_SDK_ROOT`, `ANDROID_NDK_HOME`, and `ANDROID_ABI`; omit `--build-only` to
+test app with a 1,000-row list, editable search and keeper action. Set
+`ANDROID_SDK_ROOT`, `ANDROID_NDK_HOME` and `ANDROID_ABI`; omit `--build-only` to
 install and run it. It builds the native C++ bridge and Java node provider,
 including `armeabi-v7a`.
 This validates the reusable native widgets; it is not the duplicate-finder app.
@@ -145,28 +145,28 @@ GSETTINGS_BACKEND=memory dbus-run-session -- build/native-portal-check lib/appui
 ```
 
 This uses a controlled portal to verify UTF-8 selection, initial-folder handling,
-cancellation, and errors. Actual platform dialogs still need device validation.
+cancellation and errors. Actual platform dialogs still need device validation.
 
 ## Current limits
 
 This is a development preview, not a claim of complete platform accessibility.
 Linux AT-SPI has been exercised end to end with 100,000 retained rows, off-screen
-selection, scrolled bounds, button invocation, and editable search. The application retains every row; the native accessibility tree contains only
-the viewport, adjacent rows, and any focused row awaiting a scroll. Stable row
+selection, scrolled bounds, button invocation and editable search. The application retains every row; the native accessibility tree contains only
+the viewport, adjacent rows and any focused row awaiting a scroll. Stable row
 identities and position/total metadata survive materialization. Android arm64 cross-builds; the 32-bit test host also
 passes device instrumentation on an Android tablet: accessibility actions,
 touch scrollbar drags, list swipes without selection, last-row geometry,
 text replacement/selection, IME editing, high contrast,
-text scaling, and Activity recreation. This does not replace human TalkBack
+text scaling and Activity recreation. This does not replace human TalkBack
 and switch-access testing.
 Downstream consuming-application checks have also built the macOS Metal and
 Windows Vulkan hosts and passed their retained accessibility-tree tests. The
 iOS UIKit/Metal host completed simulator UI frames and a process restart while
 retaining application data. These checks do not replace VoiceOver, Narrator,
-physical-device, or platform folder-dialog interaction tests.
+physical-device or platform folder-dialog interaction tests.
 
 Outstanding work includes mobile host lifecycle and IME integration, Unicode
 text segmentation beyond code points,
-large-tree startup/filter latency across platforms, and a full assistive
+large-tree startup/filter latency across platforms and a full assistive
 technology/device test matrix. Applications own their file operations, persistent
-jobs, navigation history, localization, and platform storage permissions.
+jobs, navigation history, localization and platform storage permissions.
