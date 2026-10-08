@@ -8,7 +8,7 @@ Do not edit generated declarations by hand.
 cleanup_imgui_implot.vsh non-regression notes
 
 Keep this block current when changing cleanup rules. Do not hardcode one
-function, enum member, or struct member; derive facts from cimgui/cimgui.h or
+function, enum member or struct member; derive facts from cimgui/cimgui.h or
 cimplot/cimplot.h, then apply generic V cleanup.
 
 Covered cases and examples:
