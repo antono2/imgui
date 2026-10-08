@@ -7,7 +7,7 @@ usage() {
 Usage: update_upstream.sh standard|docking [--check-only] [--regenerate-c]
 
 Update the cimgui and cimplot gitlinks to their selected current upstream
-branches, regenerate the V bindings, and rebuild libvimgui.
+branches, regenerate the V bindings and rebuild libvimgui.
 EOF
 }
 

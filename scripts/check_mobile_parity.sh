@@ -9,7 +9,7 @@ git rev-parse --verify "${master_ref}^{commit}" >/dev/null
 git rev-parse --verify "${standard_ref}^{commit}" >/dev/null
 
 # Only hand-maintained, variant-neutral mobile integration belongs here.
-# Generated APIs, upstream submodules, and variant-specific Vulkan bindings
+# Generated APIs, upstream submodules and variant-specific Vulkan bindings
 # intentionally differ between the docking and standard branches.
 shared_paths=(
   .github/workflows/mobile-native.yml

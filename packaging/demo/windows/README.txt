@@ -5,7 +5,7 @@ Extract the complete archive and run:
 
     v_imgui_demo.exe
 
-The package contains the compiled V example, vimgui.dll, glfw3.dll, and
+The package contains the compiled V example, vimgui.dll, glfw3.dll and
 VARIANT.txt. The selected variant is also displayed inside the demo.
 
 A Vulkan-capable display driver is required. The Vulkan loader and GPU driver

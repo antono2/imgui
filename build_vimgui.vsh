@@ -140,12 +140,12 @@ if linkage !in ['shared', 'static'] {
 }
 
 if profile !in ['desktop', 'android-vulkan', 'apple-metal'] {
-	eprintln('profile must be desktop, android-vulkan, or apple-metal')
+	eprintln('profile must be desktop, android-vulkan or apple-metal')
 	exit(2)
 }
 if profile == 'apple-metal' {
 	if apple_sdk !in ['macosx', 'iphonesimulator', 'iphoneos'] {
-		eprintln('apple-sdk must be macosx, iphonesimulator, or iphoneos')
+		eprintln('apple-sdk must be macosx, iphonesimulator or iphoneos')
 		exit(2)
 	}
 	if apple_arch !in ['arm64', 'x86_64'] || (apple_sdk == 'iphoneos' && apple_arch != 'arm64') {
@@ -155,7 +155,7 @@ if profile == 'apple-metal' {
 }
 
 if freetype !in ['off', 'system', 'bundled'] {
-	eprintln('freetype must be off, system, or bundled')
+	eprintln('freetype must be off, system or bundled')
 	exit(2)
 }
 

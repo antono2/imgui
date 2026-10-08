@@ -72,7 +72,7 @@ VIMGUI_ACCESSIBILITY_API bool vimgui_accessibility_visual_focus(vimgui_accessibi
                                      double *width, double *height);
 VIMGUI_ACCESSIBILITY_API bool vimgui_accessibility_poll(vimgui_accessibility *context,
                              vimgui_accessibility_event *event);
-// Native handle: HWND, NSWindow*, UIView*, or Android View. Linux uses NULL.
+// Native handle: HWND, NSWindow*, UIView* or Android View. Linux uses NULL.
 // Android environment is JNIEnv*. Attach/update/free on the OS UI thread.
 VIMGUI_ACCESSIBILITY_API bool vimgui_accessibility_attach(vimgui_accessibility *context,
                                void *native_handle, void *environment);

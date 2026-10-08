@@ -52,7 +52,7 @@ bool vimgui_accessibility_commit(vimgui_accessibility *ctx, uint64_t root, uint6
             auto id = stack.back(); stack.pop_back();
             auto it = candidate.find(id);
             if (it == candidate.end() || !reachable.insert(id).second) {
-                ctx->error = "Accessibility tree has a missing child, cycle, or multiple parents."; return false;
+                ctx->error = "Accessibility tree has a missing child, cycle or multiple parents."; return false;
             }
             for (auto child : it->second->children) stack.push_back(child);
         }

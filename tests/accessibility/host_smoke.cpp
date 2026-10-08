@@ -93,7 +93,7 @@ static void frame(void *) {
         vimgui_app_theme(true,false,1,true);
     }
 }
-// Exercise the same table ID through wide, stacked, and rotated layouts. A
+// Exercise the same table ID through wide, stacked and rotated layouts. A
 // stacked first field must not seed a larger stretch weight when columns return.
 static void column_scaling_regression() {
     ImGui::CreateContext();
