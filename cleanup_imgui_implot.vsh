@@ -949,7 +949,7 @@ Do not edit generated declarations by hand.
 cleanup_imgui_implot.vsh non-regression notes
 
 Keep this block current when changing cleanup rules. Do not hardcode one
-function, enum member, or struct member; derive facts from cimgui/cimgui.h or
+function, enum member or struct member; derive facts from cimgui/cimgui.h or
 cimplot/cimplot.h, then apply generic V cleanup.
 
 Covered cases and examples:
@@ -1781,7 +1781,7 @@ fn insert_after_version(input string, addition string) string {
 
 // V3 interprets an uppercase C field followed by `[N]Type` as an embedded
 // struct with attributes. A named fixed-array type preserves the C field name,
-// its layout, and compatibility with both V compilers.
+// its layout and compatibility with both V compilers.
 fn name_c_fixed_array_fields(input string) string {
 	mut aliases := map[string]string{}
 	mut scalar_aliases := map[string]string{}

@@ -80,7 +80,7 @@ pub fn height() f32 {
 	return C.vimgui_app_height()
 }
 
-// Give the next button, checkbox, or radio a contextual screen-reader name.
+// Give the next button, checkbox or radio a contextual screen-reader name.
 // Include its visible label so speech-control users can identify it too.
 pub fn next_control_name(name string) {
 	C.vimgui_app_next_control_name(name.str)
@@ -135,7 +135,7 @@ pub fn pick_folder(initial string) !string {
 	}
 }
 
-// Wrap buttons, radio controls, and checkboxes using their current font/metrics.
+// Wrap buttons, radio controls and checkboxes using their current font/metrics.
 pub fn same_line_for(label string, choice bool) {
 	C.vimgui_app_same_line_width(C.vimgui_app_control_width(label.str, choice))
 }

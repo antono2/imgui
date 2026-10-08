@@ -58,7 +58,7 @@ both the style and `DisplayFramebufferScale`.
 
 ## Android host lifecycle
 
-The app owns `ANativeWindow`, the Vulkan instance/device/swapchain/render pass,
+The app owns `ANativeWindow`, the Vulkan instance/device/swapchain/render pass
 and its `NativeActivity` or Java Activity. This module owns neither the app loop
 nor a Vulkan surface. The V-facing platform module is `imgui.impl_android`;
 the existing `imgui.impl_vulkan` renderer remains unchanged.
@@ -74,16 +74,16 @@ the existing `imgui.impl_vulkan` renderer remains unchanged.
    Pass `ANativeActivity.vm` and `ANativeActivity.clazz` for a NativeActivity,
    or the equivalent `JavaVM*` and Activity/Context `jobject` for another host.
    Call it on the ImGui thread while the context object is valid. The bridge
-   uses Android's `ClipboardManager`, converts UTF-16 to ordinary UTF-8, and
+   uses Android's `ClipboardManager`, converts UTF-16 to ordinary UTF-8 and
    releases its JNI global references in `shutdown()`. Without this optional
    call, the upstream Android backend's clipboard remains unavailable.
 3. Send each `AInputEvent` to `impl_android.handle_input_event(event)`. The
-   upstream backend maps mouse, pen, keyboard, and wheel events. This wrapper
+   upstream backend maps mouse, pen, keyboard and wheel events. This wrapper
    tracks touchscreen pointer IDs and maps a stable primary finger to ImGui's
    single mouse pointer; it promotes another active finger if the primary
    lifts. It does not expose independent simultaneous ImGui pointers. The
    wrapper also maps the first Android gamepad's face/shoulder/menu buttons,
-   D-pad, sticks, and triggers to ImGui navigation input. Set
+   D-pad, sticks and triggers to ImGui navigation input. Set
    `ImGuiConfigFlags_NavEnableGamepad` in the application if desired. Call
    `impl_android.clear_gamepad()` when focus is lost, and report Android
    `InputManager.InputDeviceListener.onInputDeviceRemoved(id)` through
@@ -91,7 +91,7 @@ the existing `imgui.impl_vulkan` renderer remains unchanged.
    host does both. Only one navigation controller is active at a time.
 4. Each drawable frame: call `impl_vulkan.new_frame()`,
    `impl_android.new_frame()`, `imgui.new_frame()`, build UI,
-   `imgui.render()`, and `impl_vulkan.render_draw_data(imgui.get_draw_data(),
+   `imgui.render()` and `impl_vulkan.render_draw_data(imgui.get_draw_data(),
    command_buffer, ...)` inside an active Vulkan render pass. Submit and
    present with the host application's Vulkan code.
 5. If `impl_android.wants_text_input()` changes, call
@@ -108,12 +108,12 @@ the existing `imgui.impl_vulkan` renderer remains unchanged.
    the earlier committed-text and basic-key fallback. Applications with their
    own `InputConnection` may instead call `impl_android.text_utf8(...)` on the
    render thread. Preedit is displayed as plain text; inline underlining,
-   candidate geometry, and rich marked-text ranges are not implemented.
+   candidate geometry and rich marked-text ranges are not implemented.
    The OS can hide the keyboard with Back while `WantTextInput` remains true;
    re-request it when the user taps the still-active field, as the sample host
    does, rather than relying only on `WantTextInput` transitions.
 6. Wait for in-flight Vulkan work, then shut down the Vulkan renderer, call
-   `impl_android.shutdown()`, and destroy the ImGui context. Reinitialize the
+   `impl_android.shutdown()` and destroy the ImGui context. Reinitialize the
    Android backend if the native window is replaced.
 
 Do not drive the soft keyboard with `igIsItemActive()`; the relevant intent is
@@ -130,7 +130,7 @@ the actual V API on screen. The renderer remains upstream's Vulkan backend;
 the C++ lifecycle host is not an alternative V API. The app includes the Java
 `ImGuiInputView` and a tiny `NativeActivity` subclass that switches keyboard
 visibility on the UI thread. It loads the vendored Roboto TTF asset, uses the
-FreeType profile, and has a UI zoom slider that scales fonts and widget sizes
+FreeType profile and has a UI zoom slider that scales fonts and widget sizes
 together. Its Text field uses the selection-aware callback and displays active
 ImGui cursor and selection offsets in UTF-8 bytes. The Android
 `InputConnection` synchronizes text and selection; composing text appears
@@ -138,7 +138,7 @@ without underline or marked-range styling. The sample's Copy text and Read
 clipboard buttons exercise the optional Android clipboard bridge; the last
 read value remains visible as a preview until the next read or Clear preview.
 
-With the Android SDK (including build-tools and a platform), NDK, JDK, and a
+With the Android SDK (including build-tools and a platform), NDK, JDK and a
 connected Vulkan-capable tablet:
 
 ```sh
@@ -148,20 +148,20 @@ scripts/run_android_demo.sh
 ```
 
 The script selects the device ABI, builds the native host and V UI, packages,
-debug-signs, installs, and launches `io.antono2.vimgui.demo`. It requires `v`
+debug-signs, installs and launches `io.antono2.vimgui.demo`. It requires `v`
 on `PATH` (or `V_BIN` pointing to it). Set `ANDROID_SERIAL` if multiple devices
 are connected. To package without installing or launching, set `ANDROID_ABI`
 and pass `--build-only`.
-Tap the button, enter committed text, change UI zoom, rotate the tablet, and
+Tap the button, enter committed text, change UI zoom, rotate the tablet and
 background/resume the app. `adb logcat -s vimgui-android-demo:I` reports
-initialization, swapchain recreation, tap counts, and keyboard visibility.
+initialization, swapchain recreation, tap counts and keyboard visibility.
 
 ## iOS and macOS Metal lifecycle
 
 `imgui.impl_metal` accepts borrowed opaque Objective-C pointers so V does not
 need to model Metal protocols. The app owns its `MTKView` or `CAMetalLayer`,
 `id<MTLDevice>`, command queue/buffer, current drawable, render-pass
-descriptor, and render-command encoder. For iOS, use `imgui.impl_ios` for
+descriptor and render-command encoder. For iOS, use `imgui.impl_ios` for
 minimal platform IO. For macOS, use `imgui.impl_osx`, which forwards to
 upstream's Cocoa backend.
 
@@ -174,7 +174,7 @@ upstream's Cocoa backend.
 3. Build the UI and call `imgui.render()`. Create an active Metal render-command
    encoder from the pass descriptor, call
    `impl_metal.render_draw_data(imgui.get_draw_data(), command_buffer,
-   render_command_encoder)`, end encoding, present the drawable, and commit.
+   render_command_encoder)`, end encoding, present the drawable and commit.
 4. On iOS, forward UITouch identity and position in points to
    `impl_ios.touch(id, x, y, down)`. The first active touch is mapped to
    ImGui's primary pointer, with another active touch promoted when it ends.
@@ -192,7 +192,7 @@ upstream's Cocoa backend.
    visibility call or nonzero `text_view_error`, destroy it and use the basic
    responder below. Oversized text is rejected instead of silently truncated.
    Call these methods on the UIKit thread and destroy the handle before its
-   parent view. Candidate positioning, marked-text styling, and real-world
+   parent view. Candidate positioning, marked-text styling and real-world
    IME behavior remain unverified on Apple hardware.
 
    `impl_ios.keyboard_create(parent_view)` attaches a small `UIKeyInput`
@@ -205,7 +205,7 @@ upstream's Cocoa backend.
    supports only simple text entry, not marked-text composition or selection.
    Clipboard reads and writes use `UIPasteboard` and should occur on the main
    thread. `impl_ios.new_frame` also polls the first
-   connected `GCExtendedGamepad`, maps its controls to ImGui navigation, and
+   connected `GCExtendedGamepad`, maps its controls to ImGui navigation and
    clears held inputs on disconnect. Set `ImGuiConfigFlags_NavEnableGamepad`
    to enable navigation; the sample app does this. Call `new_frame` on the
    UIKit thread that owns the ImGui context.
@@ -219,7 +219,7 @@ The macOS build also compiles upstream `imgui_impl_osx.mm`. Both Apple builds
 link `GameController`; the iOS build does not pull in AppKit/Cocoa.
 
 `examples/ios_metal` is a minimal UIKit/`MTKView` host. It creates the Metal
-device, render pass, command buffer, and encoder, and uses the same iOS/Metal
+device, render pass, command buffer and encoder, and uses the same iOS/Metal
 wrappers exposed to V. It renders independently movable `Controls` and
 `Workspace` ImGui windows within one `MTKView`, without native UIKit scenes or
 Dear ImGui platform viewports. V applications use the same pattern: call
@@ -233,10 +233,10 @@ or GPU behavior.
 The Android sample is an integration host, not a reusable application shell;
 the Vulkan/NativeActivity host remains C++ while the ImGui widgets are written
 in V. Android uses upstream's platform backend plus this repository's
-touch, gamepad, IME, and optional clipboard extensions.
+touch, gamepad, IME and optional clipboard extensions.
 The on-screen iOS sample demonstrates rendering, touch, UITextView-backed
-composition, and a basic-keyboard fallback. The iOS layer handles one primary
-touch. Hosts must choose a sufficient `InputText` buffer, check bridge errors,
+composition and a basic-keyboard fallback. The iOS layer handles one primary
+touch. Hosts must choose a sufficient `InputText` buffer, check bridge errors
 and present any desired marked-text styling.
 
 ## Testing on a device
@@ -245,20 +245,20 @@ On a connected Android device, `vimgui_android_device_probe` tests
 context/scaling and physical-device discovery;
 `vimgui_vulkan_offscreen_probe` submits an ImGui frame to the GPU. The
 installable sample exercises an on-screen Vulkan swapchain, touch, rotation,
-background/resume, and committed IME input. iOS Simulator tests cannot replace
-validation of real Apple hardware, keyboard languages, candidate placement,
+background/resume and committed IME input. iOS Simulator tests cannot replace
+validation of real Apple hardware, keyboard languages, candidate placement
 or GPU behavior. The CI matrix is documented in [Maintaining](../MAINTAINING.md).
 
 For the connected-device checks, set `ANDROID_NDK_HOME` and run
 `scripts/run_android_probes.sh`. It builds the device's reported ABI, stages only
 the two probe executables and `libvimgui.so` under
-`/data/local/tmp/io.antono2.vimgui.probe`, and executes both. Set
+`/data/local/tmp/io.antono2.vimgui.probe` and executes both. Set
 `ANDROID_SERIAL` when more than one device is connected.
 
 ## Application forms and touch scrolling
 
 The `appui` wrapper exposes responsive column rows through `begin_columns`,
-`next_column`, and `end_columns`. A zero trailing width gives two equally sized
+`next_column` and `end_columns`. A zero trailing width gives two equally sized
 field columns; a positive trailing width reserves a compact action column.
 Below the required widths, controls stack vertically. `next_column(true)` aligns
 an action with the preceding input box, including a wrapped label above it.
@@ -266,7 +266,7 @@ Use current text scale when choosing the minimum field width. Logical
 accessibility identities stay unchanged when the row switches layout.
 
 Touch dragging from empty space scrolls the hovered application window or
-panel when content exceeds its height. Buttons, editable fields, and scrollbars
+panel when content exceeds its height. Buttons, editable fields and scrollbars
 retain their own gestures; list content also supports its existing drag scroll.
 Back controls include a native arrow without relying on a font's arrow glyph.
 
@@ -294,7 +294,7 @@ The callback's final width/height arguments describe the current usable content
 area, rather than the full Vulkan surface. Place the GUI at
 `imgui.get_main_viewport().WorkPos` and size it to these dimensions on every
 frame. NativeActivity's content rectangle updates this area when visible system
-bars, the keyboard, or orientation change; hardware-button devices need no
+bars, the keyboard or orientation change; hardware-button devices need no
 fixed navigation padding. Rendering and touch input retain surface coordinates.
 The host also forwards these insets to the optional application layer.
 
@@ -302,10 +302,10 @@ The host also forwards these insets to the optional application layer.
 To publish native accessibility semantics from an external `appui` UI, also set
 `VIMGUI_ANDROID_APPLICATION_UI=1`. The script builds the native Android
 accessibility bridge, enables `VIMGUI_APPLICATION_UI` and
-`VIMGUI_ANDROID_EXTERNAL_ACCESSIBILITY`, and passes `-d appui_embedded -d
+`VIMGUI_ANDROID_EXTERNAL_ACCESSIBILITY` and passes `-d appui_embedded -d
 release_accessibility` to V. It uses the Android SDK/NDK and Java toolchain.
 The native host owns `appui.initialize`/`shutdown`, accessibility attachment,
-selection-aware IME forwarding, and safe-area updates. The callback calls
+selection-aware IME forwarding and safe-area updates. The callback calls
 `appui.begin_frame`/`end_frame` and draws labelled controls with stable IDs. Raw
 ImGui widgets still require explicit semantics; enabling the adapter alone does
 not make them accessible. If the callback manages its own `appui.theme`, return
@@ -313,10 +313,10 @@ false so the host does not overwrite its contrast and touch settings.
 
 ## Installing prebuilt examples
 
-Users do not need V, CMake, an Android SDK, or additional application
+Users do not need V, CMake, an Android SDK or additional application
 libraries to run the release downloads. The companion
 [v_imgui_examples releases](https://github.com/antono2/v_imgui_examples/releases)
-include the desktop gallery, ImPlot dashboard, GLFW/Vulkan sample, and Android
+include the desktop gallery, ImPlot dashboard, GLFW/Vulkan sample and Android
 touch/text app. The gallery and Android app integrate the accessibility controls
 in their normal release builds. Follow the companion
 [installation guide](https://github.com/antono2/v_imgui_examples/blob/master/docs/installing-releases.md)

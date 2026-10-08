@@ -26,7 +26,7 @@ void vimgui_app_safe_area(float left, float top, float right, float bottom);
 void vimgui_app_set_text_edit_handler(vimgui_app_text_edit handler, void *userdata);
 float vimgui_app_width(void);
 float vimgui_app_height(void);
-/* Supply a contextual screen-reader name for the next button, checkbox, or radio. */
+/* Supply a contextual screen-reader name for the next button, checkbox or radio. */
 void vimgui_app_next_control_name(const char *name);
 bool vimgui_app_button(uint64_t id, const char *label);
 bool vimgui_app_checkbox(uint64_t id, const char *label, bool *value);
