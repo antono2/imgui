@@ -63,6 +63,9 @@ you install `antono2.imgui`; separate dependency installation commands are not
 needed. Those dependencies use release pins to retain the tested Vulkan/GLFW
 combination. They are package dependency choices, not a requirement to pin the
 ImGui installation command below. Change them only after checking compatibility.
+The desktop demo launcher also uses a tested examples release tag by default.
+Use `--demo-revision REF` to choose another tag or commit, or `--demo-directory`
+to build an existing checkout without changing it.
 
 ## Install
 ```bash
