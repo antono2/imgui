@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 573e3935361aa7390769033ba52a1921630f1c03
+          ref: v1.0.1
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -64,6 +64,9 @@ jobs:
         run: |
           make local=1
           echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Verify the declared dependency graph
+        shell: bash
+        run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
       - name: Verify generated upstream variant
@@ -150,7 +153,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 573e3935361aa7390769033ba52a1921630f1c03
+          ref: v1.0.1
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -175,6 +178,9 @@ jobs:
         shell: pwsh
         run: |
           "$env:GITHUB_WORKSPACE\toolchain\v" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Verify the declared dependency graph
+        shell: bash
+        run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install Vulkan SDK and SwiftShader test artifacts
         shell: pwsh
         run: v run source/modules/antono2/imgui/scripts/setup_vulkan_ci.vsh 1.4.309.0 v1.2
@@ -266,7 +272,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 573e3935361aa7390769033ba52a1921630f1c03
+          ref: v1.0.1
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -287,6 +293,9 @@ jobs:
         run: |
           make -C toolchain/v local=1
           echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+      - name: Verify the declared dependency graph
+        shell: bash
+        run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Check generated bindings and demo
         run: |
           v -new-compiler -check-syntax source/modules/antono2/imgui/imgui.v
@@ -321,7 +330,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: 573e3935361aa7390769033ba52a1921630f1c03
+          ref: v1.0.1
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
