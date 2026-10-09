@@ -85,6 +85,13 @@ fn main() {
 		}
 	}
 	if version == '' { fail('Could not determine Dear ImGui version from include/cimgui.h.') }
+	recorded_version := os.read_file(os.join_path(repo_dir, 'VERSION')) or {
+		fail(err.msg())
+		''
+	}.trim_space()
+	if recorded_version != version {
+		fail('VERSION does not match include/cimgui.h (${version}). Regenerate bindings.')
+	}
 	generated := os.read_file(os.join_path(repo_dir, 'imgui.v')) or {
 		fail(err.msg())
 		''
