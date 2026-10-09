@@ -5,7 +5,7 @@ import os
 import tooling
 
 fn usage() {
-	println('Usage: ./scripts/run_demo.vsh [--build-only|--native-only] [--demo-directory PATH] [--demo-source PATH] [--demo-revision COMMIT]\n\nBuild the native library and launch the pinned GLFW/Vulkan demo.\nA supplied checkout is used as-is. Compiling the bindings can need about 11 GiB.\nOn Windows: v run scripts/run_demo.vsh [options]')
+	println('Usage: ./scripts/run_demo.vsh [--build-only|--native-only] [--demo-directory PATH] [--demo-source PATH] [--demo-revision REF]\n\nBuild the native library and launch the pinned GLFW/Vulkan demo.\nA supplied checkout is used as-is. Compiling the bindings can need about 11 GiB.\nOn Windows: v run scripts/run_demo.vsh [options]')
 }
 
 fn run() ! {
@@ -14,7 +14,7 @@ fn run() ! {
 	mut native_only := false
 	mut demo_directory := ''
 	mut demo_source := ''
-	mut revision := '573e3935361aa7390769033ba52a1921630f1c03'
+	mut revision := 'v1.0.1'
 	mut index := 0
 	for index < args.len {
 		match args[index] {
