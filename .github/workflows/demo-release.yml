@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
-          ref: v3.2.0
+          ref: v3.2.2
           path: source/modules/antono2/vulkan
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -140,7 +140,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
-          ref: v3.2.0
+          ref: v3.2.2
           path: source/modules/antono2/vulkan
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -256,7 +256,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
-          ref: 42e6c381e37952ef07f4cd560c9996fd2435cd41
+          ref: v3.2.2
           path: source/modules/antono2/vulkan
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
