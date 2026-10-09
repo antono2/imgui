@@ -62,8 +62,11 @@ fn upstream_version(header string) !string {
 		fields := line.trim_space().fields()
 		if fields.len >= 3 && fields[0] == '#define' && fields[1] == 'IMGUI_VERSION' {
 			value := fields[2]
-			if value.len > 2 && value.starts_with('"') && value.ends_with('"') {
-				return value[1..value.len - 1]
+			if value.starts_with('"') {
+				rest := value[1..]
+				if end := rest.index('"') {
+					if end > 0 { return rest[..end] }
+				}
 			}
 		}
 	}
@@ -90,6 +93,7 @@ fn copy_sources_self_test() ! {
 	assert !os.exists(os.join_path(destination, 'nested.h'))
 	assert upstream_version('#define IMGUI_VERSION       "9.87.6b" // comment')! == '9.87.6b'
 	assert upstream_version('  #define IMGUI_VERSION "2.3.4"')! == '2.3.4'
+	assert upstream_version('#define IMGUI_VERSION "2.3.4"//comment')! == '2.3.4'
 	if _ := upstream_version('#define IMGUI_VERSION_NUM 98765') {
 		return error('version parser accepted a missing IMGUI_VERSION')
 	}
