@@ -57,6 +57,19 @@ fn copy_sources(source_dir string, suffix string, destination string) ! {
 	}
 }
 
+fn upstream_version(header string) !string {
+	for line in header.split_into_lines() {
+		fields := line.trim_space().fields()
+		if fields.len >= 3 && fields[0] == '#define' && fields[1] == 'IMGUI_VERSION' {
+			value := fields[2]
+			if value.len > 2 && value.starts_with('"') && value.ends_with('"') {
+				return value[1..value.len - 1]
+			}
+		}
+	}
+	return error('missing or malformed IMGUI_VERSION in bundled imgui.h')
+}
+
 fn copy_sources_self_test() ! {
 	root := os.join_path(os.temp_dir(), 'imgui-generator-copy-${os.getpid()}')
 	source_dir := os.join_path(root, 'imgui', 'imgui', 'source')
@@ -75,7 +88,12 @@ fn copy_sources_self_test() ! {
 	assert os.read_file(os.join_path(destination, 'backend.cpp'))! == 'source'
 	assert !os.exists(os.join_path(destination, 'ignored.txt'))
 	assert !os.exists(os.join_path(destination, 'nested.h'))
-	println('Generator source-copy self-test passed.')
+	assert upstream_version('#define IMGUI_VERSION       "9.87.6b" // comment')! == '9.87.6b'
+	assert upstream_version('  #define IMGUI_VERSION "2.3.4"')! == '2.3.4'
+	if _ := upstream_version('#define IMGUI_VERSION_NUM 98765') {
+		return error('version parser accepted a missing IMGUI_VERSION')
+	}
+	println('Generator source-copy and version self-tests passed.')
 }
 
 fn add_translation_fix(path string) ! {
@@ -154,6 +172,10 @@ fn main() {
 	os.mkdir_all(implot_include)!
 	run_at('git checkout-index -a -f --prefix=${os.quoted_path(imgui_include)}', os.join_path(repo_dir, 'cimgui', 'imgui')) or { panic(err) }
 	run_at('git checkout-index -a -f --prefix=${os.quoted_path(implot_include)}', os.join_path(repo_dir, 'cimplot', 'implot')) or { panic(err) }
+
+	version_header := os.read_file(os.join_path(imgui_include, 'imgui.h')) or { panic(err) }
+	version := upstream_version(version_header) or { panic(err) }
+	os.write_file(os.join_path(repo_dir, 'VERSION'), version + '\n') or { panic(err) }
 
 	os.write_file(os.join_path(include_dir, 'c2v.toml'), '[project]\nadditional_flags = "${c2v_flags}"\n')!
 	translate_header('cimgui.h', include_dir) or { panic(err) }

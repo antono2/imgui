@@ -6,18 +6,23 @@ on:
   schedule:
     - cron: '23 6 * * 1'
   workflow_dispatch:
+    inputs:
+      validate_only:
+        description: Validate this branch without proposing another upstream update
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: imgui-upstream-update
-  cancel-in-progress: false
+  group: imgui-upstream-${{ github.event.pull_request.number || 'publication' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   validate:
     name: Validate upstream update script
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || inputs.validate_only == true
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -33,7 +38,7 @@ jobs:
 
   verify-generated:
     name: Verify committed bindings regenerate
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || inputs.validate_only == true
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -81,10 +86,11 @@ jobs:
 
   propose:
     name: Propose ${{ matrix.variant }} update
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && inputs.validate_only != true
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     strategy:
@@ -100,6 +106,7 @@ jobs:
       BASE_BRANCH: ${{ matrix.base }}
       UPDATE_BRANCH: generated/upstream-${{ matrix.variant }}
       GH_TOKEN: ${{ secrets.UPSTREAM_UPDATE_TOKEN || github.token }}
+      DISPATCH_CI: ${{ secrets.UPSTREAM_UPDATE_TOKEN == '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -178,7 +185,7 @@ jobs:
         if: steps.upstream.outputs.changed == 'true'
         run: |
           set -euo pipefail
-          git add -A -- cimgui cimplot UPSTREAM_VARIANT imgui.v implot/implot.v \
+          git add -A -- cimgui cimplot UPSTREAM_VARIANT VERSION imgui.v implot/implot.v \
             include impl_vulkan/imgui_impl_vulkan.c.v
           git diff --exit-code
           if git diff --cached --quiet; then
@@ -205,4 +212,12 @@ jobs:
             gh pr create --draft --base "$BASE_BRANCH" --head "$UPDATE_BRANCH" \
               --title "Update $VARIANT ImGui and ImPlot bindings" \
               --body "Automated upstream refresh for the $VARIANT variant. cimgui: $(git -C cimgui rev-parse HEAD); cimplot: $(git -C cimplot rev-parse HEAD). Generated V bindings and native sources must pass CI and receive human review before merge."
+          fi
+          # A repository-token PR needs explicit CI dispatch. A personal token
+          # already triggers PR checks, so do not duplicate them.
+          if [[ "$DISPATCH_CI" == true ]]; then
+            for workflow in demo-release.yml mobile-native.yml application-accessibility.yml portable-tooling.yml; do
+              gh workflow run "$workflow" --ref "$UPDATE_BRANCH"
+            done
+            gh workflow run update-upstream.yml --ref "$UPDATE_BRANCH" -f validate_only=true
           fi
