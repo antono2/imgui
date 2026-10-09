@@ -61,7 +61,7 @@ fn upstream_version(header string) !string {
 	for line in header.split_into_lines() {
 		fields := line.trim_space().fields()
 		if fields.len >= 3 && fields[0] == '#define' && fields[1] == 'IMGUI_VERSION' {
-			value := fields[2]
+			value := line.all_after('IMGUI_VERSION').trim_space()
 			if value.starts_with('"') {
 				rest := value[1..]
 				if end := rest.index('"') {
@@ -94,6 +94,7 @@ fn copy_sources_self_test() ! {
 	assert upstream_version('#define IMGUI_VERSION       "9.87.6b" // comment')! == '9.87.6b'
 	assert upstream_version('  #define IMGUI_VERSION "2.3.4"')! == '2.3.4'
 	assert upstream_version('#define IMGUI_VERSION "2.3.4"//comment')! == '2.3.4'
+	assert upstream_version('#define IMGUI_VERSION "2.3.4 WIP" /* comment */')! == '2.3.4 WIP'
 	if _ := upstream_version('#define IMGUI_VERSION_NUM 98765') {
 		return error('version parser accepted a missing IMGUI_VERSION')
 	}
