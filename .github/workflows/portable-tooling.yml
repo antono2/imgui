@@ -66,6 +66,7 @@ jobs:
           ./setup.vsh --help
           ./build_vimgui.vsh --help
           ./generate.vsh --help
+          ./generate.vsh --self-test
           ./scripts/run_demo.vsh --help
           ./scripts/check_prerequisites.vsh --help
           ./scripts/build_appui.vsh --help
@@ -82,5 +83,7 @@ jobs:
             & $V -cc msvc run $Script --help
             if ($LASTEXITCODE -ne 0) { throw "$Script failed" }
           }
+          & $V -cc msvc run generate.vsh --self-test
+          if ($LASTEXITCODE -ne 0) { throw 'Generator subprocess tests failed' }
           & $V -cc msvc test scripts/tooling
           if ($LASTEXITCODE -ne 0) { throw 'Portable tooling tests failed' }
