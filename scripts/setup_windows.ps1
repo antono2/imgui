@@ -45,7 +45,8 @@ if ($Check) {
 $PinFile = Join-Path $PSScriptRoot 'windows-toolchain.json'
 $Pins = Get-Content -LiteralPath $PinFile -Raw | ConvertFrom-Json
 if (-not $CacheDirectory) {
-    $CacheDirectory = Join-Path $env:LOCALAPPDATA "antono2\imgui\windows\$($Pins.v.Substring(0, 12))"
+    $CacheKey = (Get-FileHash -LiteralPath $PinFile -Algorithm SHA256).Hash.Substring(0, 12).ToLowerInvariant()
+    $CacheDirectory = Join-Path $env:LOCALAPPDATA "antono2\imgui\windows\$CacheKey"
 }
 $CacheDirectory = [IO.Path]::GetFullPath($CacheDirectory)
 New-Item -ItemType Directory -Force -Path $CacheDirectory | Out-Null
@@ -56,7 +57,9 @@ Get-WindowsSetupCheckout 'https://github.com/vlang/tccbin.git' $Pins.tcc (Join-P
 $VExecutable = Join-Path $VDirectory 'v.exe'
 if (-not (Test-Path -LiteralPath $VExecutable)) {
     Push-Location $VDirectory
-    try { Invoke-WindowsSetupCommand (Join-Path $VDirectory 'makev.bat') @('-msvc', '--local') } finally { Pop-Location }
+    # Use the pinned bootstrap compiler, regardless of unrelated Clang/GCC
+    # installations on PATH. The demo itself is compiled with MSVC below.
+    try { Invoke-WindowsSetupCommand (Join-Path $VDirectory 'makev.bat') @('-tcc', '--local') } finally { Pop-Location }
 }
 $env:V_BIN = $VExecutable
 $env:Path = "$VDirectory;$(Join-Path $env:VULKAN_SDK 'Bin');$env:Path"
