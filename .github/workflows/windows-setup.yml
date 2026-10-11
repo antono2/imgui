@@ -40,3 +40,4 @@ jobs:
             $Artifact = Join-Path 'build\windows-demo' $File
             if (-not (Test-Path $Artifact)) { throw "Missing demo artifact: $File" }
           }
+          ./scripts/smoke_windows_demo.ps1
