@@ -106,10 +106,10 @@ pub fn demo_module_path(root string, runtime string) !string {
 		}
 	}
 	parent := os.dir(root)
-	local_paths := '${namespace}|${os.join_path(namespace, 'antono2')}|${parent}'
+	local_paths := '${namespace}|${os.join_path(namespace, 'antono2')}'
 	// Preserve the explicitly supplied sibling dependency checkouts used by CI.
 	if ['imgui', 'vulkan', 'glfw'].all(os.is_file(os.join_path(parent, it, 'v.mod'))) {
-		return '${local_paths}|${os.dir(parent)}|@vlib'
+		return '${local_paths}|${parent}|${os.dir(parent)}|@vlib'
 	}
 	return '${local_paths}|${os.join_path(os.vmodules_dir(), 'antono2')}|@vlib|@vmodules'
 }
