@@ -67,10 +67,14 @@ function Get-WindowsSetupArchive([string]$Url, [string]$Hash, [string]$Archive, 
     if (-not (Test-Path -LiteralPath $Archive)) {
         Write-Host "Downloading $Url"
         $Download = "$Archive.download.zip"
-        if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
-            Invoke-WindowsSetupCommand curl.exe @('--fail', '--location', '--retry', '3', '--connect-timeout', '30', '--max-time', '900', '--silent', '--show-error', '--output', $Download, $Url)
-        } else {
-            Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $Download -TimeoutSec 120
+        try {
+            if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+                Invoke-WindowsSetupCommand curl.exe @('--fail', '--location', '--retry', '3', '--connect-timeout', '30', '--max-time', '900', '--silent', '--show-error', '--output', $Download, $Url)
+            } else {
+                Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $Download -TimeoutSec 120
+            }
+        } catch {
+            throw "Download failed for ${Url}. Retry setup; existing installed tools are preserved. $($_.Exception.Message)"
         }
         if ((Get-FileHash -LiteralPath $Download -Algorithm SHA256).Hash -ne $Hash) {
             throw "Download checksum mismatch: $Url. Retry setup to download again."
