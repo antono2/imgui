@@ -21,6 +21,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           submodules: recursive
+      - name: Validate and resolve tested compatibility
+        id: compat
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          python ./scripts/test_compatibility.py
+          python ./scripts/test_doctor.py
+          python ./scripts/compatibility.py --github-output "$GITHUB_OUTPUT"
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libvulkan-dev libdbus-1-dev libatk1.0-dev libatk-bridge2.0-dev libatspi2.0-dev libglib2.0-dev at-spi2-core dbus-x11 xdotool mesa-vulkan-drivers xvfb
@@ -63,6 +71,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           submodules: recursive
+      - name: Validate and resolve tested compatibility
+        id: compat
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          python ./scripts/test_compatibility.py
+          python ./scripts/test_doctor.py
+          python ./scripts/compatibility.py --github-output "$GITHUB_OUTPUT"
       - name: Compile application widgets and accessibility for iOS Simulator
         run: |
           cmake -S . -B build/appui-ios \

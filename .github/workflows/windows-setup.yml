@@ -17,14 +17,22 @@ jobs:
         with:
           path: checkout with spaces
           submodules: recursive
+      - name: Validate and resolve tested compatibility
+        id: compat
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          python "checkout with spaces/scripts/test_compatibility.py"
+          python "checkout with spaces/scripts/test_doctor.py"
+          python "checkout with spaces/scripts/compatibility.py" --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
-          ref: v3.2.2
+          ref: ${{ steps.compat.outputs.module_vulkan }}
           path: ci-inputs/vulkan
       - name: Install CI Vulkan runtime
         shell: bash
-        run: bash ci-inputs/vulkan/.github/scripts/setup-vulkan-ci.sh 1.4.309.0 v1.2
+        run: bash ci-inputs/vulkan/.github/scripts/setup-vulkan-ci.sh ${{ steps.compat.outputs.ci_sdk }} ${{ steps.compat.outputs.ci_runtime }}
       - name: Exercise the documented PowerShell bootstrap
         shell: powershell
         working-directory: checkout with spaces

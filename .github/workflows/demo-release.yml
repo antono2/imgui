@@ -29,35 +29,43 @@ jobs:
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
+      - name: Resolve tested demo compatibility
+        id: compat
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          python "source/modules/antono2/imgui/scripts/test_compatibility.py"
+          python "source/modules/antono2/imgui/scripts/test_doctor.py"
+          python "source/modules/antono2/imgui/scripts/compatibility.py" --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
-          ref: v3.2.2
+          ref: ${{ steps.compat.outputs.module_vulkan }}
           path: source/modules/antono2/vulkan
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/glfw
-          ref: v2.0.1
+          ref: ${{ steps.compat.outputs.module_glfw }}
           path: source/modules/antono2/glfw
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: v1.0.1
+          ref: ${{ steps.compat.outputs.demo_release }}
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
-          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          ref: ${{ steps.compat.outputs.v }}
           path: toolchain/v
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
-          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          ref: ${{ steps.compat.outputs.vc }}
           path: toolchain/v/vc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/tccbin
-          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          ref: ${{ steps.compat.outputs.linux_tcc }}
           path: toolchain/v/thirdparty/tcc
       - name: Build official V compiler
         working-directory: toolchain/v
@@ -142,35 +150,43 @@ jobs:
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
+      - name: Resolve tested demo compatibility
+        id: compat
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          python "source/modules/antono2/imgui/scripts/test_compatibility.py"
+          python "source/modules/antono2/imgui/scripts/test_doctor.py"
+          python "source/modules/antono2/imgui/scripts/compatibility.py" --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
-          ref: v3.2.2
+          ref: ${{ steps.compat.outputs.module_vulkan }}
           path: source/modules/antono2/vulkan
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/glfw
-          ref: v2.0.1
+          ref: ${{ steps.compat.outputs.module_glfw }}
           path: source/modules/antono2/glfw
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: v1.0.1
+          ref: ${{ steps.compat.outputs.demo_release }}
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
-          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          ref: ${{ steps.compat.outputs.v }}
           path: toolchain/v
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
-          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          ref: ${{ steps.compat.outputs.vc }}
           path: toolchain/v/vc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: zeux/volk
-          ref: 58689c063427f5bad4f133625049b1a3c5dd8287
+          ref: ${{ steps.compat.outputs.volk }}
           path: source/third_party/volk
       - name: Build official V compiler
         shell: cmd
@@ -185,7 +201,7 @@ jobs:
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install Vulkan SDK and SwiftShader test artifacts
         shell: pwsh
-        run: v run source/modules/antono2/imgui/scripts/setup_vulkan_ci.vsh 1.4.309.0 v1.2
+        run: v run source/modules/antono2/imgui/scripts/setup_vulkan_ci.vsh ${{ steps.compat.outputs.ci_sdk }} ${{ steps.compat.outputs.ci_runtime }}
       - name: Install matching Volk header
         shell: pwsh
         run: |
@@ -261,35 +277,43 @@ jobs:
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
+      - name: Resolve tested demo compatibility
+        id: compat
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          python "source/modules/antono2/imgui/scripts/test_compatibility.py"
+          python "source/modules/antono2/imgui/scripts/test_doctor.py"
+          python "source/modules/antono2/imgui/scripts/compatibility.py" --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
-          ref: v3.2.2
+          ref: ${{ steps.compat.outputs.module_vulkan }}
           path: source/modules/antono2/vulkan
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/glfw
-          ref: v2.0.1
+          ref: ${{ steps.compat.outputs.module_glfw }}
           path: source/modules/antono2/glfw
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: v1.0.1
+          ref: ${{ steps.compat.outputs.demo_release }}
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
-          ref: efae23e85b3772a28e62884d554c1e88f91f52f4
+          ref: ${{ steps.compat.outputs.v3_v }}
           path: toolchain/v
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
-          ref: 2cbaf6bc2367937cd5f0b4ef923d1ef9aad613b3
+          ref: ${{ steps.compat.outputs.v3_vc }}
           path: toolchain/v/vc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/tccbin
-          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          ref: ${{ steps.compat.outputs.v3_tcc }}
           path: toolchain/v/thirdparty/tcc
       - name: Build pinned V3 compiler
         run: |
@@ -319,6 +343,14 @@ jobs:
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
+      - name: Resolve tested demo compatibility
+        id: compat
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          python "source/modules/antono2/imgui/scripts/test_compatibility.py"
+          python "source/modules/antono2/imgui/scripts/test_doctor.py"
+          python "source/modules/antono2/imgui/scripts/compatibility.py" --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
@@ -332,7 +364,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/v_imgui_examples
-          ref: v1.0.1
+          ref: ${{ steps.compat.outputs.demo_release }}
           path: source/demo
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
