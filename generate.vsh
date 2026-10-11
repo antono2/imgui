@@ -107,7 +107,7 @@ fn copy_sources_self_test() ! {
 	original_directory := os.getwd()
 	run_at('${os.quoted_path(@VEXE)} run ${os.quoted_path(fixture)}', working_directory)!
 	assert os.getwd() == original_directory
-	assert os.read_file(os.join_path(working_directory, 'ran.txt'))! == working_directory
+	assert os.real_path(os.read_file(os.join_path(working_directory, 'ran.txt'))!) == os.real_path(working_directory)
 	mut failed := false
 	run_at('${os.quoted_path(@VEXE)} run ${os.quoted_path(fixture)} --fail', working_directory) or {
 		assert err.msg().contains('exit code 23')
