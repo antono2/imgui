@@ -84,7 +84,8 @@ try {
     [Environment]::SetEnvironmentVariable("GIT_CONFIG_KEY_$Count", 'core.longpaths', 'Process')
     [Environment]::SetEnvironmentVariable("GIT_CONFIG_VALUE_$Count", 'true', 'Process')
     $env:GIT_CONFIG_COUNT = ($Count + 1).ToString()
-    Invoke-WindowsSetupCommand $VExecutable @('-cc', 'msvc', 'install')
+    Install-WindowsSetupModules $ProjectDirectory $env:VMODULES @{}
+    Invoke-WindowsSetupCommand $VExecutable @('-cc', 'msvc', 'run', 'scripts/check_installed_deps.vsh')
     $Options = @('-cc', 'msvc', 'run', 'scripts/run_demo.vsh')
     if (-not $Run) { $Options += '--build-only' }
     Invoke-WindowsSetupCommand $VExecutable $Options
