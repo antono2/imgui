@@ -75,6 +75,15 @@ read-only prerequisite checks, or `-PrepareOnly` to prepare only the compiler.
 with local changes or wrong revisions are rejected rather than reset. Native
 GPU rendering still requires a Vulkan-capable driver and desktop session.
 
+After building, check rendering and clean shutdown with a bounded 60-frame run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\smoke_windows_demo.ps1
+```
+
+Windows CI uses a software Vulkan driver for this smoke test; it does not
+establish support for every physical GPU.
+
 For an already configured developer shell, the existing commands remain useful:
 
 ```powershell
