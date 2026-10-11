@@ -150,3 +150,9 @@ system upgrade, run `./build_vimgui.vsh`.
 Thank you [@ryoskzypu](https://github.com/ryoskzypu) from #regex on
 [libera.chat](https://libera.chat/) for helping with the original cleanup rules
 that the current V-native generator preserves.
+
+
+## Compatibility and diagnostics
+
+See [tested profiles and read-only diagnostics](docs/compatibility.md) for
+compiler/dependency versions, setup recovery actions and upgrade checks.

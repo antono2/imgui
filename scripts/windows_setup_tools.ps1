@@ -6,9 +6,18 @@ function Invoke-WindowsSetupCommand([string]$Command, [string[]]$Arguments) {
 
 function Get-WindowsSetupCheckout([string]$Url, [string]$Revision, [string]$Directory) {
     if (-not (Test-Path -LiteralPath $Directory)) {
-        Invoke-WindowsSetupCommand git @('-c', 'core.longpaths=true', 'clone', '--filter=blob:none', '--no-checkout', $Url, $Directory)
-        Invoke-WindowsSetupCommand git @('-C', $Directory, 'fetch', '--depth', '1', 'origin', $Revision)
-        Invoke-WindowsSetupCommand git @('-C', $Directory, 'checkout', '--detach', $Revision)
+        $Staging = "$Directory.setup-$([Guid]::NewGuid().ToString('N'))"
+        New-Item -ItemType Directory -Force -Path ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($Directory))) | Out-Null
+        try {
+            Invoke-WindowsSetupCommand git @('-c', 'core.longpaths=true', 'clone', '--filter=blob:none', '--no-checkout', $Url, $Staging)
+            Invoke-WindowsSetupCommand git @('-C', $Staging, 'fetch', '--depth', '1', 'origin', $Revision)
+            Invoke-WindowsSetupCommand git @('-C', $Staging, 'checkout', '--detach', $Revision)
+            [IO.Directory]::Move([IO.Path]::GetFullPath($Staging), [IO.Path]::GetFullPath($Directory))
+        } catch {
+            throw "Could not prepare ${Directory}. Retry setup; existing caches are preserved. $($_.Exception.Message)"
+        } finally {
+            Remove-WindowsSetupStagingDirectory $Staging $Directory
+        }
     }
     if (-not (Test-Path -LiteralPath (Join-Path $Directory '.git'))) {
         throw "Existing directory is not a managed Git checkout: $Directory. Choose another -CacheDirectory."
@@ -23,6 +32,16 @@ function Get-WindowsSetupCheckout([string]$Url, [string]$Revision, [string]$Dire
     if ($LASTEXITCODE -ne 0 -or $Changes) {
         throw "Preserve local changes in $Directory, or choose another -CacheDirectory."
     }
+}
+
+function Remove-WindowsSetupStagingDirectory([string]$Staging, [string]$Destination) {
+    $Resolved = [IO.Path]::GetFullPath($Staging)
+    $Target = [IO.Path]::GetFullPath($Destination)
+    if ([IO.Path]::GetDirectoryName($Resolved) -ne [IO.Path]::GetDirectoryName($Target) -or
+        -not ([IO.Path]::GetFileName($Resolved) -match ('^' + [regex]::Escape([IO.Path]::GetFileName($Target)) + '\.setup-[0-9a-f]{32}$'))) {
+        throw "Refusing staging cleanup outside the tool cache: $Resolved"
+    }
+    if (Test-Path -LiteralPath $Resolved) { Remove-Item -LiteralPath $Resolved -Recurse -Force }
 }
 
 function Expand-WindowsSetupVerifiedArchive([string]$Archive, [string]$Hash, [string]$Directory) {
@@ -42,6 +61,9 @@ function Get-WindowsSetupArchive([string]$Url, [string]$Hash, [string]$Archive, 
         }
         return
     }
+    if (Test-Path -LiteralPath $Directory) {
+        throw "Unverified tool directory: $Directory. Preserve its contents and choose another -CacheDirectory."
+    }
     if (-not (Test-Path -LiteralPath $Archive)) {
         Write-Host "Downloading $Url"
         $Download = "$Archive.download.zip"
@@ -55,11 +77,17 @@ function Get-WindowsSetupArchive([string]$Url, [string]$Hash, [string]$Archive, 
         }
         Move-Item -LiteralPath $Download -Destination $Archive -Force
     }
-    Expand-WindowsSetupVerifiedArchive $Archive $Hash $Directory
-    if (-not (Test-Path -LiteralPath (Join-Path $Directory $Executable))) {
-        throw "Downloaded tool is missing ${Executable}: $Directory"
+    $Staging = "$Directory.setup-$([Guid]::NewGuid().ToString('N'))"
+    try {
+        Expand-WindowsSetupVerifiedArchive $Archive $Hash $Staging
+        if (-not (Test-Path -LiteralPath (Join-Path $Staging $Executable))) {
+            throw "Downloaded tool is missing ${Executable}: $Archive. Check the archive/pin before retrying."
+        }
+        $Hash | Set-Content -LiteralPath (Join-Path $Staging '.archive-sha256') -Encoding ascii
+        [IO.Directory]::Move([IO.Path]::GetFullPath($Staging), [IO.Path]::GetFullPath($Directory))
+    } finally {
+        Remove-WindowsSetupStagingDirectory $Staging $Directory
     }
-    $Hash | Set-Content -LiteralPath $Marker -Encoding ascii
 }
 
 # Install manifest-pinned repositories directly: old VPM versions refuse repeat
