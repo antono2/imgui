@@ -1,7 +1,6 @@
 #!/usr/bin/env -S v run
 
 // Canonical ImGui/ImPlot binding generator.
-
 import os
 
 const repo_dir = @DIR
@@ -14,7 +13,14 @@ fn usage() {
 
 fn run_at(command string, directory string) ! {
 	println('\n> ${command}')
-	result := os.execute('cd ${os.quoted_path(directory)} && ${command}')
+	original_directory := os.getwd()
+	os.chdir(directory)!
+	defer {
+		os.chdir(original_directory) or { panic(err) }
+	}
+	// Windows os.execute rejects shell command chaining. Keep the command
+	// unchanged and select its working directory through the OS API.
+	result := os.execute(command)
 	if result.output.trim_space() != '' {
 		println(result.output.trim_right('\r\n'))
 	}
@@ -91,6 +97,24 @@ fn copy_sources_self_test() ! {
 	assert os.read_file(os.join_path(destination, 'backend.cpp'))! == 'source'
 	assert !os.exists(os.join_path(destination, 'ignored.txt'))
 	assert !os.exists(os.join_path(destination, 'nested.h'))
+	// Exercise the real subprocess path, including spaces in the working
+	// directory and restoration after both success and a failed child.
+	working_directory := os.join_path(root, 'working directory with spaces')
+	os.mkdir_all(working_directory)!
+	fixture := os.join_path(working_directory, 'probe.v')
+	os.write_file(fixture,
+		'import os\nfn main() {\n os.write_file("ran.txt", os.getwd()) or { panic(err) }\n if os.args.len > 1 { exit(23) }\n}\n')!
+	original_directory := os.getwd()
+	run_at('${os.quoted_path(@VEXE)} run ${os.quoted_path(fixture)}', working_directory)!
+	assert os.getwd() == original_directory
+	assert os.read_file(os.join_path(working_directory, 'ran.txt'))! == working_directory
+	mut failed := false
+	run_at('${os.quoted_path(@VEXE)} run ${os.quoted_path(fixture)} --fail', working_directory) or {
+		assert err.msg().contains('exit code 23')
+		failed = true
+	}
+	assert failed
+	assert os.getwd() == original_directory
 	assert upstream_version('#define IMGUI_VERSION       "9.87.6b" // comment')! == '9.87.6b'
 	assert upstream_version('  #define IMGUI_VERSION "2.3.4"')! == '2.3.4'
 	assert upstream_version('#define IMGUI_VERSION "2.3.4"//comment')! == '2.3.4'
@@ -153,7 +177,8 @@ fn main() {
 	remove_file(os.join_path(repo_dir, 'CMakeCache.txt')) or { panic(err) }
 
 	if regenerate_c {
-		run_at('luajit ./generator.lua gcc internal glfw', os.join_path(repo_dir, 'cimgui', 'generator')) or { panic(err) }
+		run_at('luajit ./generator.lua gcc internal glfw', os.join_path(repo_dir, 'cimgui',
+			'generator')) or { panic(err) }
 	} else {
 		println('Using the generated cimgui API committed by the pinned revision.')
 	}
@@ -163,7 +188,8 @@ fn main() {
 	add_translation_fix(os.join_path(include_dir, 'cimgui.h')) or { panic(err) }
 
 	if regenerate_c {
-		run_at('luajit ./generator.lua gcc internal glfw', os.join_path(repo_dir, 'cimplot', 'generator')) or { panic(err) }
+		run_at('luajit ./generator.lua gcc internal glfw', os.join_path(repo_dir, 'cimplot',
+			'generator')) or { panic(err) }
 	} else {
 		println('Using the generated cimplot API committed by the pinned revision.')
 	}
@@ -175,14 +201,17 @@ fn main() {
 	implot_include := os.join_path(include_dir, 'implot') + os.path_separator
 	os.mkdir_all(imgui_include)!
 	os.mkdir_all(implot_include)!
-	run_at('git checkout-index -a -f --prefix=${os.quoted_path(imgui_include)}', os.join_path(repo_dir, 'cimgui', 'imgui')) or { panic(err) }
-	run_at('git checkout-index -a -f --prefix=${os.quoted_path(implot_include)}', os.join_path(repo_dir, 'cimplot', 'implot')) or { panic(err) }
+	run_at('git checkout-index -a -f --prefix=${os.quoted_path(imgui_include)}', os.join_path(repo_dir,
+		'cimgui', 'imgui')) or { panic(err) }
+	run_at('git checkout-index -a -f --prefix=${os.quoted_path(implot_include)}', os.join_path(repo_dir,
+		'cimplot', 'implot')) or { panic(err) }
 
 	version_header := os.read_file(os.join_path(imgui_include, 'imgui.h')) or { panic(err) }
 	version := upstream_version(version_header) or { panic(err) }
 	os.write_file(os.join_path(repo_dir, 'VERSION'), version + '\n') or { panic(err) }
 
-	os.write_file(os.join_path(include_dir, 'c2v.toml'), '[project]\nadditional_flags = "${c2v_flags}"\n')!
+	os.write_file(os.join_path(include_dir, 'c2v.toml'),
+		'[project]\nadditional_flags = "${c2v_flags}"\n')!
 	translate_header('cimgui.h', include_dir) or { panic(err) }
 	translate_header('cimplot.h', include_dir) or { panic(err) }
 	remove_file(os.join_path(include_dir, 'cimgui.json')) or { panic(err) }
@@ -193,14 +222,15 @@ fn main() {
 	os.mv(os.join_path(include_dir, 'cimgui.v'), imgui_binding)!
 	os.mv(os.join_path(include_dir, 'cimplot.v'), implot_binding)!
 	cleanup := os.join_path(repo_dir, 'cleanup_imgui_implot.vsh')
-	run_at('v run ${os.quoted_path(cleanup)} ${os.quoted_path(imgui_binding)} ${os.quoted_path(imgui_binding)} imgui', repo_dir) or { panic(err) }
-	run_at('v run ${os.quoted_path(cleanup)} ${os.quoted_path(implot_binding)} ${os.quoted_path(implot_binding)} implot', repo_dir) or { panic(err) }
+	run_at('v run ${os.quoted_path(cleanup)} ${os.quoted_path(imgui_binding)} ${os.quoted_path(imgui_binding)} imgui',
+		repo_dir) or { panic(err) }
+	run_at('v run ${os.quoted_path(cleanup)} ${os.quoted_path(implot_binding)} ${os.quoted_path(implot_binding)} implot',
+		repo_dir) or { panic(err) }
 	run_at('v fmt -w ${os.quoted_path(imgui_binding)}', repo_dir) or { panic(err) }
 	// vfmt restores a space before fixed-array types. V3 currently treats that
 	// form as an embedded-struct attribute when the C field name is uppercase.
-	run_at('v run ${os.quoted_path(cleanup)} --v3-fixed-arrays ${os.quoted_path(imgui_binding)}', repo_dir) or {
-		panic(err)
-	}
+	run_at('v run ${os.quoted_path(cleanup)} --v3-fixed-arrays ${os.quoted_path(imgui_binding)}',
+		repo_dir) or { panic(err) }
 	// Do not format ImPlot: its C field/type pair `Marker Marker` is currently
 	// collapsed by vfmt into invalid V.
 	run_at('v run ${os.quoted_path(os.join_path(repo_dir, 'build_vimgui.vsh'))}', repo_dir) or {
