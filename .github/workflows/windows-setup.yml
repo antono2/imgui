@@ -1,0 +1,41 @@
+name: Fresh Windows developer setup
+on:
+  pull_request:
+    branches: [master, standard]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: windows-setup-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bootstrap:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: checkout with spaces
+          submodules: recursive
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: antono2/vulkan
+          ref: v3.2.2
+          path: ci-inputs/vulkan
+      - name: Install CI Vulkan runtime
+        shell: bash
+        run: bash ci-inputs/vulkan/.github/scripts/setup-vulkan-ci.sh 1.4.309.0 v1.2
+      - name: Exercise the documented PowerShell bootstrap
+        shell: powershell
+        working-directory: checkout with spaces
+        run: |
+          ./scripts/test_windows_setup.ps1
+          $Cache = Join-Path $env:RUNNER_TEMP 'ImGui compiler with spaces'
+          ./scripts/setup_windows.ps1 -Check -CacheDirectory $Cache
+          if (Test-Path $Cache) { throw 'Read-only check created the compiler cache' }
+          ./scripts/setup_windows.ps1 -CacheDirectory $Cache
+          ./scripts/setup_windows.ps1 -CacheDirectory $Cache -PrepareOnly
+          foreach ($File in @('v_imgui_demo.exe', 'vimgui.dll', 'glfw3.dll')) {
+            $Artifact = Join-Path 'build\windows-demo' $File
+            if (-not (Test-Path $Artifact)) { throw "Missing demo artifact: $File" }
+          }
