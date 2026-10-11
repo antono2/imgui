@@ -20,13 +20,15 @@ fn test_install_modules_reuses_pinned_checkout() {
 	command('git', ['init', installed]) or { panic(err) }
 	os.write_file(os.join_path(installed, 'fixture.txt'), 'original') or { panic(err) }
 	command('git', ['-C', installed, 'add', '.']) or { panic(err) }
-	command('git', ['-C', installed, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'fixture']) or { panic(err) }
+	command('git', ['-C', installed, '-c', 'user.name=Fixture', '-c',
+		'user.email=fixture@example.invalid', 'commit', '-m', 'fixture']) or { panic(err) }
 	command('git', ['-C', installed, 'tag', 'v1.0.0']) or { panic(err) }
 	install_modules(root) or { panic(err) }
 	install_modules(root) or { panic(err) }
 	os.write_file(os.join_path(installed, 'fixture.txt'), 'local change') or { panic(err) }
 	command('git', ['-C', installed, 'add', '.']) or { panic(err) }
-	command('git', ['-C', installed, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'local work']) or { panic(err) }
+	command('git', ['-C', installed, '-c', 'user.name=Fixture', '-c',
+		'user.email=fixture@example.invalid', 'commit', '-m', 'local work']) or { panic(err) }
 	head := output('git', ['-C', installed, 'rev-parse', 'HEAD']) or { panic(err) }
 	install_modules(root) or {
 		assert err.msg().contains('different revision')

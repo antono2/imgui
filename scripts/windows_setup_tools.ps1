@@ -61,3 +61,22 @@ function Get-WindowsSetupArchive([string]$Url, [string]$Hash, [string]$Archive, 
     }
     $Hash | Set-Content -LiteralPath $Marker -Encoding ascii
 }
+
+# Install manifest-pinned repositories directly: old VPM versions refuse repeat
+# installs into a VMODULES directory containing spaces, even at the right pin.
+function Install-WindowsSetupModules([string]$ManifestDirectory, [string]$ModulesDirectory, [hashtable]$Checked) {
+    $Manifest = Get-Content -LiteralPath (Join-Path $ManifestDirectory 'v.mod') -Raw
+    foreach ($Match in [regex]::Matches($Manifest, "'antono2\.([a-z0-9_]+)@([^']+)'")) {
+        $Name = $Match.Groups[1].Value
+        $Tag = $Match.Groups[2].Value
+        if ($Checked.ContainsKey($Name)) {
+            if ($Checked[$Name] -ne $Tag) { throw "Conflicting dependency pins for $Name" }
+            continue
+        }
+        $Checked[$Name] = $Tag
+        $Repository = if ($Name -eq 'vkmemalloc') { 'vulkan_memory_allocator' } else { $Name }
+        $Directory = Join-Path $ModulesDirectory "antono2\$Name"
+        Get-WindowsSetupCheckout "https://github.com/antono2/$Repository.git" $Tag $Directory
+        Install-WindowsSetupModules $Directory $ModulesDirectory $Checked
+    }
+}
