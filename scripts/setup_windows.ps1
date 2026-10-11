@@ -89,6 +89,7 @@ try {
     $env:GIT_CONFIG_COUNT = ($Count + 1).ToString()
     Install-WindowsSetupModules $ProjectDirectory $env:VMODULES @{}
     Invoke-WindowsSetupCommand $VExecutable @('-cc', 'msvc', 'run', 'scripts/check_installed_deps.vsh')
+    Invoke-WindowsSetupCommand $VExecutable @('-old-compiler', '-check-syntax', 'imgui.v')
     $Options = @('-cc', 'msvc', 'run', 'scripts/run_demo.vsh')
     if (-not $Run) { $Options += '--build-only' }
     Invoke-WindowsSetupCommand $VExecutable $Options
