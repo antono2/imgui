@@ -34,6 +34,7 @@ jobs:
           ./scripts/setup_windows.ps1 -Check -CacheDirectory $Cache
           if (Test-Path $Cache) { throw 'Read-only check created the compiler cache' }
           ./scripts/setup_windows.ps1 -CacheDirectory $Cache
+          ./scripts/setup_windows.ps1 -CacheDirectory $Cache
           ./scripts/setup_windows.ps1 -CacheDirectory $Cache -PrepareOnly
           foreach ($File in @('v_imgui_demo.exe', 'vimgui.dll', 'glfw3.dll')) {
             $Artifact = Join-Path 'build\windows-demo' $File
