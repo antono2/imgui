@@ -18,5 +18,10 @@
   "build_tools": [
     "git",
     "cmake"
-  ]
+  ],
+  "v3_v": "efae23e85b3772a28e62884d554c1e88f91f52f4",
+  "v3_vc": "2cbaf6bc2367937cd5f0b4ef923d1ef9aad613b3",
+  "v3_tcc": "d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74",
+  "volk": "58689c063427f5bad4f133625049b1a3c5dd8287",
+  "demo_release": "v1.0.1"
 }
