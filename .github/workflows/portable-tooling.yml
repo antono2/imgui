@@ -22,33 +22,41 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Validate and resolve tested compatibility
+        id: compat
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          python ./scripts/test_compatibility.py
+          python ./scripts/test_doctor.py
+          python ./scripts/compatibility.py --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
-          ref: 1f128c94619fb6e4863c5f81883e1b860405c8fa
+          ref: ${{ steps.compat.outputs.v }}
           path: toolchain/v
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
-          ref: 4a1ba4d772f19c2752c9850d3b5421c71f54a4d6
+          ref: ${{ steps.compat.outputs.vc }}
           path: toolchain/v/vc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: runner.os == 'Linux'
         with:
           repository: vlang/tccbin
-          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          ref: ${{ steps.compat.outputs.linux_tcc }}
           path: toolchain/v/thirdparty/tcc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: runner.os == 'macOS' && runner.arch == 'ARM64'
         with:
           repository: vlang/tccbin
-          ref: 1d0ad0ecf70a91a1df64cebf215e683b1d5aedb5 # thirdparty-macos-arm64
+          ref: ${{ steps.compat.outputs.macos_arm64_tcc }} # thirdparty-macos-arm64
           path: toolchain/v/thirdparty/tcc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: runner.os == 'macOS' && runner.arch == 'X64'
         with:
           repository: vlang/tccbin
-          ref: 199fa78395ca413aac23d02ec69cc5e7b1d805a2 # thirdparty-macos-amd64
+          ref: ${{ steps.compat.outputs.macos_x64_tcc }} # thirdparty-macos-amd64
           path: toolchain/v/thirdparty/tcc
       - name: Build V on Unix
         if: runner.os != 'Windows'

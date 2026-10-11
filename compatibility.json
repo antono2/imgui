@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "v_release": "0.5.2",
+  "bootstrap": "tcc",
+  "v": "1f128c94619fb6e4863c5f81883e1b860405c8fa",
+  "vc": "4a1ba4d772f19c2752c9850d3b5421c71f54a4d6",
+  "tcc": "dc80dc81dcb8df649456090348b504b0be97a623",
+  "ci_sdk": "1.4.309.0",
+  "ci_runtime": "v1.2",
+  "linux_tcc": "d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74",
+  "macos_arm64_tcc": "1d0ad0ecf70a91a1df64cebf215e683b1d5aedb5",
+  "macos_x64_tcc": "199fa78395ca413aac23d02ec69cc5e7b1d805a2",
+  "glfw": "3.4",
+  "modules": {
+    "vulkan": "v3.2.2",
+    "glfw": "v2.0.1"
+  },
+  "build_tools": [
+    "git",
+    "cmake"
+  ],
+  "v3_v": "efae23e85b3772a28e62884d554c1e88f91f52f4",
+  "v3_vc": "2cbaf6bc2367937cd5f0b4ef923d1ef9aad613b3",
+  "v3_tcc": "d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74",
+  "volk": "58689c063427f5bad4f133625049b1a3c5dd8287",
+  "demo_release": "v1.0.1"
+}

@@ -42,8 +42,12 @@ if ($Check) {
     Write-Host 'Compiling ImGui/ImPlot bindings may require about 11 GiB of memory.'
     return
 }
-$PinFile = Join-Path $PSScriptRoot 'windows-toolchain.json'
+$PinFile = Join-Path $ProjectDirectory 'compatibility.json'
 $Pins = Get-Content -LiteralPath $PinFile -Raw | ConvertFrom-Json
+if ($Pins.schema_version -ne 1) { throw 'Unsupported compatibility manifest schema.' }
+foreach ($Match in [regex]::Matches((Get-Content (Join-Path $ProjectDirectory 'v.mod') -Raw), "'antono2\.([a-z0-9_]+)@([^']+)'")) {
+    if ($Pins.modules.($Match.Groups[1].Value) -ne $Match.Groups[2].Value) { throw 'v.mod and compatibility.json disagree.' }
+}
 if (-not $CacheDirectory) {
     $CacheKey = (Get-FileHash -LiteralPath $PinFile -Algorithm SHA256).Hash.Substring(0, 12).ToLowerInvariant()
     $CacheDirectory = Join-Path $env:LOCALAPPDATA "antono2\imgui\windows\$CacheKey"
