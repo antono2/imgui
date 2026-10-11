@@ -96,7 +96,7 @@ support landed upstream through
 [`vlang/v#28368`](https://github.com/vlang/v/pull/28368), so use a current
 compiler from the official `vlang/v` master branch until that change reaches a
 tagged V release; a custom fork is no longer required. The PowerShell bootstrap
-selects the tested revision recorded in `scripts/windows-toolchain.json`.
+selects the tested revision recorded in `compatibility.json`.
 
 ## Build choices
 
