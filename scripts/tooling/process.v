@@ -52,6 +52,19 @@ pub fn install_modules(root string) ! {
 			println('Using checked-out ${dependency.split('@')[0]} module.')
 			continue
 		}
+		installed := os.join_path(os.vmodules_dir(), ...dependency.split('@')[0].split('.'))
+		if os.exists(installed) {
+			_, tag := dependency.rsplit_once('@') or {
+				return error('Existing module requires a pinned dependency: ${dependency}')
+			}
+			actual := output('git', ['-C', installed, 'rev-parse', 'HEAD'])!
+			expected := output('git', ['-C', installed, 'rev-parse', 'refs/tags/${tag}^{commit}'])!
+			if actual != expected {
+				return error('Installed ${dependency} has a different revision: ${installed}; preserve it and choose another VMODULES directory.')
+			}
+			println('Using installed ${dependency}.')
+			continue
+		}
 		command(compiler(), ['install', dependency])!
 	}
 }
@@ -93,10 +106,10 @@ pub fn demo_module_path(root string, runtime string) !string {
 		}
 	}
 	parent := os.dir(root)
-	local_paths := '${namespace}|${os.join_path(namespace, 'antono2')}|${parent}'
+	local_paths := '${namespace}|${os.join_path(namespace, 'antono2')}'
 	// Preserve the explicitly supplied sibling dependency checkouts used by CI.
 	if ['imgui', 'vulkan', 'glfw'].all(os.is_file(os.join_path(parent, it, 'v.mod'))) {
-		return '${local_paths}|${os.dir(parent)}|@vlib'
+		return '${local_paths}|${parent}|${os.dir(parent)}|@vlib'
 	}
 	return '${local_paths}|${os.join_path(os.vmodules_dir(), 'antono2')}|@vlib|@vmodules'
 }

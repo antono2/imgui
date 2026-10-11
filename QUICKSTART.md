@@ -59,21 +59,44 @@ v install
 
 ## Windows 10/11 x64
 
-Install V, Git, CMake, Visual Studio Build Tools with C++ and the Vulkan SDK.
-Then run these commands from a Developer PowerShell:
+Install Git, CMake, Visual Studio Build Tools with C++ and the Vulkan SDK.
+From ordinary 64-bit PowerShell in the checkout, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup_windows.ps1
+```
+
+The helper discovers Visual Studio x64 tools and builds the tested upstream V
+compiler in a versioned cache, so a separately installed V compiler is optional.
+It prepares isolated V modules, downloads GLFW 3.4 through CMake, checks out the
+tested demo and builds it. Use `-Run` to launch after building, `-Check` for
+read-only prerequisite checks, or `-PrepareOnly` to prepare only the compiler.
+`-CacheDirectory` chooses another compiler-cache location. Existing checkouts
+with local changes or wrong revisions are rejected rather than reset. Native
+GPU rendering still requires a Vulkan-capable driver and desktop session.
+
+After building, check rendering and clean shutdown with a bounded 60-frame run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\smoke_windows_demo.ps1
+```
+
+Windows CI uses a software Vulkan driver for this smoke test; it does not
+establish support for every physical GPU.
+
+For an already configured developer shell, the existing commands remain useful:
 
 ```powershell
 v run scripts/check_prerequisites.vsh --glfw bundled
 v run scripts/run_demo.vsh
 ```
 
-The runner downloads GLFW 3.4 through CMake, installs missing V module
-dependencies, checks out the tested demo revision, builds it and launches it.
-Use `--build-only` to compile without opening a window. The required compiler
+The required compiler
 support landed upstream through
 [`vlang/v#28368`](https://github.com/vlang/v/pull/28368), so use a current
 compiler from the official `vlang/v` master branch until that change reaches a
-tagged V release; a custom fork is no longer required.
+tagged V release; a custom fork is no longer required. The PowerShell bootstrap
+selects the tested revision recorded in `scripts/windows-toolchain.json`.
 
 ## Build choices
 
