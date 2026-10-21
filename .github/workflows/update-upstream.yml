@@ -32,6 +32,7 @@ jobs:
         run: |
           set -euo pipefail
           bash -n scripts/update_upstream.sh
+          python3 scripts/test_update_whitespace.py
           variant=$(tr -d '[:space:]' < UPSTREAM_VARIANT)
           scripts/update_upstream.sh "$variant" --check-only
           git diff --exit-code
@@ -81,7 +82,7 @@ jobs:
           set -euo pipefail
           ./generate.vsh
           ./scripts/check_upstream_variant.vsh
-          git diff --check
+          bash scripts/check_update_whitespace.sh
           git diff --exit-code
 
   propose:
@@ -180,7 +181,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/vmodules/antono2"
           ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
           v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -shared -check implot
-          git diff --check
+          bash scripts/check_update_whitespace.sh
       - name: Propose reviewable upstream update
         if: steps.upstream.outputs.changed == 'true'
         run: |
