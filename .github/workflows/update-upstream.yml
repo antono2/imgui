@@ -33,6 +33,7 @@ jobs:
           set -euo pipefail
           bash -n scripts/update_upstream.sh
           python3 scripts/test_update_whitespace.py
+          python3 scripts/test_publish_generated_branch.py
           variant=$(tr -d '[:space:]' < UPSTREAM_VARIANT)
           scripts/update_upstream.sh "$variant" --check-only
           git diff --exit-code
@@ -193,30 +194,37 @@ jobs:
             echo 'No generated changes to propose.'
             exit 0
           fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git switch -c "$UPDATE_BRANCH"
-          git commit -m "Update $VARIANT ImGui and ImPlot bindings"
           remote_ref="refs/heads/$UPDATE_BRANCH"
           remote_sha=$(git ls-remote origin "$remote_ref" | awk '{print $1}')
           if [[ -n "$remote_sha" ]]; then
             existing=$(gh pr list --base "$BASE_BRANCH" --head "$UPDATE_BRANCH" \
               --state open --json number --jq '.[0].number // empty')
-            [[ -n "$existing" ]] || {
-              echo "Refusing to replace $remote_ref without an open update PR." >&2
-              exit 1
-            }
-            git push --force-with-lease="$remote_ref:$remote_sha" origin "HEAD:$remote_ref"
-            echo "Updated PR #$existing"
-          else
-            git push origin "HEAD:$remote_ref"
+            if [[ -z "$existing" ]]; then
+              git fetch --no-tags origin "$remote_ref"
+              [[ $(git rev-parse FETCH_HEAD) == "$remote_sha" ]] || exit 1
+              [[ $(git write-tree) == $(git rev-parse 'FETCH_HEAD^{tree}') ]] || {
+                echo "Refusing to replace $remote_ref without an open update PR." >&2
+                exit 1
+              }
+            fi
+          fi
+          before=$(git rev-parse HEAD)
+          python3 scripts/publish_generated_branch.py "$UPDATE_BRANCH" "Update $VARIANT ImGui and ImPlot bindings"
+          pushed=false
+          if [[ $(git rev-parse HEAD) != "$before" ]]; then pushed=true; fi
+          # Even after a no-op push, recover a missing PR without editing an existing one.
+          existing=$(gh pr list --base "$BASE_BRANCH" --head "$UPDATE_BRANCH" \
+            --state open --json number --jq '.[0].number // empty')
+          created=false
+          if [[ -z "$existing" ]]; then
             gh pr create --draft --base "$BASE_BRANCH" --head "$UPDATE_BRANCH" \
               --title "Update $VARIANT ImGui and ImPlot bindings" \
               --body "Automated upstream refresh for the $VARIANT variant. cimgui: $(git -C cimgui rev-parse HEAD); cimplot: $(git -C cimplot rev-parse HEAD). Generated V bindings and native sources must pass CI and receive human review before merge."
+            created=true
           fi
           # A repository-token PR needs explicit CI dispatch. A personal token
           # already triggers PR checks, so do not duplicate them.
-          if [[ "$DISPATCH_CI" == true ]]; then
+          if [[ "$DISPATCH_CI" == true && ( "$pushed" == true || "$created" == true ) ]]; then
             for workflow in demo-release.yml mobile-native.yml application-accessibility.yml portable-tooling.yml; do
               gh workflow run "$workflow" --ref "$UPDATE_BRANCH"
             done

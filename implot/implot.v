@@ -71,8 +71,8 @@ SOFTWARE.
 */
 
 
-pub const version = '1.1 WIP'
-pub const version_num = 10100
+pub const version = '1.2 WIP'
+pub const version_num = 10200
 
 pub type BindingFixedArray1 = [16]ImVec4_c
 pub type BindingFixedArray2 = [16]i8
@@ -150,7 +150,6 @@ pub type ImGuiMouseCursor = i32
 pub type ImGuiStyleVar = i32
 pub type ImGuiTableBgTarget = i32
 pub type ImDrawFlags = i32
-pub type ImDrawListFlags = i32
 pub type ImDrawTextFlags = i32
 pub type ImFontFlags = i32
 pub type ImFontAtlasFlags = i32
@@ -251,6 +250,7 @@ pub enum ImGuiItemFlags_ {
  live_edit_on_input_text            = 1 << 7
  live_edit_on_input_scalar          = 1 << 8
  live_edit_on_input                 = 1 << 7 | 1 << 8
+ mixed_value                        = 1 << 9
 }
 
 
@@ -980,7 +980,7 @@ pub enum ImGuiTableBgTarget_ {
 
 pub type ImVector_ImWchar = imgui.ImVector_ImWchar
 
-pub type ImVector_ImGuiTextRange = imgui.ImVector_TextRange
+pub type ImVector_ImGuiTextFilterItem = imgui.ImVector_TextFilterItem
 
 pub type ImVector_char = imgui.ImVector_char
 
@@ -1050,29 +1050,35 @@ pub type ImDrawListSplitter = imgui.ImDrawListSplitter
 
 pub enum ImDrawFlags_ {
  none                               = 0
- round_corners_top_left             = 1 << 4
- round_corners_top_right            = 1 << 5
- round_corners_bottom_left          = 1 << 6
- round_corners_bottom_right         = 1 << 7
- round_corners_none                 = 1 << 8
- round_corners_all                  = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
- round_corners_top                  = 1 << 4 | 1 << 5
- round_corners_bottom               = 1 << 6 | 1 << 7
- round_corners_left                 = 1 << 4 | 1 << 6
- round_corners_right                = 1 << 5 | 1 << 7
- round_corners_mask_                = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8
+ round_top_left                     = 1 << 4
+ round_top_right                    = 1 << 5
+ round_bottom_left                  = 1 << 6
+ round_bottom_right                 = 1 << 7
+ round_none                         = 1 << 8
+ round_all                          = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
+ round_top                          = 1 << 4 | 1 << 5
+ round_bottom                       = 1 << 6 | 1 << 7
+ round_left                         = 1 << 4 | 1 << 6
+ round_right                        = 1 << 5 | 1 << 7
  closed                             = 1 << 9
+ join_miter                         = 1 << 10
+ cap_square                         = 1 << 11
+ aa_fill                            = 1 << 12
+ aa_lines                           = 1 << 13
+ aa_line_ends                       = 1 << 14
+ stroke_inside                      = 1 << 17
+ stroke_center                      = 1 << 18
+ stroke_center_biased               = 1 << 17 | 1 << 18
+ stroke_outside                     = 1 << 19
+ stroke_legacy                      = 1 << 17 | 1 << 18 | 1 << 19
+ text_no_pixel_snap                 = 1 << 20
+ use_tex_for_round_corners          = 1 << 21
+ use_vtx_offset                     = 1 << 22
+ allow_tex_for_round_corners_       = 1 << 23
+ round_mask_                        = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8
+ allow_in_push_scope_               = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 17 | 1 << 18 | 1 << 19 | 1 << 20 | 1 << 21 | 1 << 22
+ allow_in_frame_scope_              = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 17 | 1 << 18 | 1 << 19 | 1 << 20 | 1 << 21 | 1 << 22 | 1 << 23
  invalid_mask_                      = -2147483633
-}
-
-
-pub enum ImDrawListFlags_ {
- none                               = 0
- anti_aliased_lines                 = 1 << 0
- anti_aliased_lines_use_tex         = 1 << 1
- anti_aliased_fill                  = 1 << 2
- allow_vtx_offset                   = 1 << 3
- text_no_pixel_snap                 = 1 << 4
 }
 
 pub type ImVector_ImDrawVert = imgui.ImVector_ImDrawVert
@@ -1084,6 +1090,8 @@ pub type ImVector_ImVec4 = imgui.ImVector_ImVec4
 pub type ImVector_ImTextureRef = imgui.ImVector_ImTextureRef
 
 pub type ImVector_ImU8 = imgui.ImVector_ImU8
+
+pub type ImSmallStack__ImDrawFlags__3 = imgui.ImSmallStack__ImDrawFlags__3
 
 pub type ImDrawList = imgui.ImDrawList
 
@@ -1132,6 +1140,7 @@ pub enum ImFontAtlasFlags_ {
  no_power_of_two_height             = 1 << 0
  no_mouse_cursors                   = 1 << 1
  no_baked_lines                     = 1 << 2
+ no_baked_round_corners             = 1 << 3
 }
 
 pub type ImVector_ImFontPtr = imgui.ImVector_ImFontPtr
@@ -1240,7 +1249,6 @@ pub enum ImGuiDataTypePrivate_ {
 
 pub enum ImGuiItemFlagsPrivate_ {
  read_only                          = 1 << 11
- mixed_value                        = 1 << 12
  no_window_hoverable_check          = 1 << 13
  allow_overlap                      = 1 << 14
  no_nav_disable_mouse_hover         = 1 << 15
@@ -1301,11 +1309,6 @@ pub enum ImGuiButtonFlagsPrivate_ {
  no_test_key_owner                  = 1 << 21
  no_focus                           = 1 << 22
  pressed_on_mask_                   = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9
-}
-
-
-pub enum ImGuiComboFlagsPrivate_ {
- custom_preview                     = 1 << 20
 }
 
 
@@ -2074,6 +2077,24 @@ pub fn im_draw_list_pop_texture(self &imgui.ImDrawList) {
 
 
 @[keep_args_alive]
+fn C.ImDrawList_PushDrawFlag(self &imgui.ImDrawList, flags imgui.ImDrawFlags, enabled bool)
+
+@[inline]
+pub fn im_draw_list_push_draw_flag(self &imgui.ImDrawList, flags imgui.ImDrawFlags, enabled bool) {
+	C.ImDrawList_PushDrawFlag(self, flags, enabled)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList_PopDrawFlag(self &imgui.ImDrawList)
+
+@[inline]
+pub fn im_draw_list_pop_draw_flag(self &imgui.ImDrawList) {
+	C.ImDrawList_PopDrawFlag(self)
+}
+
+
+@[keep_args_alive]
 fn C.ImDrawList_GetClipRectMin(self &imgui.ImDrawList) ImVec2_c
 
 @[inline]
@@ -2092,29 +2113,29 @@ pub fn im_draw_list_get_clip_rect_max(self &imgui.ImDrawList) ImVec2_c {
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddLine(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col u32, thickness f32)
+fn C.ImDrawList_AddLine(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col u32, thickness f32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_line(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col u32, thickness f32) {
-	C.ImDrawList_AddLine(self, p1, p2, col, thickness)
+pub fn im_draw_list_add_line(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col u32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddLine(self, p1, p2, col, thickness, flags)
 }
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddLineH(self &imgui.ImDrawList, min_x f32, max_x f32, y f32, col u32, thickness f32)
+fn C.ImDrawList_AddLineH(self &imgui.ImDrawList, min_x f32, max_x f32, y f32, col u32, thickness f32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_line_h(self &imgui.ImDrawList, min_x f32, max_x f32, y f32, col u32, thickness f32) {
-	C.ImDrawList_AddLineH(self, min_x, max_x, y, col, thickness)
+pub fn im_draw_list_add_line_h(self &imgui.ImDrawList, min_x f32, max_x f32, y f32, col u32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddLineH(self, min_x, max_x, y, col, thickness, flags)
 }
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddLineV(self &imgui.ImDrawList, x f32, min_y f32, max_y f32, col u32, thickness f32)
+fn C.ImDrawList_AddLineV(self &imgui.ImDrawList, x f32, min_y f32, max_y f32, col u32, thickness f32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_line_v(self &imgui.ImDrawList, x f32, min_y f32, max_y f32, col u32, thickness f32) {
-	C.ImDrawList_AddLineV(self, x, min_y, max_y, col, thickness)
+pub fn im_draw_list_add_line_v(self &imgui.ImDrawList, x f32, min_y f32, max_y f32, col u32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddLineV(self, x, min_y, max_y, col, thickness, flags)
 }
 
 
@@ -2146,11 +2167,11 @@ pub fn im_draw_list_add_rect_filled_multi_color(self &imgui.ImDrawList, p_min Im
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddQuad(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32)
+fn C.ImDrawList_AddQuad(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_quad(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32) {
-	C.ImDrawList_AddQuad(self, p1, p2, p3, p4, col, thickness)
+pub fn im_draw_list_add_quad(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddQuad(self, p1, p2, p3, p4, col, thickness, flags)
 }
 
 
@@ -2164,11 +2185,11 @@ pub fn im_draw_list_add_quad_filled(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVe
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddTriangle(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32)
+fn C.ImDrawList_AddTriangle(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_triangle(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32) {
-	C.ImDrawList_AddTriangle(self, p1, p2, p3, col, thickness)
+pub fn im_draw_list_add_triangle(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddTriangle(self, p1, p2, p3, col, thickness, flags)
 }
 
 
@@ -2182,11 +2203,11 @@ pub fn im_draw_list_add_triangle_filled(self &imgui.ImDrawList, p1 ImVec2_c, p2 
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddCircle(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32)
+fn C.ImDrawList_AddCircle(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_circle(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32) {
-	C.ImDrawList_AddCircle(self, center, radius, col, num_segments, thickness)
+pub fn im_draw_list_add_circle(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddCircle(self, center, radius, col, num_segments, thickness, flags)
 }
 
 
@@ -2200,11 +2221,11 @@ pub fn im_draw_list_add_circle_filled(self &imgui.ImDrawList, center ImVec2_c, r
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddNgon(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32)
+fn C.ImDrawList_AddNgon(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_ngon(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32) {
-	C.ImDrawList_AddNgon(self, center, radius, col, num_segments, thickness)
+pub fn im_draw_list_add_ngon(self &imgui.ImDrawList, center ImVec2_c, radius f32, col u32, num_segments i32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddNgon(self, center, radius, col, num_segments, thickness, flags)
 }
 
 
@@ -2218,11 +2239,11 @@ pub fn im_draw_list_add_ngon_filled(self &imgui.ImDrawList, center ImVec2_c, rad
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddEllipse(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, col u32, rot f32, num_segments i32, thickness f32)
+fn C.ImDrawList_AddEllipse(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, col u32, rot f32, num_segments i32, thickness f32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_ellipse(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, col u32, rot f32, num_segments i32, thickness f32) {
-	C.ImDrawList_AddEllipse(self, center, radius, col, rot, num_segments, thickness)
+pub fn im_draw_list_add_ellipse(self &imgui.ImDrawList, center ImVec2_c, radius ImVec2_c, col u32, rot f32, num_segments i32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddEllipse(self, center, radius, col, rot, num_segments, thickness, flags)
 }
 
 
@@ -2254,20 +2275,20 @@ pub fn im_draw_list_add_text_font_ptr(self &imgui.ImDrawList, font &imgui.ImFont
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddBezierCubic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32, num_segments i32)
+fn C.ImDrawList_AddBezierCubic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32, num_segments i32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_bezier_cubic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32, num_segments i32) {
-	C.ImDrawList_AddBezierCubic(self, p1, p2, p3, p4, col, thickness, num_segments)
+pub fn im_draw_list_add_bezier_cubic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col u32, thickness f32, num_segments i32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddBezierCubic(self, p1, p2, p3, p4, col, thickness, num_segments, flags)
 }
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddBezierQuadratic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32, num_segments i32)
+fn C.ImDrawList_AddBezierQuadratic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32, num_segments i32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_bezier_quadratic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32, num_segments i32) {
-	C.ImDrawList_AddBezierQuadratic(self, p1, p2, p3, col, thickness, num_segments)
+pub fn im_draw_list_add_bezier_quadratic(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col u32, thickness f32, num_segments i32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddBezierQuadratic(self, p1, p2, p3, col, thickness, num_segments, flags)
 }
 
 
@@ -2281,11 +2302,11 @@ pub fn im_draw_list_add_polyline(self &imgui.ImDrawList, points &ImVec2_c, num_p
 
 
 @[keep_args_alive]
-fn C.ImDrawList_AddConvexPolyFilled(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32)
+fn C.ImDrawList_AddConvexPolyFilled(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_convex_poly_filled(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32) {
-	C.ImDrawList_AddConvexPolyFilled(self, points, num_points, col)
+pub fn im_draw_list_add_convex_poly_filled(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_AddConvexPolyFilled(self, points, num_points, col, flags)
 }
 
 
@@ -2353,11 +2374,11 @@ pub fn im_draw_list_path_line_to_merge_duplicate(self &imgui.ImDrawList, pos ImV
 
 
 @[keep_args_alive]
-fn C.ImDrawList_PathFillConvex(self &imgui.ImDrawList, col u32)
+fn C.ImDrawList_PathFillConvex(self &imgui.ImDrawList, col u32, flags imgui.ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_path_fill_convex(self &imgui.ImDrawList, col u32) {
-	C.ImDrawList_PathFillConvex(self, col)
+pub fn im_draw_list_path_fill_convex(self &imgui.ImDrawList, col u32, flags imgui.ImDrawFlags) {
+	C.ImDrawList_PathFillConvex(self, col, flags)
 }
 
 
@@ -2578,6 +2599,15 @@ pub fn im_draw_list__reset_for_new_frame(self &imgui.ImDrawList) {
 
 
 @[keep_args_alive]
+fn C.ImDrawList__SetPixelDensity(self &imgui.ImDrawList, pixel_density f32)
+
+@[inline]
+pub fn im_draw_list__set_pixel_density(self &imgui.ImDrawList, pixel_density f32) {
+	C.ImDrawList__SetPixelDensity(self, pixel_density)
+}
+
+
+@[keep_args_alive]
 fn C.ImDrawList__ClearFreeMemory(self &imgui.ImDrawList)
 
 @[inline]
@@ -2664,6 +2694,69 @@ fn C.ImDrawList__PathArcToN(self &imgui.ImDrawList, center ImVec2_c, radius f32,
 @[inline]
 pub fn im_draw_list__path_arc_to_n(self &imgui.ImDrawList, center ImVec2_c, radius f32, a_min f32, a_max f32, num_segments i32) {
 	C.ImDrawList__PathArcToN(self, center, radius, a_min, a_max, num_segments)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__AddRectFilledBaked(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, r f32, tex_uvs ImVec4_c, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__add_rect_filled_baked(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, r f32, tex_uvs ImVec4_c, flags imgui.ImDrawFlags) {
+	C.ImDrawList__AddRectFilledBaked(self, p_min, p_max, col, r, tex_uvs, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__AddRectBaked(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, r f32, t f32, tex_uvs ImVec4_c, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__add_rect_baked(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, r f32, t f32, tex_uvs ImVec4_c, flags imgui.ImDrawFlags) {
+	C.ImDrawList__AddRectBaked(self, p_min, p_max, col, r, t, tex_uvs, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__AddLine(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col u32, thickness f32, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__add_line(self &imgui.ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col u32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList__AddLine(self, p1, p2, col, thickness, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__AddRectTinyRounding(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, rounding f32, thickness f32, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__add_rect_tiny_rounding(self &imgui.ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col u32, rounding f32, thickness f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList__AddRectTinyRounding(self, p_min, p_max, col, rounding, thickness, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__SelectLineTexture(self &imgui.ImDrawList, screen_thickness f32, out_uv0 &ImVec2_c, out_uv1 &ImVec2_c, out_fringe &f32, flags imgui.ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__select_line_texture(self &imgui.ImDrawList, screen_thickness f32, out_uv0 &ImVec2_c, out_uv1 &ImVec2_c, out_fringe &f32, flags imgui.ImDrawFlags) {
+	C.ImDrawList__SelectLineTexture(self, screen_thickness, out_uv0, out_uv1, out_fringe, flags)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__CalculateCenterBiasedOffset(self &imgui.ImDrawList, thickness f32) f32
+
+@[inline]
+pub fn im_draw_list__calculate_center_biased_offset(self &imgui.ImDrawList, thickness f32) f32 {
+	return C.ImDrawList__CalculateCenterBiasedOffset(self, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImDrawList__AddPolyline(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32, thickness f32, flags imgui.ImDrawFlags, max_inner_offset f32)
+
+@[inline]
+pub fn im_draw_list__add_polyline(self &imgui.ImDrawList, points &ImVec2_c, num_points i32, col u32, thickness f32, flags imgui.ImDrawFlags, max_inner_offset f32) {
+	C.ImDrawList__AddPolyline(self, points, num_points, col, thickness, flags, max_inner_offset)
 }
 
 
@@ -3316,11 +3409,20 @@ pub fn im_font_clear_output_data(self &imgui.ImFont) {
 
 
 @[keep_args_alive]
-fn C.ImFont_AddRemapChar(self &imgui.ImFont, from_codepoint u32, to_codepoint u32)
+fn C.ImFont_AddRemapCodepoint(self &imgui.ImFont, from_codepoint u32, to_codepoint u32)
 
 @[inline]
-pub fn im_font_add_remap_char(self &imgui.ImFont, from_codepoint u32, to_codepoint u32) {
-	C.ImFont_AddRemapChar(self, from_codepoint, to_codepoint)
+pub fn im_font_add_remap_codepoint(self &imgui.ImFont, from_codepoint u32, to_codepoint u32) {
+	C.ImFont_AddRemapCodepoint(self, from_codepoint, to_codepoint)
+}
+
+
+@[keep_args_alive]
+fn C.ImFont_AddRemapCodepointToGlyphIndex(self &imgui.ImFont, from_codepoint u32, font_src_idx i32, glyph_idx i32)
+
+@[inline]
+pub fn im_font_add_remap_codepoint_to_glyph_index(self &imgui.ImFont, from_codepoint u32, font_src_idx i32, glyph_idx i32) {
+	C.ImFont_AddRemapCodepointToGlyphIndex(self, from_codepoint, font_src_idx, glyph_idx)
 }
 
 
@@ -4055,6 +4157,7 @@ pub enum AxisFlags_ {
  pan_stretch                        = 1 << 13
  lock_min                           = 1 << 14
  lock_max                           = 1 << 15
+ tick_labels_inside                 = 1 << 16
  lock                               = 1 << 14 | 1 << 15
  no_decorations                     = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3
  aux_default                        = 1 << 1 | 1 << 8
@@ -4104,6 +4207,8 @@ pub enum DragToolFlags_ {
  no_fit                             = 1 << 1
  no_inputs                          = 1 << 2
  delayed                            = 1 << 3
+ no_move                            = 1 << 4
+ no_resize                          = 1 << 5
 }
 
 
@@ -4312,6 +4417,8 @@ pub enum Marker_ {
  cross
  plus
  asterisk
+ vertical
+ horizontal
  count
 }
 
@@ -4950,6 +5057,16 @@ pub mut:
 }
 
 
+pub type ImVector_ImRect = C.ImVector_ImRect
+@[typedef]
+pub struct C.ImVector_ImRect {
+pub mut:
+	Size i32
+	Capacity i32
+	Data &ImRect_c
+}
+
+
 pub type ImPool_AlignmentData = C.ImPool_ImPlotAlignmentData
 @[typedef]
 pub struct C.ImPool_ImPlotAlignmentData {
@@ -4984,6 +5101,7 @@ pub mut:
 	TempDouble1 ImVector_double
 	TempDouble2 ImVector_double
 	TempInt1 ImVector_int
+	TempRect1 ImVector_ImRect
 	DigitalPlotItemCnt i32
 	DigitalPlotOffset i32
 	NextPlotData NextPlotData
@@ -8389,6 +8507,15 @@ pub fn hide_next_item(hidden bool, cond Cond) {
 
 
 @[keep_args_alive]
+fn C.ImPlot_IsItemHidden(label_id &char) bool
+
+@[inline]
+pub fn is_item_hidden(label_id &char) bool {
+	return C.ImPlot_IsItemHidden(label_id)
+}
+
+
+@[keep_args_alive]
 fn C.ImPlot_BeginAlignedPlots(group_id &char, vertical bool) bool
 
 @[inline]
@@ -8619,6 +8746,15 @@ fn C.ImPlot_GetLastItemColor() ImVec4_c
 @[inline]
 pub fn get_last_item_color() ImVec4_c {
 	return C.ImPlot_GetLastItemColor()
+}
+
+
+@[keep_args_alive]
+fn C.ImPlot_IsLastItemHidden() bool
+
+@[inline]
+pub fn is_last_item_hidden() bool {
+	return C.ImPlot_IsLastItemHidden()
 }
 
 
@@ -9177,6 +9313,15 @@ fn C.ImPlot_ImPosMod(l i32, r i32) i32
 @[inline]
 pub fn im_pos_mod(l i32, r i32) i32 {
 	return C.ImPlot_ImPosMod(l, r)
+}
+
+
+@[keep_args_alive]
+fn C.ImPlot_ImDoubleBits(val f64) u64
+
+@[inline]
+pub fn im_double_bits(val f64) u64 {
+	return C.ImPlot_ImDoubleBits(val)
 }
 
 
@@ -10594,6 +10739,15 @@ pub fn axis_has_tick_labels(self &Axis) bool {
 
 
 @[keep_args_alive]
+fn C.ImPlotAxis_HasTickLabelsInside(self &Axis) bool
+
+@[inline]
+pub fn axis_has_tick_labels_inside(self &Axis) bool {
+	return C.ImPlotAxis_HasTickLabelsInside(self)
+}
+
+
+@[keep_args_alive]
 fn C.ImPlotAxis_HasTickMarks(self &Axis) bool
 
 @[inline]
@@ -11634,6 +11788,24 @@ fn C.ImPlot_RenderColorBar(colors &u32, size i32, draw_list &imgui.ImDrawList, b
 @[inline]
 pub fn render_color_bar(colors &u32, size i32, draw_list &imgui.ImDrawList, bounds ImRect_c, vert bool, reversed bool, continuous bool) {
 	C.ImPlot_RenderColorBar(colors, size, draw_list, bounds, vert, reversed, continuous)
+}
+
+
+@[keep_args_alive]
+fn C.ImPlot_AddLineH(draw_list &imgui.ImDrawList, x1 f32, x2 f32, y f32, col u32, thickness f32)
+
+@[inline]
+pub fn add_line_h(draw_list &imgui.ImDrawList, x1 f32, x2 f32, y f32, col u32, thickness f32) {
+	C.ImPlot_AddLineH(draw_list, x1, x2, y, col, thickness)
+}
+
+
+@[keep_args_alive]
+fn C.ImPlot_AddLineV(draw_list &imgui.ImDrawList, x f32, y1 f32, y2 f32, col u32, thickness f32)
+
+@[inline]
+pub fn add_line_v(draw_list &imgui.ImDrawList, x f32, y1 f32, y2 f32, col u32, thickness f32) {
+	C.ImPlot_AddLineV(draw_list, x, y1, y2, col, thickness)
 }
 
 

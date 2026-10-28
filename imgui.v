@@ -66,8 +66,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-pub const version = '1.92.9b'
-pub const version_num = 19291
+pub const version = '1.93.0'
+pub const version_num = 19300
 
 pub type BindingFixedArray1 = [61]ImVec4_c
 pub type BindingFixedArray2 = [5]bool
@@ -77,29 +77,33 @@ pub type BindingFixedArray5 = [5]f64
 pub type BindingFixedArray6 = [5]ImU16
 pub type BindingFixedArray7 = [5]f32
 pub type BindingFixedArray8 = [33]i8
-pub type BindingFixedArray9 = [40]i8
-pub type BindingFixedArray10 = [33]ImVec4_c
-pub type BindingFixedArray11 = [1]ImU8
-pub type BindingFixedArray12 = [48]ImVec2_c
-pub type BindingFixedArray13 = [64]ImU8
-pub type BindingFixedArray14 = [8]ImU8
-pub type BindingFixedArray15 = [4]ImU16
-pub type BindingFixedArray16 = [5]ImU32
-pub type BindingFixedArray17 = [155]KeyRoutingIndex
-pub type BindingFixedArray18 = [64]i8
-pub type BindingFixedArray19 = [2]ImRect_c
-pub type BindingFixedArray20 = [2]f32
-pub type BindingFixedArray21 = [6]DebugAllocEntry
-pub type BindingFixedArray22 = [16]i8
-pub type BindingFixedArray23 = [155]KeyOwnerData
-pub type BindingFixedArray24 = [16]u8
-pub type BindingFixedArray25 = [60]f32
-pub type BindingFixedArray26 = [2]ID
-pub type BindingFixedArray27 = [2]ImVec2_c
-pub type BindingFixedArray28 = [2]ImU32
-pub type BindingFixedArray29 = [80]i8
-pub type BindingFixedArray30 = [99]StbUndoRecord
-pub type BindingFixedArray31 = [999]i8
+pub type BindingFixedArray9 = [256]i8
+pub type BindingFixedArray10 = [3]ImDrawFlags
+pub type BindingFixedArray11 = [40]i8
+pub type BindingFixedArray12 = [1]ImU8
+pub type BindingFixedArray13 = [48]ImVec2_c
+pub type BindingFixedArray14 = [64]ImU8
+pub type BindingFixedArray15 = [8]ImU8
+pub type BindingFixedArray16 = [4]ImU16
+pub type BindingFixedArray17 = [5]ImU32
+pub type BindingFixedArray18 = [155]KeyRoutingIndex
+pub type BindingFixedArray19 = [64]i8
+pub type BindingFixedArray20 = [2]ImRect_c
+pub type BindingFixedArray21 = [2]i32
+pub type BindingFixedArray22 = [2]f32
+pub type BindingFixedArray23 = [6]DebugAllocEntry
+pub type BindingFixedArray24 = [16]i8
+pub type BindingFixedArray25 = [155]KeyOwnerData
+pub type BindingFixedArray26 = [16]u8
+pub type BindingFixedArray27 = [60]f32
+pub type BindingFixedArray28 = [2]ID
+pub type BindingFixedArray29 = [2]ImVec2_c
+pub type BindingFixedArray30 = [2]ImU32
+pub type BindingFixedArray31 = [80]i8
+pub type BindingFixedArray32 = [46]ImVec4_c
+pub type BindingFixedArray33 = [64]ImVec4_c
+pub type BindingFixedArray34 = [99]StbUndoRecord
+pub type BindingFixedArray35 = [999]i8
 
 pub type ImWchar = u32
 
@@ -130,11 +134,6 @@ pub type ImTextureRef = C.ImTextureRef_c
 pub type ImVec2 = C.ImVec2_c
 pub type ImVec2i = C.ImVec2i_c
 pub type ImVec4 = C.ImVec4_c
-
-pub type TextFilter = C.ImGuiTextFilter
-
-@[typedef]
-pub struct C.ImGuiTextFilter {}
 
 pub type InputTextDeactivateData = C.ImGuiInputTextDeactivateData
 
@@ -168,7 +167,6 @@ pub type MouseCursor = i32
 pub type StyleVar = i32
 pub type TableBgTarget = i32
 pub type ImDrawFlags = i32
-pub type ImDrawListFlags = i32
 pub type ImDrawTextFlags = i32
 pub type ImFontFlags = i32
 pub type ImFontAtlasFlags = i32
@@ -282,6 +280,7 @@ pub enum ItemFlags_ {
 	live_edit_on_input_text   = 1 << 7
 	live_edit_on_input_scalar = 1 << 8
 	live_edit_on_input        = 1 << 7 | 1 << 8
+	mixed_value               = 1 << 9
 }
 
 pub enum InputTextFlags_ {
@@ -1069,9 +1068,9 @@ pub mut:
 	DisplaySafeAreaPadding           ImVec2_c
 	MouseCursorScale                 f32
 	AntiAliasedLines                 bool
-	AntiAliasedLinesUseTex           bool
+	AntiAliasedLineEnds              bool
 	AntiAliasedFill                  bool
-	CurveTessellationTol             f32
+	CurveTessellationMaxError        f32
 	CircleTessellationMaxError       f32
 	Colors                           BindingFixedArray1
 	HoverStationaryDelay             f32
@@ -1159,6 +1158,7 @@ pub mut:
 	ConfigDebugBeginReturnValueOnce               bool
 	ConfigDebugBeginReturnValueLoop               bool
 	ConfigDebugIgnoreFocusLoss                    bool
+	ConfigDebugDrawListDefaultsToStrokeLegacy     bool
 	BackendPlatformName                           &char
 	BackendRendererName                           &char
 	BackendPlatformUserData                       voidptr
@@ -1269,23 +1269,24 @@ pub mut:
 	RefFrame i32
 }
 
-pub type TextRange = C.ImGuiTextRange
+pub type ImVector_TextFilterItem = C.ImVector_ImGuiTextFilterItem
 
 @[typedef]
-pub struct C.ImGuiTextRange {
-pub mut:
-	B &char
-	E &char
-}
-
-pub type ImVector_TextRange = C.ImVector_ImGuiTextRange
-
-@[typedef]
-pub struct C.ImVector_ImGuiTextRange {
+pub struct C.ImVector_ImGuiTextFilterItem {
 pub mut:
 	Size     i32
 	Capacity i32
-	Data     &TextRange
+	Data     &TextFilterItem
+}
+
+pub type TextFilter = C.ImGuiTextFilter
+
+@[typedef]
+pub struct C.ImGuiTextFilter {
+pub mut:
+	InputBuf      BindingFixedArray9
+	_CountExclude i32
+	_Items        ImVector_TextFilterItem
 }
 
 pub type ImVector_char = C.ImVector_char
@@ -1538,29 +1539,36 @@ pub mut:
 }
 
 pub enum ImDrawFlags_ {
-	none                       = 0
-	round_corners_top_left     = 1 << 4
-	round_corners_top_right    = 1 << 5
-	round_corners_bottom_left  = 1 << 6
-	round_corners_bottom_right = 1 << 7
-	round_corners_none         = 1 << 8
-	round_corners_all          = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
-	round_corners_top          = 1 << 4 | 1 << 5
-	round_corners_bottom       = 1 << 6 | 1 << 7
-	round_corners_left         = 1 << 4 | 1 << 6
-	round_corners_right        = 1 << 5 | 1 << 7
-	round_corners_mask_        = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8
-	closed                     = 1 << 9
-	invalid_mask_              = -2147483633
-}
-
-pub enum ImDrawListFlags_ {
-	none                       = 0
-	anti_aliased_lines         = 1 << 0
-	anti_aliased_lines_use_tex = 1 << 1
-	anti_aliased_fill          = 1 << 2
-	allow_vtx_offset           = 1 << 3
-	text_no_pixel_snap         = 1 << 4
+	none                         = 0
+	round_top_left               = 1 << 4
+	round_top_right              = 1 << 5
+	round_bottom_left            = 1 << 6
+	round_bottom_right           = 1 << 7
+	round_none                   = 1 << 8
+	round_all                    = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7
+	round_top                    = 1 << 4 | 1 << 5
+	round_bottom                 = 1 << 6 | 1 << 7
+	round_left                   = 1 << 4 | 1 << 6
+	round_right                  = 1 << 5 | 1 << 7
+	closed                       = 1 << 9
+	join_miter                   = 1 << 10
+	cap_square                   = 1 << 11
+	aa_fill                      = 1 << 12
+	aa_lines                     = 1 << 13
+	aa_line_ends                 = 1 << 14
+	stroke_inside                = 1 << 17
+	stroke_center                = 1 << 18
+	stroke_center_biased         = 1 << 17 | 1 << 18
+	stroke_outside               = 1 << 19
+	stroke_legacy                = 1 << 17 | 1 << 18 | 1 << 19
+	text_no_pixel_snap           = 1 << 20
+	use_tex_for_round_corners    = 1 << 21
+	use_vtx_offset               = 1 << 22
+	allow_tex_for_round_corners_ = 1 << 23
+	round_mask_                  = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8
+	allow_in_push_scope_         = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 17 | 1 << 18 | 1 << 19 | 1 << 20 | 1 << 21 | 1 << 22
+	allow_in_frame_scope_        = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 12 | 1 << 13 | 1 << 14 | 1 << 17 | 1 << 18 | 1 << 19 | 1 << 20 | 1 << 21 | 1 << 22 | 1 << 23
+	invalid_mask_                = -2147483633
 }
 
 pub type ImVector_ImDrawVert = C.ImVector_ImDrawVert
@@ -1613,27 +1621,39 @@ pub mut:
 	Data     &ImU8
 }
 
+pub type ImSmallStack__ImDrawFlags__3 = C.ImSmallStack__ImDrawFlags__3
+
+@[typedef]
+pub struct C.ImSmallStack__ImDrawFlags__3 {
+pub mut:
+	LocalData BindingFixedArray10
+	Size      ImU16
+}
+
 pub type ImDrawList = C.ImDrawList
 
 @[typedef]
 pub struct C.ImDrawList {
 pub mut:
-	CmdBuffer         ImVector_ImDrawCmd
-	IdxBuffer         ImVector_ImDrawIdx
-	VtxBuffer         ImVector_ImDrawVert
-	Flags             ImDrawListFlags
-	_VtxCurrentIdx    u32
-	_Data             &ImDrawListSharedData
-	_VtxWritePtr      &ImDrawVert
-	_IdxWritePtr      &ImDrawIdx
-	_Path             ImVector_ImVec2
-	_CmdHeader        ImDrawCmdHeader
-	_Splitter         ImDrawListSplitter
-	_ClipRectStack    ImVector_ImVec4
-	_TextureStack     ImVector_ImTextureRef
-	_CallbacksDataBuf ImVector_ImU8
-	_FringeScale      f32
-	_OwnerName        &char
+	CmdBuffer             ImVector_ImDrawCmd
+	IdxBuffer             ImVector_ImDrawIdx
+	VtxBuffer             ImVector_ImDrawVert
+	Flags                 ImDrawFlags
+	_VtxCurrentIdx        u32
+	_Data                 &ImDrawListSharedData
+	_VtxWritePtr          &ImDrawVert
+	_IdxWritePtr          &ImDrawIdx
+	_Path                 ImVector_ImVec2
+	_CmdHeader            ImDrawCmdHeader
+	_Splitter             ImDrawListSplitter
+	_ClipRectStack        ImVector_ImVec4
+	_TextureStack         ImVector_ImTextureRef
+	_CallbacksDataBuf     ImVector_ImU8
+	_DrawFlagsStack       ImSmallStack__ImDrawFlags__3
+	_FringeScale          f32
+	_InvFringeScale       f32
+	_FringeScaleIsInteger bool
+	_OwnerName            &char
 }
 
 pub type ImVector_ImDrawListPtr = C.ImVector_ImDrawListPtr
@@ -1736,7 +1756,7 @@ pub type ImFontConfig = C.ImFontConfig
 @[typedef]
 pub struct C.ImFontConfig {
 pub mut:
-	Name                 BindingFixedArray9
+	Name                 BindingFixedArray11
 	FontData             voidptr
 	FontDataSize         i32
 	FontDataOwnedByAtlas bool
@@ -1822,6 +1842,7 @@ pub enum ImFontAtlasFlags_ {
 	no_power_of_two_height = 1 << 0
 	no_mouse_cursors       = 1 << 1
 	no_baked_lines         = 1 << 2
+	no_baked_round_corners = 1 << 3
 }
 
 pub type ImVector_ImFontPtr = C.ImVector_ImFontPtr
@@ -1878,7 +1899,6 @@ pub mut:
 	TexUvWhitePixel     ImVec2_c
 	Fonts               ImVector_ImFontPtr
 	Sources             ImVector_ImFontConfig
-	TexUvLines          BindingFixedArray10
 	TexNextUniqueID     i32
 	FontNextUniqueID    i32
 	DrawListSharedDatas ImVector_ImDrawListSharedDataPtr
@@ -1977,7 +1997,7 @@ pub mut:
 	Sources                  ImVector_ImFontConfigPtr
 	EllipsisChar             ImWchar
 	FallbackChar             ImWchar
-	Used8kPagesMap           BindingFixedArray11
+	Used8kPagesMap           BindingFixedArray12
 	EllipsisAutoBake         bool
 	RemapPairs               Storage
 }
@@ -2025,6 +2045,7 @@ pub mut:
 	DrawCallback_ResetRenderState  ImDrawCallback
 	DrawCallback_SetSamplerLinear  ImDrawCallback
 	DrawCallback_SetSamplerNearest ImDrawCallback
+	DrawCallback_SetSamplerFromTex ImDrawCallback
 	Textures                       ImVector_ImTextureDataPtr
 }
 
@@ -2142,6 +2163,17 @@ pub mut:
 	EndOffset i32
 }
 
+pub type TextFilterItem = C.ImGuiTextFilterItem
+
+@[typedef]
+pub struct C.ImGuiTextFilterItem {
+pub mut:
+	Begin             &char
+	Len               i32
+	CountInclude      i16
+	MatchIncludesMask u16
+}
+
 pub type PackedDate = C.ImGuiPackedDate
 
 @[typedef]
@@ -2159,21 +2191,21 @@ pub struct C.ImDrawListSharedData {
 pub mut:
 	TexUvWhitePixel            ImVec2_c
 	TexUvLines                 &ImVec4_c
+	TexUvCorners               &ImVec4_c
 	FontAtlas                  &ImFontAtlas
 	Font                       &ImFont
 	FontSize                   f32
 	FontScale                  f32
-	CurveTessellationTol       f32
+	CurveTessellationMaxError  f32
 	CircleTessellationMaxError f32
-	InitialFringeScale         f32
-	InitialFlags               ImDrawListFlags
+	InitialDrawFlags           ImDrawFlags
 	ClipRectFullscreen         ImVec4_c
 	TempBuffer                 ImVector_ImVec2
 	DrawLists                  ImVector_ImDrawListPtr
 	Context                    &Context
-	ArcFastVtx                 BindingFixedArray12
+	ArcFastVtx                 BindingFixedArray13
 	ArcFastRadiusCutoff        f32
-	CircleSegmentCounts        BindingFixedArray13
+	CircleSegmentCounts        BindingFixedArray14
 }
 
 pub type ImDrawDataBuilder = C.ImDrawDataBuilder
@@ -2227,7 +2259,7 @@ pub type DataTypeStorage = C.ImGuiDataTypeStorage
 @[typedef]
 pub struct C.ImGuiDataTypeStorage {
 pub mut:
-	Data BindingFixedArray14
+	Data BindingFixedArray15
 }
 
 pub type DataTypeInfo = C.ImGuiDataTypeInfo
@@ -2248,7 +2280,6 @@ pub enum DataTypePrivate_ {
 
 pub enum ItemFlagsPrivate_ {
 	read_only                  = 1 << 11
-	mixed_value                = 1 << 12
 	no_window_hoverable_check  = 1 << 13
 	allow_overlap              = 1 << 14
 	no_nav_disable_mouse_hover = 1 << 15
@@ -2305,10 +2336,6 @@ pub enum ButtonFlagsPrivate_ {
 	no_test_key_owner                 = 1 << 21
 	no_focus                          = 1 << 22
 	pressed_on_mask_                  = 1 << 4 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9
-}
-
-pub enum ComboFlagsPrivate_ {
-	custom_preview = 1 << 20
 }
 
 pub enum SliderFlagsPrivate_ {
@@ -2392,7 +2419,10 @@ pub mut:
 	BackupCursorMaxPos           ImVec2_c
 	BackupCursorPosPrevLine      ImVec2_c
 	BackupPrevLineTextBaseOffset f32
+	BackupWorkRectMaxX           f32
+	BackupContentRectMaxX        f32
 	BackupLayout                 LayoutType
+	WithinPreview                i32
 }
 
 pub type GroupData = C.ImGuiGroupData
@@ -2428,7 +2458,7 @@ pub mut:
 	OffsetLabel    ImU16
 	OffsetShortcut ImU16
 	OffsetMark     ImU16
-	Widths         BindingFixedArray15
+	Widths         BindingFixedArray16
 }
 
 pub type InputTextDeactivatedState = C.ImGuiInputTextDeactivatedState
@@ -2486,6 +2516,7 @@ pub mut:
 	SelectedAllMouseLock bool
 	EditedBefore         bool
 	EditedThisFrame      bool
+	ValidatedThisFrame   bool
 	WantReloadUserBuf    bool
 	LastMoveDirectionLR  ImS8
 	ReloadSelectionStart i32
@@ -2533,8 +2564,10 @@ pub mut:
 	SizeVal              ImVec2_c
 	ContentSizeVal       ImVec2_c
 	ScrollVal            ImVec2_c
-	WindowFlags          i32
-	ChildFlags           i32
+	WindowFlagsSet       WindowFlags
+	WindowFlagsClear     WindowFlags
+	ChildFlagsSet        ChildFlags
+	ChildFlagsClear      ChildFlags
 	CollapsedVal         bool
 	SizeConstraintRect   ImRect_c
 	SizeCallback         SizeCallback
@@ -2630,6 +2663,7 @@ pub mut:
 	StackSizesInBegin                   ErrorRecoveryState
 	DisabledOverrideReenable            bool
 	DisabledOverrideReenableAlphaBackup f32
+	ParentLastComboPreviewRect          ImRect_c
 }
 
 pub type ShrinkWidthItem = C.ImGuiShrinkWidthItem
@@ -2688,7 +2722,7 @@ pub type ImBitArray_Key_NamedKey_COUNT__lessKey_NamedKey_BEGIN = C.ImBitArray_Im
 @[typedef]
 pub struct C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN {
 pub mut:
-	Data BindingFixedArray16
+	Data BindingFixedArray17
 }
 
 pub type ImBitArrayForNamedKeys = C.ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN
@@ -2809,7 +2843,7 @@ pub type KeyRoutingTable = C.ImGuiKeyRoutingTable
 @[typedef]
 pub struct C.ImGuiKeyRoutingTable {
 pub mut:
-	Index       BindingFixedArray17
+	Index       BindingFixedArray18
 	Entries     ImVector_KeyRoutingData
 	EntriesNext ImVector_KeyRoutingData
 }
@@ -2990,7 +3024,7 @@ pub type TypingSelectState = C.ImGuiTypingSelectState
 pub struct C.ImGuiTypingSelectState {
 pub mut:
 	Request            TypingSelectRequest
-	SearchBuffer       BindingFixedArray18
+	SearchBuffer       BindingFixedArray19
 	FocusScope         ID
 	LastRequestFrame   i32
 	LastRequestTime    f32
@@ -3069,7 +3103,7 @@ pub mut:
 	Window                &Window
 	UnclipMode            bool
 	UnclipRect            ImRect_c
-	UnclipRects           BindingFixedArray19
+	UnclipRects           BindingFixedArray20
 	BoxSelectRectPrev     ImRect_c
 	BoxSelectRectCurr     ImRect_c
 }
@@ -3117,15 +3151,16 @@ pub type ViewportP = C.ImGuiViewportP
 @[typedef]
 pub struct C.ImGuiViewportP {
 pub mut:
-	_ImGuiViewport              Viewport
-	BgFgDrawListsLastTimeActive BindingFixedArray20
+	_ImGuiViewport               Viewport
 	BgFgDrawLists[2]&ImDrawList
-	DrawDataP                   ImDrawData
-	DrawDataBuilder             ImDrawDataBuilder
-	WorkInsetMin                ImVec2_c
-	WorkInsetMax                ImVec2_c
-	BuildWorkInsetMin           ImVec2_c
-	BuildWorkInsetMax           ImVec2_c
+	BgFgDrawListsLastFrameActive BindingFixedArray21
+	BgFgDrawListsLastTimeActive  BindingFixedArray22
+	DrawDataP                    ImDrawData
+	DrawDataBuilder              ImDrawDataBuilder
+	WorkInsetMin                 ImVec2_c
+	WorkInsetMax                 ImVec2_c
+	BuildWorkInsetMin            ImVec2_c
+	BuildWorkInsetMax            ImVec2_c
 }
 
 pub type WindowSettings = C.ImGuiWindowSettings
@@ -3239,7 +3274,7 @@ pub mut:
 	TotalAllocCount i32
 	TotalFreeCount  i32
 	LastEntriesIdx  ImS16
-	LastEntriesBuf  BindingFixedArray21
+	LastEntriesBuf  BindingFixedArray23
 }
 
 pub type MetricsConfig = C.ImGuiMetricsConfig
@@ -3651,7 +3686,7 @@ pub mut:
 	FrameCountEnded                    i32
 	FrameCountRendered                 i32
 	Time                               f64
-	ContextName                        BindingFixedArray22
+	ContextName                        BindingFixedArray24
 	IO                                 IO
 	PlatformIO                         PlatformIO
 	Style                              Style
@@ -3661,7 +3696,7 @@ pub mut:
 	FontSize                           f32
 	FontSizeBase                       f32
 	FontBakedScale                     f32
-	FontRasterizerDensity              f32
+	CurrentPixelDensity                f32
 	CurrentDpiScale                    f32
 	DrawListSharedData                 ImDrawListSharedData
 	WithinEndChildID                   ID
@@ -3691,6 +3726,7 @@ pub mut:
 	WheelingWindowReleaseTimer         f32
 	WheelingWindowWheelRemainder       ImVec2_c
 	WheelingAxisAvg                    ImVec2_c
+	MixedValueLabel                    &char
 	DebugDrawIdConflictsId             ID
 	DebugHookIdInfoId                  ID
 	HoveredId                          ID
@@ -3730,7 +3766,7 @@ pub mut:
 	LastKeyModsChangeFromNoneTime      f64
 	LastKeyboardKeyPressTime           f64
 	KeysMayBeCharInput                 ImBitArrayForNamedKeys
-	KeysOwnerData                      BindingFixedArray23
+	KeysOwnerData                      BindingFixedArray25
 	KeysRoutingTable                   KeyRoutingTable
 	ActiveIdUsingNavDirMask            ImU32
 	ActiveIdUsingAllKeyboardKeys       bool
@@ -3804,6 +3840,7 @@ pub mut:
 	NavJustMovedToFocusScopeId         ID
 	NavJustMovedToKeyMods              KeyChord
 	NavJustMovedToIsTabbing            bool
+	NavJustMovedToIsInit               bool
 	NavJustMovedToHasSelectionData     bool
 	ConfigNavEnableTabbing             bool
 	ConfigNavWindowingWithGamepad      bool
@@ -3839,7 +3876,7 @@ pub mut:
 	DragDropAcceptFrameCount           i32
 	DragDropHoldJustPressedId          ID
 	DragDropPayloadBufHeap             ImVector_unsigned_char
-	DragDropPayloadBufLocal            BindingFixedArray24
+	DragDropPayloadBufLocal            BindingFixedArray26
 	ClipperTempDataStacked             i32
 	ClipperTempData                    ImVector_ListClipperData
 	CurrentTable                       &Table
@@ -3954,7 +3991,7 @@ pub mut:
 	DebugItemPathQuery                 DebugItemPathQuery
 	DebugIDStackTool                   IDStackTool
 	DebugAllocInfo                     DebugAllocInfo
-	FramerateSecPerFrame               BindingFixedArray25
+	FramerateSecPerFrame               BindingFixedArray27
 	FramerateSecPerFrameIdx            i32
 	FramerateSecPerFrameCount          i32
 	FramerateSecPerFrameAccum          f32
@@ -3962,7 +3999,7 @@ pub mut:
 	WantCaptureKeyboardNextFrame       i32
 	WantTextInputNextFrame             i32
 	TempBuffer                         ImVector_char
-	TempKeychordName                   BindingFixedArray18
+	TempKeychordName                   BindingFixedArray19
 }
 
 pub type WindowTempData = C.ImGuiWindowTempData
@@ -4127,9 +4164,9 @@ pub mut:
 	RootWindowForNav                  &Window
 	ParentWindowForFocusRoute         &Window
 	NavLastChildNavWindow             &Window
-	NavLastIds                        BindingFixedArray26
-	NavRectRel                        BindingFixedArray19
-	NavPreferredScoringPosRel         BindingFixedArray27
+	NavLastIds                        BindingFixedArray28
+	NavRectRel                        BindingFixedArray20
+	NavPreferredScoringPosRel         BindingFixedArray29
 	NavRootFocusScopeId               ID
 	MemoryDrawListIdxCapacity         i32
 	MemoryDrawListVtxCapacity         i32
@@ -4403,7 +4440,7 @@ pub mut:
 	RowFlags                   TableRowFlags
 	LastRowFlags               TableRowFlags
 	RowBgColorCounter          i32
-	RowBgColor                 BindingFixedArray28
+	RowBgColor                 BindingFixedArray30
 	BorderColorStrong          ImU32
 	BorderColorLight           ImU32
 	BorderX1                   f32
@@ -4438,9 +4475,9 @@ pub mut:
 	DrawSplitter               &ImDrawListSplitter
 	InstanceDataFirst          TableInstanceData
 	InstanceDataExtra          ImVector_TableInstanceData
-	SortSpecsSingle            TableColumnSortSpecs
-	SortSpecsMulti             ImVector_TableColumnSortSpecs
 	SortSpecs                  TableSortSpecs
+	SortSpecsMulti             ImVector_TableColumnSortSpecs
+	SortSpecsSingle            TableColumnSortSpecs
 	SortSpecsCount             TableColumnIdx
 	ColumnsEnabledCount        TableColumnIdx
 	ColumnsEnabledFixedCount   TableColumnIdx
@@ -4472,6 +4509,7 @@ pub mut:
 	NavLayer                   ImS8
 	IsLayoutLocked             bool
 	IsInsideRow                bool
+	IsNewTable                 bool
 	IsInitializing             bool
 	IsReconcileMode            bool
 	IsSortSpecsDirty           bool
@@ -4575,16 +4613,17 @@ pub type ImFontLoader = C.ImFontLoader
 @[typedef]
 pub struct C.ImFontLoader {
 pub mut:
-	Name                       &char
-	LoaderInit                 fn (&ImFontAtlas) bool
-	LoaderShutdown             fn (&ImFontAtlas)
-	FontSrcInit                fn (&ImFontAtlas, &ImFontConfig) bool
-	FontSrcDestroy             fn (&ImFontAtlas, &ImFontConfig)
-	FontSrcContainsGlyph       fn (&ImFontAtlas, &ImFontConfig, ImWchar) bool
-	FontBakedInit              fn (&ImFontAtlas, &ImFontConfig, &ImFontBaked, voidptr) bool
-	FontBakedDestroy           fn (&ImFontAtlas, &ImFontConfig, &ImFontBaked, voidptr)
-	FontBakedLoadGlyph         fn (&ImFontAtlas, &ImFontConfig, &ImFontBaked, voidptr, ImWchar, &ImFontGlyph, &f32) bool
-	FontBakedSrcLoaderDataSize usize
+	Name                              &char
+	LoaderInit                        fn (&ImFontAtlas) bool
+	LoaderShutdown                    fn (&ImFontAtlas)
+	FontSrcInit                       fn (&ImFontAtlas, &ImFontConfig) bool
+	FontSrcDestroy                    fn (&ImFontAtlas, &ImFontConfig)
+	FontSrcGetGlyphIndexFromCodepoint fn (&ImFontAtlas, &ImFontConfig, ImWchar) i32
+	FontSrcContainsGlyph              fn (&ImFontAtlas, &ImFontConfig, i32) bool
+	FontBakedInit                     fn (&ImFontAtlas, &ImFontConfig, &ImFontBaked, voidptr) bool
+	FontBakedDestroy                  fn (&ImFontAtlas, &ImFontConfig, &ImFontBaked, voidptr)
+	FontBakedLoadGlyph                fn (&ImFontAtlas, &ImFontConfig, &ImFontBaked, voidptr, i32, &ImFontGlyph, &f32) bool
+	FontBakedSrcLoaderDataSize        usize
 }
 
 pub type ImFontAtlasRectEntry = C.ImFontAtlasRectEntry
@@ -4621,7 +4660,7 @@ pub type Stbrp_context_opaque = C.stbrp_context_opaque
 @[typedef]
 pub struct C.stbrp_context_opaque {
 pub mut:
-	Data BindingFixedArray29
+	Data BindingFixedArray31
 }
 
 pub type ImVector_stbrp_node_im = C.ImVector_stbrp_node_im
@@ -4689,6 +4728,10 @@ pub mut:
 	BakedDiscardedCount      i32
 	PackIdMouseCursors       ImFontAtlasRectId
 	PackIdLinesTexData       ImFontAtlasRectId
+	PackIdLineFractTexData   ImFontAtlasRectId
+	PackIdCornersTexData     ImFontAtlasRectId
+	TexUvLines               BindingFixedArray32
+	TexUvCorners             BindingFixedArray33
 }
 
 pub type StbUndoRecord = C.StbUndoRecord
@@ -4707,8 +4750,8 @@ pub type StbUndoState = C.StbUndoState
 @[typedef]
 pub struct C.StbUndoState {
 pub mut:
-	Undo_rec        BindingFixedArray30
-	Undo_char       BindingFixedArray31
+	Undo_rec        BindingFixedArray34
+	Undo_char       BindingFixedArray35
 	Undo_point      i16
 	Redo_point      i16
 	Undo_char_point i32
@@ -8369,14 +8412,6 @@ pub fn text_filter_destroy(self &TextFilter) {
 }
 
 @[keep_args_alive]
-fn C.ImGuiTextFilter_Draw(self &TextFilter, const_label &char, width f32) bool
-
-@[inline]
-pub fn text_filter_draw(self &TextFilter, const_label &char, width f32) bool {
-	return C.ImGuiTextFilter_Draw(self, const_label, width)
-}
-
-@[keep_args_alive]
 fn C.ImGuiTextFilter_PassFilter(self &TextFilter, const_text &char, const_text_end &char) bool
 
 @[inline]
@@ -8409,43 +8444,19 @@ pub fn text_filter_is_active(self &TextFilter) bool {
 }
 
 @[keep_args_alive]
-fn C.ImGuiTextRange_ImGuiTextRange_Nil() &TextRange
+fn C.ImGuiTextFilter_Draw(self &TextFilter, const_label &char) bool
 
 @[inline]
-pub fn text_range_text_range_nil() &TextRange {
-	return C.ImGuiTextRange_ImGuiTextRange_Nil()
+pub fn text_filter_draw(self &TextFilter, const_label &char) bool {
+	return C.ImGuiTextFilter_Draw(self, const_label)
 }
 
 @[keep_args_alive]
-fn C.ImGuiTextRange_destroy(self &TextRange)
+fn C.ImGuiTextFilter_DrawWithHint(self &TextFilter, const_label &char, hint &char) bool
 
 @[inline]
-pub fn text_range_destroy(self &TextRange) {
-	C.ImGuiTextRange_destroy(self)
-}
-
-@[keep_args_alive]
-fn C.ImGuiTextRange_ImGuiTextRange_Str(_b &char, _e &char) &TextRange
-
-@[inline]
-pub fn text_range_text_range_str(_b &char, _e &char) &TextRange {
-	return C.ImGuiTextRange_ImGuiTextRange_Str(_b, _e)
-}
-
-@[keep_args_alive]
-fn C.ImGuiTextRange_empty(self &TextRange) bool
-
-@[inline]
-pub fn text_range_empty(self &TextRange) bool {
-	return C.ImGuiTextRange_empty(self)
-}
-
-@[keep_args_alive]
-fn C.ImGuiTextRange_split(self &TextRange, separator i8, out &ImVector_TextRange)
-
-@[inline]
-pub fn text_range_split(self &TextRange, separator i8, out &ImVector_TextRange) {
-	C.ImGuiTextRange_split(self, separator, out)
+pub fn text_filter_draw_with_hint(self &TextFilter, const_label &char, hint &char) bool {
+	return C.ImGuiTextFilter_DrawWithHint(self, const_label, hint)
 }
 
 @[keep_args_alive]
@@ -9057,6 +9068,22 @@ pub fn im_draw_list_pop_texture(self &ImDrawList) {
 }
 
 @[keep_args_alive]
+fn C.ImDrawList_PushDrawFlag(self &ImDrawList, flags ImDrawFlags, enabled bool)
+
+@[inline]
+pub fn im_draw_list_push_draw_flag(self &ImDrawList, flags ImDrawFlags, enabled bool) {
+	C.ImDrawList_PushDrawFlag(self, flags, enabled)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList_PopDrawFlag(self &ImDrawList)
+
+@[inline]
+pub fn im_draw_list_pop_draw_flag(self &ImDrawList) {
+	C.ImDrawList_PopDrawFlag(self)
+}
+
+@[keep_args_alive]
 fn C.ImDrawList_GetClipRectMin(self &ImDrawList) ImVec2_c
 
 @[inline]
@@ -9073,27 +9100,27 @@ pub fn im_draw_list_get_clip_rect_max(self &ImDrawList) ImVec2_c {
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddLine(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col ImU32, thickness f32)
+fn C.ImDrawList_AddLine(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col ImU32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_line(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col ImU32, thickness f32) {
-	C.ImDrawList_AddLine(self, p1, p2, col, thickness)
+pub fn im_draw_list_add_line(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col ImU32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddLine(self, p1, p2, col, thickness, flags)
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddLineH(self &ImDrawList, min_x f32, max_x f32, y f32, col ImU32, thickness f32)
+fn C.ImDrawList_AddLineH(self &ImDrawList, min_x f32, max_x f32, y f32, col ImU32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_line_h(self &ImDrawList, min_x f32, max_x f32, y f32, col ImU32, thickness f32) {
-	C.ImDrawList_AddLineH(self, min_x, max_x, y, col, thickness)
+pub fn im_draw_list_add_line_h(self &ImDrawList, min_x f32, max_x f32, y f32, col ImU32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddLineH(self, min_x, max_x, y, col, thickness, flags)
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddLineV(self &ImDrawList, x f32, min_y f32, max_y f32, col ImU32, thickness f32)
+fn C.ImDrawList_AddLineV(self &ImDrawList, x f32, min_y f32, max_y f32, col ImU32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_line_v(self &ImDrawList, x f32, min_y f32, max_y f32, col ImU32, thickness f32) {
-	C.ImDrawList_AddLineV(self, x, min_y, max_y, col, thickness)
+pub fn im_draw_list_add_line_v(self &ImDrawList, x f32, min_y f32, max_y f32, col ImU32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddLineV(self, x, min_y, max_y, col, thickness, flags)
 }
 
 @[keep_args_alive]
@@ -9121,11 +9148,11 @@ pub fn im_draw_list_add_rect_filled_multi_color(self &ImDrawList, p_min ImVec2_c
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddQuad(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col ImU32, thickness f32)
+fn C.ImDrawList_AddQuad(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col ImU32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_quad(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col ImU32, thickness f32) {
-	C.ImDrawList_AddQuad(self, p1, p2, p3, p4, col, thickness)
+pub fn im_draw_list_add_quad(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col ImU32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddQuad(self, p1, p2, p3, p4, col, thickness, flags)
 }
 
 @[keep_args_alive]
@@ -9137,11 +9164,11 @@ pub fn im_draw_list_add_quad_filled(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, 
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddTriangle(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col ImU32, thickness f32)
+fn C.ImDrawList_AddTriangle(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col ImU32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_triangle(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col ImU32, thickness f32) {
-	C.ImDrawList_AddTriangle(self, p1, p2, p3, col, thickness)
+pub fn im_draw_list_add_triangle(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col ImU32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddTriangle(self, p1, p2, p3, col, thickness, flags)
 }
 
 @[keep_args_alive]
@@ -9153,11 +9180,11 @@ pub fn im_draw_list_add_triangle_filled(self &ImDrawList, p1 ImVec2_c, p2 ImVec2
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddCircle(self &ImDrawList, center ImVec2_c, radius f32, col ImU32, num_segments i32, thickness f32)
+fn C.ImDrawList_AddCircle(self &ImDrawList, center ImVec2_c, radius f32, col ImU32, num_segments i32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_circle(self &ImDrawList, center ImVec2_c, radius f32, col ImU32, num_segments i32, thickness f32) {
-	C.ImDrawList_AddCircle(self, center, radius, col, num_segments, thickness)
+pub fn im_draw_list_add_circle(self &ImDrawList, center ImVec2_c, radius f32, col ImU32, num_segments i32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddCircle(self, center, radius, col, num_segments, thickness, flags)
 }
 
 @[keep_args_alive]
@@ -9169,11 +9196,11 @@ pub fn im_draw_list_add_circle_filled(self &ImDrawList, center ImVec2_c, radius 
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddNgon(self &ImDrawList, center ImVec2_c, radius f32, col ImU32, num_segments i32, thickness f32)
+fn C.ImDrawList_AddNgon(self &ImDrawList, center ImVec2_c, radius f32, col ImU32, num_segments i32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_ngon(self &ImDrawList, center ImVec2_c, radius f32, col ImU32, num_segments i32, thickness f32) {
-	C.ImDrawList_AddNgon(self, center, radius, col, num_segments, thickness)
+pub fn im_draw_list_add_ngon(self &ImDrawList, center ImVec2_c, radius f32, col ImU32, num_segments i32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddNgon(self, center, radius, col, num_segments, thickness, flags)
 }
 
 @[keep_args_alive]
@@ -9185,11 +9212,11 @@ pub fn im_draw_list_add_ngon_filled(self &ImDrawList, center ImVec2_c, radius f3
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddEllipse(self &ImDrawList, center ImVec2_c, radius ImVec2_c, col ImU32, rot f32, num_segments i32, thickness f32)
+fn C.ImDrawList_AddEllipse(self &ImDrawList, center ImVec2_c, radius ImVec2_c, col ImU32, rot f32, num_segments i32, thickness f32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_ellipse(self &ImDrawList, center ImVec2_c, radius ImVec2_c, col ImU32, rot f32, num_segments i32, thickness f32) {
-	C.ImDrawList_AddEllipse(self, center, radius, col, rot, num_segments, thickness)
+pub fn im_draw_list_add_ellipse(self &ImDrawList, center ImVec2_c, radius ImVec2_c, col ImU32, rot f32, num_segments i32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList_AddEllipse(self, center, radius, col, rot, num_segments, thickness, flags)
 }
 
 @[keep_args_alive]
@@ -9217,19 +9244,19 @@ pub fn im_draw_list_add_text_font_ptr(self &ImDrawList, font &ImFont, font_size 
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddBezierCubic(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col ImU32, thickness f32, num_segments i32)
+fn C.ImDrawList_AddBezierCubic(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col ImU32, thickness f32, num_segments i32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_bezier_cubic(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col ImU32, thickness f32, num_segments i32) {
-	C.ImDrawList_AddBezierCubic(self, p1, p2, p3, p4, col, thickness, num_segments)
+pub fn im_draw_list_add_bezier_cubic(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, col ImU32, thickness f32, num_segments i32, flags ImDrawFlags) {
+	C.ImDrawList_AddBezierCubic(self, p1, p2, p3, p4, col, thickness, num_segments, flags)
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddBezierQuadratic(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col ImU32, thickness f32, num_segments i32)
+fn C.ImDrawList_AddBezierQuadratic(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col ImU32, thickness f32, num_segments i32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_bezier_quadratic(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col ImU32, thickness f32, num_segments i32) {
-	C.ImDrawList_AddBezierQuadratic(self, p1, p2, p3, col, thickness, num_segments)
+pub fn im_draw_list_add_bezier_quadratic(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, col ImU32, thickness f32, num_segments i32, flags ImDrawFlags) {
+	C.ImDrawList_AddBezierQuadratic(self, p1, p2, p3, col, thickness, num_segments, flags)
 }
 
 @[keep_args_alive]
@@ -9241,11 +9268,11 @@ pub fn im_draw_list_add_polyline(self &ImDrawList, points &ImVec2_c, num_points 
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_AddConvexPolyFilled(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32)
+fn C.ImDrawList_AddConvexPolyFilled(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_add_convex_poly_filled(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32) {
-	C.ImDrawList_AddConvexPolyFilled(self, points, num_points, col)
+pub fn im_draw_list_add_convex_poly_filled(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32, flags ImDrawFlags) {
+	C.ImDrawList_AddConvexPolyFilled(self, points, num_points, col, flags)
 }
 
 @[keep_args_alive]
@@ -9305,11 +9332,11 @@ pub fn im_draw_list_path_line_to_merge_duplicate(self &ImDrawList, pos ImVec2_c)
 }
 
 @[keep_args_alive]
-fn C.ImDrawList_PathFillConvex(self &ImDrawList, col ImU32)
+fn C.ImDrawList_PathFillConvex(self &ImDrawList, col ImU32, flags ImDrawFlags)
 
 @[inline]
-pub fn im_draw_list_path_fill_convex(self &ImDrawList, col ImU32) {
-	C.ImDrawList_PathFillConvex(self, col)
+pub fn im_draw_list_path_fill_convex(self &ImDrawList, col ImU32, flags ImDrawFlags) {
+	C.ImDrawList_PathFillConvex(self, col, flags)
 }
 
 @[keep_args_alive]
@@ -9505,6 +9532,14 @@ pub fn im_draw_list__reset_for_new_frame(self &ImDrawList) {
 }
 
 @[keep_args_alive]
+fn C.ImDrawList__SetPixelDensity(self &ImDrawList, pixel_density f32)
+
+@[inline]
+pub fn im_draw_list__set_pixel_density(self &ImDrawList, pixel_density f32) {
+	C.ImDrawList__SetPixelDensity(self, pixel_density)
+}
+
+@[keep_args_alive]
 fn C.ImDrawList__ClearFreeMemory(self &ImDrawList)
 
 @[inline]
@@ -9582,6 +9617,62 @@ fn C.ImDrawList__PathArcToN(self &ImDrawList, center ImVec2_c, radius f32, a_min
 @[inline]
 pub fn im_draw_list__path_arc_to_n(self &ImDrawList, center ImVec2_c, radius f32, a_min f32, a_max f32, num_segments i32) {
 	C.ImDrawList__PathArcToN(self, center, radius, a_min, a_max, num_segments)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList__AddRectFilledBaked(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, r f32, tex_uvs ImVec4_c, flags ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__add_rect_filled_baked(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, r f32, tex_uvs ImVec4_c, flags ImDrawFlags) {
+	C.ImDrawList__AddRectFilledBaked(self, p_min, p_max, col, r, tex_uvs, flags)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList__AddRectBaked(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, r f32, t f32, tex_uvs ImVec4_c, flags ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__add_rect_baked(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, r f32, t f32, tex_uvs ImVec4_c, flags ImDrawFlags) {
+	C.ImDrawList__AddRectBaked(self, p_min, p_max, col, r, t, tex_uvs, flags)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList__AddLine(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col ImU32, thickness f32, flags ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__add_line(self &ImDrawList, p1 ImVec2_c, p2 ImVec2_c, col ImU32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList__AddLine(self, p1, p2, col, thickness, flags)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList__AddRectTinyRounding(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, rounding f32, thickness f32, flags ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__add_rect_tiny_rounding(self &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, rounding f32, thickness f32, flags ImDrawFlags) {
+	C.ImDrawList__AddRectTinyRounding(self, p_min, p_max, col, rounding, thickness, flags)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList__SelectLineTexture(self &ImDrawList, screen_thickness f32, out_uv0 &ImVec2_c, out_uv1 &ImVec2_c, out_fringe &f32, flags ImDrawFlags)
+
+@[inline]
+pub fn im_draw_list__select_line_texture(self &ImDrawList, screen_thickness f32, out_uv0 &ImVec2_c, out_uv1 &ImVec2_c, out_fringe &f32, flags ImDrawFlags) {
+	C.ImDrawList__SelectLineTexture(self, screen_thickness, out_uv0, out_uv1, out_fringe, flags)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList__CalculateCenterBiasedOffset(self &ImDrawList, thickness f32) f32
+
+@[inline]
+pub fn im_draw_list__calculate_center_biased_offset(self &ImDrawList, thickness f32) f32 {
+	return C.ImDrawList__CalculateCenterBiasedOffset(self, thickness)
+}
+
+@[keep_args_alive]
+fn C.ImDrawList__AddPolyline(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32, thickness f32, flags ImDrawFlags, max_inner_offset f32)
+
+@[inline]
+pub fn im_draw_list__add_polyline(self &ImDrawList, points &ImVec2_c, num_points i32, col ImU32, thickness f32, flags ImDrawFlags, max_inner_offset f32) {
+	C.ImDrawList__AddPolyline(self, points, num_points, col, thickness, flags, max_inner_offset)
 }
 
 @[keep_args_alive]
@@ -10161,11 +10252,19 @@ pub fn im_font_clear_output_data(self &ImFont) {
 }
 
 @[keep_args_alive]
-fn C.ImFont_AddRemapChar(self &ImFont, from_codepoint ImWchar, to_codepoint ImWchar)
+fn C.ImFont_AddRemapCodepoint(self &ImFont, from_codepoint ImWchar, to_codepoint ImWchar)
 
 @[inline]
-pub fn im_font_add_remap_char(self &ImFont, from_codepoint ImWchar, to_codepoint ImWchar) {
-	C.ImFont_AddRemapChar(self, from_codepoint, to_codepoint)
+pub fn im_font_add_remap_codepoint(self &ImFont, from_codepoint ImWchar, to_codepoint ImWchar) {
+	C.ImFont_AddRemapCodepoint(self, from_codepoint, to_codepoint)
+}
+
+@[keep_args_alive]
+fn C.ImFont_AddRemapCodepointToGlyphIndex(self &ImFont, from_codepoint ImWchar, font_src_idx i32, glyph_idx i32)
+
+@[inline]
+pub fn im_font_add_remap_codepoint_to_glyph_index(self &ImFont, from_codepoint ImWchar, font_src_idx i32, glyph_idx i32) {
+	C.ImFont_AddRemapCodepointToGlyphIndex(self, from_codepoint, font_src_idx, glyph_idx)
 }
 
 @[keep_args_alive]
@@ -10809,6 +10908,14 @@ pub fn im_rsqrt_float(x f32) f32 {
 }
 
 @[keep_args_alive]
+fn C.igImRsqrtPrecise(x f32) f32
+
+@[inline]
+pub fn im_rsqrt_precise(x f32) f32 {
+	return C.igImRsqrtPrecise(x)
+}
+
+@[keep_args_alive]
 fn C.igImRsqrt_double(x f64) f64
 
 @[inline]
@@ -10817,27 +10924,75 @@ pub fn im_rsqrt_double(x f64) f64 {
 }
 
 @[keep_args_alive]
-fn C.igImMin(lhs ImVec2_c, rhs ImVec2_c) ImVec2_c
+fn C.igImMin_Int(lhs i32, rhs i32) i32
 
 @[inline]
-pub fn im_min(lhs ImVec2_c, rhs ImVec2_c) ImVec2_c {
-	return C.igImMin(lhs, rhs)
+pub fn im_min_int(lhs i32, rhs i32) i32 {
+	return C.igImMin_Int(lhs, rhs)
 }
 
 @[keep_args_alive]
-fn C.igImMax(lhs ImVec2_c, rhs ImVec2_c) ImVec2_c
+fn C.igImMax_Int(lhs i32, rhs i32) i32
 
 @[inline]
-pub fn im_max(lhs ImVec2_c, rhs ImVec2_c) ImVec2_c {
-	return C.igImMax(lhs, rhs)
+pub fn im_max_int(lhs i32, rhs i32) i32 {
+	return C.igImMax_Int(lhs, rhs)
 }
 
 @[keep_args_alive]
-fn C.igImClamp(v ImVec2_c, mn ImVec2_c, mx ImVec2_c) ImVec2_c
+fn C.igImClamp_Int(v i32, mn i32, mx i32) i32
 
 @[inline]
-pub fn im_clamp(v ImVec2_c, mn ImVec2_c, mx ImVec2_c) ImVec2_c {
-	return C.igImClamp(v, mn, mx)
+pub fn im_clamp_int(v i32, mn i32, mx i32) i32 {
+	return C.igImClamp_Int(v, mn, mx)
+}
+
+@[keep_args_alive]
+fn C.igImMin_Float(lhs f32, rhs f32) f32
+
+@[inline]
+pub fn im_min_float(lhs f32, rhs f32) f32 {
+	return C.igImMin_Float(lhs, rhs)
+}
+
+@[keep_args_alive]
+fn C.igImMax_Float(lhs f32, rhs f32) f32
+
+@[inline]
+pub fn im_max_float(lhs f32, rhs f32) f32 {
+	return C.igImMax_Float(lhs, rhs)
+}
+
+@[keep_args_alive]
+fn C.igImClamp_Float(v f32, mn f32, mx f32) f32
+
+@[inline]
+pub fn im_clamp_float(v f32, mn f32, mx f32) f32 {
+	return C.igImClamp_Float(v, mn, mx)
+}
+
+@[keep_args_alive]
+fn C.igImMin_Vec2(lhs ImVec2_c, rhs ImVec2_c) ImVec2_c
+
+@[inline]
+pub fn im_min_vec2(lhs ImVec2_c, rhs ImVec2_c) ImVec2_c {
+	return C.igImMin_Vec2(lhs, rhs)
+}
+
+@[keep_args_alive]
+fn C.igImMax_Vec2(lhs ImVec2_c, rhs ImVec2_c) ImVec2_c
+
+@[inline]
+pub fn im_max_vec2(lhs ImVec2_c, rhs ImVec2_c) ImVec2_c {
+	return C.igImMax_Vec2(lhs, rhs)
+}
+
+@[keep_args_alive]
+fn C.igImClamp_Vec2(v ImVec2_c, mn ImVec2_c, mx ImVec2_c) ImVec2_c
+
+@[inline]
+pub fn im_clamp_vec2(v ImVec2_c, mn ImVec2_c, mx ImVec2_c) ImVec2_c {
+	return C.igImClamp_Vec2(v, mn, mx)
 }
 
 @[keep_args_alive]
@@ -10937,11 +11092,19 @@ pub fn im_trunc64(f f32) f32 {
 }
 
 @[keep_args_alive]
-fn C.igImRound64(f f32) f32
+fn C.igImRoundPositive64(f f32) f32
 
 @[inline]
-pub fn im_round64(f f32) f32 {
-	return C.igImRound64(f)
+pub fn im_round_positive64(f f32) f32 {
+	return C.igImRoundPositive64(f)
+}
+
+@[keep_args_alive]
+fn C.igImRoundSigned64(f f32) f32
+
+@[inline]
+pub fn im_round_signed64(f f32) f32 {
+	return C.igImRoundSigned64(f)
 }
 
 @[keep_args_alive]
@@ -11017,6 +11180,22 @@ pub fn im_exponential_moving_average(avg f32, sample f32, n i32) f32 {
 }
 
 @[keep_args_alive]
+fn C.igImIsTruncated(x f32) bool
+
+@[inline]
+pub fn im_is_truncated(x f32) bool {
+	return C.igImIsTruncated(x)
+}
+
+@[keep_args_alive]
+fn C.igImIsTruncated4(x f32, y f32, z f32, w f32) bool
+
+@[inline]
+pub fn im_is_truncated4(x f32, y f32, z f32, w f32) bool {
+	return C.igImIsTruncated4(x, y, z, w)
+}
+
+@[keep_args_alive]
 fn C.igImBezierCubicCalc(p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, t f32) ImVec2_c
 
 @[inline]
@@ -11033,11 +11212,11 @@ pub fn im_bezier_cubic_closest_point(p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 I
 }
 
 @[keep_args_alive]
-fn C.igImBezierCubicClosestPointCasteljau(p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, p ImVec2_c, tess_tol f32) ImVec2_c
+fn C.igImBezierCubicClosestPointCasteljau(p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, p ImVec2_c, max_error f32) ImVec2_c
 
 @[inline]
-pub fn im_bezier_cubic_closest_point_casteljau(p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, p ImVec2_c, tess_tol f32) ImVec2_c {
-	return C.igImBezierCubicClosestPointCasteljau(p1, p2, p3, p4, p, tess_tol)
+pub fn im_bezier_cubic_closest_point_casteljau(p1 ImVec2_c, p2 ImVec2_c, p3 ImVec2_c, p4 ImVec2_c, p ImVec2_c, max_error f32) ImVec2_c {
+	return C.igImBezierCubicClosestPointCasteljau(p1, p2, p3, p4, p, max_error)
 }
 
 @[keep_args_alive]
@@ -11558,6 +11737,22 @@ fn C.ImGuiTextIndex_append(self &TextIndex, base &char, old_size i32, new_size i
 @[inline]
 pub fn text_index_append(self &TextIndex, base &char, old_size i32, new_size i32) {
 	C.ImGuiTextIndex_append(self, base, old_size, new_size)
+}
+
+@[keep_args_alive]
+fn C.ImGuiTextFilterItem_ImGuiTextFilterItem(b &char, e &char) &TextFilterItem
+
+@[inline]
+pub fn text_filter_item_text_filter_item(b &char, e &char) &TextFilterItem {
+	return C.ImGuiTextFilterItem_ImGuiTextFilterItem(b, e)
+}
+
+@[keep_args_alive]
+fn C.ImGuiTextFilterItem_destroy(self &TextFilterItem)
+
+@[inline]
+pub fn text_filter_item_destroy(self &TextFilterItem) {
+	C.ImGuiTextFilterItem_destroy(self)
 }
 
 @[keep_args_alive]
@@ -13489,6 +13684,22 @@ pub fn window_pos_rel_to_abs(window &Window, p ImVec2_c) ImVec2_c {
 }
 
 @[keep_args_alive]
+fn C.igSetNextWindowFlags(flags WindowFlags, enabled bool)
+
+@[inline]
+pub fn set_next_window_flags(flags WindowFlags, enabled bool) {
+	C.igSetNextWindowFlags(flags, enabled)
+}
+
+@[keep_args_alive]
+fn C.igSetNextWindowChildFlags(flags ChildFlags, enabled bool)
+
+@[inline]
+pub fn set_next_window_child_flags(flags ChildFlags, enabled bool) {
+	C.igSetNextWindowChildFlags(flags, enabled)
+}
+
+@[keep_args_alive]
 fn C.igFocusWindow(window &Window, flags FocusRequestFlags)
 
 @[inline]
@@ -13609,19 +13820,19 @@ pub fn update_current_font_size(restore_font_size_after_scaling f32) {
 }
 
 @[keep_args_alive]
-fn C.igSetFontRasterizerDensity(rasterizer_density f32)
+fn C.igSetPixelDensity(pixel_density f32)
 
 @[inline]
-pub fn set_font_rasterizer_density(rasterizer_density f32) {
-	C.igSetFontRasterizerDensity(rasterizer_density)
+pub fn set_pixel_density(pixel_density f32) {
+	C.igSetPixelDensity(pixel_density)
 }
 
 @[keep_args_alive]
-fn C.igGetFontRasterizerDensity() f32
+fn C.igGetPixelDensity() f32
 
 @[inline]
-pub fn get_font_rasterizer_density() f32 {
-	return C.igGetFontRasterizerDensity()
+pub fn get_pixel_density() f32 {
+	return C.igGetPixelDensity()
 }
 
 @[keep_args_alive]
@@ -15001,6 +15212,14 @@ pub fn render_drag_drop_target_rect_for_item(bb ImRect_c) {
 }
 
 @[keep_args_alive]
+fn C.igRenderDragDropTargetRectForViewport(viewport_id ID, bb ImRect_c)
+
+@[inline]
+pub fn render_drag_drop_target_rect_for_viewport(viewport_id ID, bb ImRect_c) {
+	C.igRenderDragDropTargetRectForViewport(viewport_id, bb)
+}
+
+@[keep_args_alive]
 fn C.igRenderDragDropTargetRectEx(draw_list &ImDrawList, bb ImRect_c, rounding f32)
 
 @[inline]
@@ -15177,6 +15396,14 @@ pub fn tab_bar_get_tab_name(tab_bar &TabBar, tab &TabItem) &char {
 }
 
 @[keep_args_alive]
+fn C.igTabBarGetTabPos(tab_bar &TabBar, tab &TabItem) ImVec2_c
+
+@[inline]
+pub fn tab_bar_get_tab_pos(tab_bar &TabBar, tab &TabItem) ImVec2_c {
+	return C.igTabBarGetTabPos(tab_bar, tab)
+}
+
+@[keep_args_alive]
 fn C.igTabBarRemoveTab(tab_bar &TabBar, tab_id ID)
 
 @[inline]
@@ -15345,11 +15572,11 @@ pub fn render_color_component_marker(bb ImRect_c, col ImU32, rounding f32) {
 }
 
 @[keep_args_alive]
-fn C.igRenderColorRectWithAlphaCheckerboard(draw_list &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, fill_col ImU32, grid_step f32, grid_off ImVec2_c, rounding f32, flags ImDrawFlags)
+fn C.igRenderColorRectWithAlphaCheckerboard(draw_list &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, alpha f32, grid_step f32, grid_off ImVec2_c, rounding f32, flags ImDrawFlags)
 
 @[inline]
-pub fn render_color_rect_with_alpha_checkerboard(draw_list &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, fill_col ImU32, grid_step f32, grid_off ImVec2_c, rounding f32, flags ImDrawFlags) {
-	C.igRenderColorRectWithAlphaCheckerboard(draw_list, p_min, p_max, fill_col, grid_step, grid_off, rounding, flags)
+pub fn render_color_rect_with_alpha_checkerboard(draw_list &ImDrawList, p_min ImVec2_c, p_max ImVec2_c, col ImU32, alpha f32, grid_step f32, grid_off ImVec2_c, rounding f32, flags ImDrawFlags) {
+	C.igRenderColorRectWithAlphaCheckerboard(draw_list, p_min, p_max, col, alpha, grid_step, grid_off, rounding, flags)
 }
 
 @[keep_args_alive]
@@ -15441,19 +15668,19 @@ pub fn text_ex(const_text &char, const_text_end &char, flags TextFlags) {
 }
 
 @[keep_args_alive]
-fn C.igTextAligned(align_x f32, size_x f32, const_fmt &char)
+fn C.igTextAligned(align_x f32, width f32, const_fmt &char)
 
 @[inline]
-pub fn text_aligned(align_x f32, size_x f32, const_fmt &char) {
-	C.igTextAligned(align_x, size_x, const_fmt)
+pub fn text_aligned(align_x f32, width f32, const_fmt &char) {
+	C.igTextAligned(align_x, width, const_fmt)
 }
 
 @[keep_args_alive]
-fn C.igTextAlignedV(align_x f32, size_x f32, const_fmt &char, args C.va_list)
+fn C.igTextAlignedV(align_x f32, width f32, const_fmt &char, args C.va_list)
 
 @[inline]
-pub fn text_aligned_v(align_x f32, size_x f32, const_fmt &char, args C.va_list) {
-	C.igTextAlignedV(align_x, size_x, const_fmt, args)
+pub fn text_aligned_v(align_x f32, width f32, const_fmt &char, args C.va_list) {
+	C.igTextAlignedV(align_x, width, const_fmt, args)
 }
 
 @[keep_args_alive]
