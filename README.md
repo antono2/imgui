@@ -32,8 +32,11 @@ This repository supports both official Dear ImGui lines:
   multi-viewport support while retaining the normal Dear ImGui API.
 - The `standard` branch tracks Dear ImGui's smaller standard line.
 
-Both currently track Dear ImGui `1.92.9b`. The `b` is an upstream patch-level
-suffix shared by the release; it does not identify the docking variant. Check
+The standard line tracks Dear ImGui `1.93.0`; the docking line remains on
+`1.92.9b` until its upstream generated docking API is ready. See
+[Migrating to 1.93](https://github.com/antono2/imgui/blob/standard/docs/migrating-1.93.md)
+before upgrading a standard consumer.
+The `b` is an upstream patch-level suffix, not a docking marker. Check
 `UPSTREAM_VARIANT` in a checkout to see which line its generated bindings and
 native sources use. Do not mix a generated binding from one line with a native
 library built from the other.
