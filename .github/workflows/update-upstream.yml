@@ -199,10 +199,14 @@ jobs:
           if [[ -n "$remote_sha" ]]; then
             existing=$(gh pr list --base "$BASE_BRANCH" --head "$UPDATE_BRANCH" \
               --state open --json number --jq '.[0].number // empty')
-            [[ -n "$existing" ]] || {
-              echo "Refusing to replace $remote_ref without an open update PR." >&2
-              exit 1
-            }
+            if [[ -z "$existing" ]]; then
+              git fetch --no-tags origin "$remote_ref"
+              [[ $(git rev-parse FETCH_HEAD) == "$remote_sha" ]] || exit 1
+              [[ $(git write-tree) == $(git rev-parse 'FETCH_HEAD^{tree}') ]] || {
+                echo "Refusing to replace $remote_ref without an open update PR." >&2
+                exit 1
+              }
+            fi
           fi
           before=$(git rev-parse HEAD)
           python3 scripts/publish_generated_branch.py "$UPDATE_BRANCH" "Update $VARIANT ImGui and ImPlot bindings"
