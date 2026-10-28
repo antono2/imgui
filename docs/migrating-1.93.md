@@ -21,8 +21,12 @@ Notable source changes include:
 - Draw-list methods such as `im_draw_list_add_line` and
   `im_draw_list_add_circle` gain an explicit flags argument. Review the new
   signature and desired stroke/cap/join behavior rather than copying old bits.
-- `Style.AntiAliasedLinesUseTex` becomes `AntiAliasedLineEnds`, and
-  `CurveTessellationTol` becomes `CurveTessellationMaxError`.
+- `Style.AntiAliasedLinesUseTex` is removed because the new line renderer
+  always uses textures. `AntiAliasedLineEnds` controls line-ending anti-aliasing;
+  it is not a replacement texture toggle.
+- `CurveTessellationTol` used squared-pixel units; `CurveTessellationMaxError`
+  uses pixels. Convert a customized old threshold with `sqrt(old_threshold)`
+  rather than copying the old value unchanged.
 - Font remapping uses `im_font_add_remap_codepoint` instead of
   `im_font_add_remap_char`.
 - Text-filter, draw-list and other generated structures have changed layouts.
