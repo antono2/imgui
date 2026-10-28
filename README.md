@@ -32,8 +32,10 @@ This repository supports both official Dear ImGui lines:
   multi-viewport support while retaining the normal Dear ImGui API.
 - The `standard` branch tracks Dear ImGui's smaller standard line.
 
-Both currently track Dear ImGui `1.92.9b`. The `b` is an upstream patch-level
-suffix shared by the release; it does not identify the docking variant. Check
+The standard line tracks Dear ImGui `1.93.0`; the docking line remains on
+`1.92.9b` until its upstream generated docking API is ready. See
+[Migrating to 1.93](docs/migrating-1.93.md) before upgrading a consumer.
+The `b` is an upstream patch-level suffix, not a docking marker. Check
 `UPSTREAM_VARIANT` in a checkout to see which line its generated bindings and
 native sources use. Do not mix a generated binding from one line with a native
 library built from the other.
@@ -58,8 +60,8 @@ and secondary-viewport rendering helpers become safe no-ops there.
 The setup and build tooling uses V, CMake, Git and a C/C++ toolchain. Python,
 Rust and Cargo are not required.
 
-`v install antono2.vulkan@v2.0.0`<br>
-`v install antono2.glfw`
+Run `v install` in this checkout to install the tested dependency versions from
+[`v.mod`](v.mod). Keep those pins aligned with `compatibility.json`.
 
 ## Install
 ```bash
