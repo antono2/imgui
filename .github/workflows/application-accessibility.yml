@@ -9,6 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  V_C_ERROR_BUG_REPORT_DISABLED: 1
+
 jobs:
   desktop:
     strategy:
@@ -31,7 +34,12 @@ jobs:
           python ./scripts/compatibility.py --github-output "$GITHUB_OUTPUT"
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libvulkan-dev libdbus-1-dev libatk1.0-dev libatk-bridge2.0-dev libatspi2.0-dev libglib2.0-dev at-spi2-core dbus-x11 xdotool mesa-vulkan-drivers xvfb
+        run: sudo apt-get update && sudo apt-get install -y libglfw3-dev libvulkan-dev libdbus-1-dev libatk1.0-dev libatk-bridge2.0-dev libatspi2.0-dev libglib2.0-dev at-spi2-core dbus-x11 xdotool mesa-vulkan-drivers vulkan-validationlayers xvfb xauth libx11-dev openbox
+      - name: Set up the supported V release for Linux regression tooling
+        if: runner.os == 'Linux'
+        uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: ${{ steps.compat.outputs.v_release }}
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
         run: brew install glfw
@@ -47,6 +55,12 @@ jobs:
         run: |
           cmake -S native/application -B build/appui -DCMAKE_BUILD_TYPE=Release
           cmake --build build/appui --parallel 2
+      - name: Test bounded Linux window startup
+        if: runner.os == 'Linux'
+        run: |
+          v -cc tcc -o "$RUNNER_TEMP/window-startup-probe" tests/desktop/startup_probe.v
+          v -cc tcc -o "$RUNNER_TEMP/window-startup-check" tests/desktop/window_startup.v
+          "$RUNNER_TEMP/window-startup-check" "$RUNNER_TEMP/window-startup-probe" "$RUNNER_TEMP/window-startup-logs"
       - name: Test native tree
         if: runner.os != 'Windows'
         run: ctest --test-dir build/appui/accessibility --output-on-failure
