@@ -144,7 +144,7 @@ connected Vulkan-capable tablet:
 ```sh
 export ANDROID_SDK_ROOT=/path/to/android-sdk
 export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
-scripts/run_android_demo.sh
+v run scripts/run_android_demo.vsh
 ```
 
 The script selects the device ABI, builds the native host and V UI, packages,
@@ -155,6 +155,12 @@ and pass `--build-only`.
 Tap the button, enter committed text, change UI zoom, rotate the tablet and
 background/resume the app. `adb logcat -s vimgui-android-demo:I` reports
 initialization, swapchain recreation, tap counts and keyboard visibility.
+
+Use `v run scripts/run_android_accessible.vsh --build-only` with the same SDK
+and ABI settings to package the native accessibility fixture. To build, install
+and exercise it on the selected device, run
+`v run scripts/test_android_accessible.vsh`. Set `VIMGUI_ANDROID_BUILD_DIR` to
+choose a build directory and keep the instrumentation log with its APK.
 
 ## iOS and macOS Metal lifecycle
 
@@ -278,7 +284,7 @@ UI and manifest:
 ```sh
 VIMGUI_ANDROID_UI_SOURCE=/absolute/path/to/ui.v \
 VIMGUI_ANDROID_MANIFEST=/absolute/path/to/AndroidManifest.xml \
-ANDROID_ABI=arm64-v8a scripts/run_android_demo.sh --build-only
+ANDROID_ABI=arm64-v8a v run scripts/run_android_demo.vsh --build-only
 ```
 
 A source directory is also accepted. The UI must export
