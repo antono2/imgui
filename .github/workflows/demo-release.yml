@@ -29,14 +29,17 @@ jobs:
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
       - name: Resolve tested demo compatibility
         id: compat
         shell: bash
         working-directory: ${{ github.workspace }}
         run: |
-          python "source/modules/antono2/imgui/scripts/test_compatibility.py"
-          python "source/modules/antono2/imgui/scripts/test_doctor.py"
-          python "source/modules/antono2/imgui/scripts/compatibility.py" --github-output "$GITHUB_OUTPUT"
+          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --self-test
+          v run "source/modules/antono2/imgui/scripts/doctor.vsh" --self-test
+          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
@@ -150,14 +153,17 @@ jobs:
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
       - name: Resolve tested demo compatibility
         id: compat
         shell: bash
         working-directory: ${{ github.workspace }}
         run: |
-          python "source/modules/antono2/imgui/scripts/test_compatibility.py"
-          python "source/modules/antono2/imgui/scripts/test_doctor.py"
-          python "source/modules/antono2/imgui/scripts/compatibility.py" --github-output "$GITHUB_OUTPUT"
+          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --self-test
+          v run "source/modules/antono2/imgui/scripts/doctor.vsh" --self-test
+          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
@@ -200,8 +206,10 @@ jobs:
         shell: bash
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install Vulkan SDK and SwiftShader test artifacts
-        shell: pwsh
-        run: v run source/modules/antono2/imgui/scripts/setup_vulkan_ci.vsh ${{ steps.compat.outputs.ci_sdk }} ${{ steps.compat.outputs.ci_runtime }}
+        uses: antono2/vulkan/.github/actions/setup-vulkan-ci@04620525bab9fd843ad3b9046171aaff4dfe3d3c
+        with:
+          sdk-version: ${{ steps.compat.outputs.ci_sdk }}
+          artifact-tag: ${{ steps.compat.outputs.ci_runtime }}
       - name: Install matching Volk header
         shell: pwsh
         run: |
@@ -277,14 +285,17 @@ jobs:
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
       - name: Resolve tested demo compatibility
         id: compat
         shell: bash
         working-directory: ${{ github.workspace }}
         run: |
-          python "source/modules/antono2/imgui/scripts/test_compatibility.py"
-          python "source/modules/antono2/imgui/scripts/test_doctor.py"
-          python "source/modules/antono2/imgui/scripts/compatibility.py" --github-output "$GITHUB_OUTPUT"
+          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --self-test
+          v run "source/modules/antono2/imgui/scripts/doctor.vsh" --self-test
+          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
@@ -343,14 +354,17 @@ jobs:
         with:
           path: source/modules/antono2/imgui
           submodules: recursive
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
       - name: Resolve tested demo compatibility
         id: compat
         shell: bash
         working-directory: ${{ github.workspace }}
         run: |
-          python "source/modules/antono2/imgui/scripts/test_compatibility.py"
-          python "source/modules/antono2/imgui/scripts/test_doctor.py"
-          python "source/modules/antono2/imgui/scripts/compatibility.py" --github-output "$GITHUB_OUTPUT"
+          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --self-test
+          v run "source/modules/antono2/imgui/scripts/doctor.vsh" --self-test
+          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
