@@ -3,7 +3,7 @@ V + Dear ImGui GLFW/Vulkan Demo - Ubuntu 24.04 x86-64
 
 Extract the complete archive and run:
 
-    ./run.sh
+    ./v_imgui_demo
 
 The package contains the compiled V example, libvimgui, GLFW, the required C++
 runtime libraries and VARIANT.txt. The variant is also displayed inside the
