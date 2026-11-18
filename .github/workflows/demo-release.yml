@@ -206,8 +206,10 @@ jobs:
         shell: bash
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install Vulkan SDK and SwiftShader test artifacts
-        shell: pwsh
-        run: v run source/modules/antono2/imgui/scripts/setup_vulkan_ci.vsh ${{ steps.compat.outputs.ci_sdk }} ${{ steps.compat.outputs.ci_runtime }}
+        uses: antono2/vulkan/.github/actions/setup-vulkan-ci@04620525bab9fd843ad3b9046171aaff4dfe3d3c
+        with:
+          sdk-version: ${{ steps.compat.outputs.ci_sdk }}
+          artifact-tag: ${{ steps.compat.outputs.ci_runtime }}
       - name: Install matching Volk header
         shell: pwsh
         run: |
