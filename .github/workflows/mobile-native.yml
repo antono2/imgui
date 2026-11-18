@@ -199,13 +199,22 @@ jobs:
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
           export ANDROID_ABI='${{ matrix.abi }}'
           export VIMGUI_ANDROID_BUILD_DIR="$GITHUB_WORKSPACE/build/ci-android"
-          scripts/run_android_demo.sh --build-only
+          v run scripts/run_android_demo.vsh --build-only
           test -f "build/ci-android/vimgui-demo-$ANDROID_ABI.apk"
           unzip -l "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" | grep classes.dex
           unzip -l "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" | grep "lib/$ANDROID_ABI/libvimgui_android_demo.so"
           unzip -l "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" | grep "lib/$ANDROID_ABI/libvimgui_android_ui.so"
           "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D \
             build/ci-android/libvimgui_android_ui.so | grep vimgui_android_demo_draw_ui
+      - name: Build and sign the native accessibility fixture
+        if: matrix.abi == 'x86_64'
+        env:
+          ANDROID_ABI: x86_64
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
+          v -check scripts/test_android_accessible.vsh
+          v run scripts/run_android_accessible.vsh --build-only
+          unzip -l build/android-accessible-x86_64/accessible-x86_64.apk | grep classes.dex
 
   apple:
     name: ${{ matrix.sdk }} / ${{ matrix.arch }} Metal
