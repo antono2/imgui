@@ -23,6 +23,9 @@
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#ifdef __linux__
+#include "window_startup.h"
+#endif
 #ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
 #elif defined(__APPLE__)
@@ -368,9 +371,21 @@ int vimgui_app_run(const char *title, int width, int height, vimgui_app_frame fr
 
     // Create window with Vulkan context
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#ifdef __linux__
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+#endif
     float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor()); // Valid on GLFW 3.3+ only
     GLFWwindow* window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (!window) { glfwTerminate(); return 1; }
+#ifdef __linux__
+    char window_error[256] = {};
+    if (!a2_glfw_show_startup(window, window_error, sizeof(window_error))) {
+        fprintf(stderr, "%s\n", window_error);
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return 1;
+    }
+#endif
     if (!glfwVulkanSupported())
     {
         printf("GLFW: Vulkan Not Supported\n");
