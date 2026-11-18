@@ -27,9 +27,9 @@ bindings can require roughly 11 GiB of memory; the demo build uses V's
 To advance upstream revisions, run the matching command on the matching branch:
 
 ```sh
-./scripts/update_upstream.sh docking
+v run scripts/update_upstream.vsh docking
 # On standard only:
-./scripts/update_upstream.sh standard
+v run scripts/update_upstream.vsh standard
 ```
 
 Use `--check-only` for a read-only `changed=true` or `changed=false` report.
