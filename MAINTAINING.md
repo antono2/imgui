@@ -27,9 +27,9 @@ bindings can require roughly 11 GiB of memory; the demo build uses V's
 To advance upstream revisions, run the matching command on the matching branch:
 
 ```sh
-./scripts/update_upstream.sh docking
+v run scripts/update_upstream.vsh docking
 # On standard only:
-./scripts/update_upstream.sh standard
+v run scripts/update_upstream.vsh standard
 ```
 
 Use `--check-only` for a read-only `changed=true` or `changed=false` report.
@@ -58,7 +58,7 @@ the required matrix.
 
 [The mobile parity workflow](.github/workflows/mobile-parity.yml) compares
 hand-maintained mobile integration on `master` and `standard` weekly and on
-manual dispatch. Run `./scripts/check_mobile_parity.sh` locally after
+manual dispatch. Run `v run scripts/check_mobile_parity.vsh` locally after
 coordinated changes to both branches. Generated APIs, upstream submodules and
 variant-specific Vulkan bindings are deliberately excluded.
 
