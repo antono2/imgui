@@ -361,7 +361,7 @@ jobs:
         if: matrix.sdk == 'iphonesimulator' && ((matrix.arch == 'x86_64' && runner.arch == 'X64') || (matrix.arch == 'arm64' && runner.arch == 'ARM64'))
         continue-on-error: true
         timeout-minutes: 15
-        run: scripts/run_ios_simulator_smoke.sh build/ci-apple/vimgui_ios_demo.app
+        run: v run scripts/run_ios_simulator_smoke.vsh build/ci-apple/vimgui_ios_demo.app
 
   mobile-required-checks:
     name: mobile-required-checks

@@ -255,6 +255,11 @@ background/resume and committed IME input. iOS Simulator tests cannot replace
 validation of real Apple hardware, keyboard languages, candidate placement
 or GPU behavior. The CI matrix is documented in [Maintaining](../MAINTAINING.md).
 
+On macOS with an iPhone Simulator runtime installed, run
+`v run scripts/run_ios_simulator_smoke.vsh build/ci-apple/vimgui_ios_demo.app`
+against the Simulator build. It signs and installs the sample, then checks
+keyboard input, text composition, and overflow fallback through Metal.
+
 For the connected-device checks, set `ANDROID_NDK_HOME` and run
 `v run scripts/run_android_probes.vsh`. It builds for the device's reported ABI,
 stages the two probes and `libvimgui.so` under
