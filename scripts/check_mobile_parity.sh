@@ -34,6 +34,7 @@ shared_paths=(
   scripts/test_android_accessible.sh
   scripts/test_android_accessible.vsh
   scripts/run_android_probes.sh
+  scripts/run_android_probes.vsh
   scripts/run_ios_simulator_smoke.sh
   scripts/tooling
   scripts/build_appui.vsh

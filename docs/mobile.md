@@ -256,10 +256,12 @@ validation of real Apple hardware, keyboard languages, candidate placement
 or GPU behavior. The CI matrix is documented in [Maintaining](../MAINTAINING.md).
 
 For the connected-device checks, set `ANDROID_NDK_HOME` and run
-`scripts/run_android_probes.sh`. It builds the device's reported ABI, stages only
-the two probe executables and `libvimgui.so` under
-`/data/local/tmp/io.antono2.vimgui.probe` and executes both. Set
-`ANDROID_SERIAL` when more than one device is connected.
+`v run scripts/run_android_probes.vsh`. It builds for the device's reported ABI,
+stages the two probes and `libvimgui.so` under
+`/data/local/tmp/io.antono2.vimgui.probe`, runs both, and removes the staged files.
+Set `ANDROID_SERIAL` when more than one device is connected. Use
+`ANDROID_ABI` and `--build-only` to cross-build without a connected device.
+Use `VIMGUI_ANDROID_BUILD_DIR` to choose a build directory.
 
 ## Application forms and touch scrolling
 
