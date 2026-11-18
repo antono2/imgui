@@ -28,6 +28,11 @@ shared_paths=(
   impl_osx
   native
   scripts/run_android_demo.sh
+  scripts/run_android_demo.vsh
+  scripts/run_android_accessible.sh
+  scripts/run_android_accessible.vsh
+  scripts/test_android_accessible.sh
+  scripts/test_android_accessible.vsh
   scripts/run_android_probes.sh
   scripts/run_ios_simulator_smoke.sh
   scripts/tooling
