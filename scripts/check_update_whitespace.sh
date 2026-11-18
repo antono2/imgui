@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
-# Keep generated V and maintained code strict without rewriting copied Dear ImGui sources.
-set -euo pipefail
-git diff --check -- . ':(exclude)include/imgui/**'
+#!/bin/sh
+# Compatibility entry point for the V command.
+set -eu
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec "${V_BIN:-v}" run "$script_dir/check_update_whitespace.vsh" "$@"
