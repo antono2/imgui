@@ -8,11 +8,11 @@ generated API contents; upstream update workflows deliberately select candidates
 separately from the tested compiler profiles.
 
 Upgrade the manifest and affected VPM declarations together. Run
-`python scripts/test_compatibility.py` and the full project CI. Consumer application
+`v run scripts/compatibility.vsh --self-test` and the full project CI. Consumer application
 compilation/runtime checks are also required before publishing a dependency upgrade.
 The resolver's `--modules PATH` option verifies installed Git tags without fetching.
 
-Run `python scripts/doctor.py --v PATH_TO_V --modules PATH_TO_MODULES` for read-only
+Run `v run scripts/doctor.vsh --v PATH_TO_V --modules PATH_TO_MODULES` for read-only
 compiler/tool/dependency diagnostics. Add `--json` for a support report and
 `--runtime` for Vulkan device enumeration when Vulkan tools are available. Missing
 or mismatched prerequisites include a recovery action; diagnostics never repair

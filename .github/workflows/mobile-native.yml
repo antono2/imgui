@@ -24,14 +24,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
       - name: Validate and resolve tested compatibility
         id: compat
         shell: bash
         working-directory: ${{ github.workspace }}
         run: |
-          python ./scripts/test_compatibility.py
-          python ./scripts/test_doctor.py
-          python ./scripts/compatibility.py --github-output "$GITHUB_OUTPUT"
+          v run ./scripts/compatibility.vsh --self-test
+          v run ./scripts/doctor.vsh --self-test
+          v run ./scripts/compatibility.vsh --github-output "$GITHUB_OUTPUT"
       - name: Install Linux native dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libglfw3-dev libvulkan-dev libfreetype-dev mesa-vulkan-drivers
       - name: Compile Linux backend and Vulkan GPU test
@@ -93,14 +96,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
       - name: Validate and resolve tested compatibility
         id: compat
         shell: bash
         working-directory: ${{ github.workspace }}
         run: |
-          python ./scripts/test_compatibility.py
-          python ./scripts/test_doctor.py
-          python ./scripts/compatibility.py --github-output "$GITHUB_OUTPUT"
+          v run ./scripts/compatibility.vsh --self-test
+          v run ./scripts/doctor.vsh --self-test
+          v run ./scripts/compatibility.vsh --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
@@ -221,14 +227,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
       - name: Validate and resolve tested compatibility
         id: compat
         shell: bash
         working-directory: ${{ github.workspace }}
         run: |
-          python ./scripts/test_compatibility.py
-          python ./scripts/test_doctor.py
-          python ./scripts/compatibility.py --github-output "$GITHUB_OUTPUT"
+          v run ./scripts/compatibility.vsh --self-test
+          v run ./scripts/doctor.vsh --self-test
+          v run ./scripts/compatibility.vsh --github-output "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
