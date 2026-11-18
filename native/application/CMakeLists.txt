@@ -34,7 +34,7 @@ add_library(vimgui_app SHARED
 target_compile_features(vimgui_app PRIVATE cxx_std_17)
 target_include_directories(vimgui_app PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}"
   PRIVATE "${VIMGUI_ROOT}/cimgui/imgui" "${VIMGUI_ROOT}/cimgui/imgui/backends")
-target_link_libraries(vimgui_app PRIVATE vimgui_accessibility glfw nfd)
+target_link_libraries(vimgui_app PRIVATE vimgui_accessibility glfw nfd ${CMAKE_DL_LIBS})
 if(APPLE)
   target_sources(vimgui_app PRIVATE desktop_metal.mm "${VIMGUI_ROOT}/cimgui/imgui/backends/imgui_impl_metal.mm")
   target_compile_options(vimgui_app PRIVATE "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
