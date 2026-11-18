@@ -30,18 +30,13 @@ pub fn command(program string, args []string) ! {
 }
 
 pub fn output(program string, args []string) !string {
-	mut process := os.new_process(executable(program)!)
-	process.set_args(args)
-	process.set_redirect_stdio_merged()
-	process.run()
-	text := process.stdout_slurp()
-	process.wait()
-	code := process.code
-	process.close()
-	if code != 0 {
-		return error('${program} failed with exit code ${code}: ${text.trim_space()}')
+	mut invocation := [executable(program)!]
+	invocation << args
+	result := os.exec(invocation)
+	if result.exit_code != 0 {
+		return error('${program} failed with exit code ${result.exit_code}: ${result.output.trim_space()}')
 	}
-	return text.trim_space()
+	return result.output.trim_space()
 }
 
 pub fn install_modules(root string) ! {
