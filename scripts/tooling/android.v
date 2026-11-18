@@ -26,12 +26,16 @@ const supported_abis = {
 
 struct AndroidTools {
 	abi         Abi
-	adb         string
-	selector    []string
+	device      AndroidDevice
 	toolchain   string
 	build_tools string
 	android_jar string
 	clang       string
+}
+
+struct AndroidDevice {
+	adb      string
+	selector []string
 }
 
 fn android_setting(name string, default_value string) string {
@@ -81,10 +85,37 @@ fn sdk_install(directory string, expected string) !string {
 	return best
 }
 
-fn (tools AndroidTools) device_args(args []string) []string {
-	mut invocation := tools.selector.clone()
+fn (device AndroidDevice) args(args []string) []string {
+	mut invocation := device.selector.clone()
 	invocation << args
 	return invocation
+}
+
+fn android_device(sdk string) !AndroidDevice {
+	mut adb := if sdk == '' { '' } else { os.join_path(sdk, 'platform-tools', 'adb') }
+	if !os.is_executable(adb) {
+		adb = os.find_abs_path_of_executable('adb')!
+	}
+	mut selector := []string{}
+	serial := os.getenv('ANDROID_SERIAL')
+	if serial != '' {
+		selector << ['-s', serial]
+	}
+	return AndroidDevice{adb, selector}
+}
+
+fn (device AndroidDevice) abi() !string {
+	reported := output(device.adb, device.args(['shell', 'getprop', 'ro.product.cpu.abi']))!
+	// adb may announce a new server on stderr before returning the property.
+	return reported.split_into_lines().filter(!it.starts_with('* daemon ')).join('\n').trim_space()
+}
+
+fn android_toolchain(ndk string) !string {
+	toolchain := os.join_path(os.abs_path(ndk), 'build', 'cmake', 'android.toolchain.cmake')
+	if ndk == '' || !os.is_file(toolchain) {
+		return error('Set ANDROID_NDK_HOME to an installed NDK')
+	}
+	return toolchain
 }
 
 fn android_tools(deploy bool, compile_widgets bool) !AndroidTools {
@@ -92,28 +123,14 @@ fn android_tools(deploy bool, compile_widgets bool) !AndroidTools {
 	ndk_path := android_setting('ANDROID_NDK_HOME', os.getenv('ANDROID_NDK_ROOT'))
 	sdk := os.abs_path(sdk_path)
 	ndk := os.abs_path(ndk_path)
-	toolchain := os.join_path(ndk, 'build', 'cmake', 'android.toolchain.cmake')
-	if ndk_path == '' || !os.is_file(toolchain) {
-		return error('Set ANDROID_NDK_HOME to an installed NDK')
-	}
+	toolchain := android_toolchain(ndk_path)!
 	if sdk_path == '' || !os.is_dir(os.join_path(sdk, 'build-tools')) {
 		return error('Set ANDROID_SDK_ROOT to an installed Android SDK')
 	}
-	mut adb := os.join_path(sdk, 'platform-tools', 'adb')
-	if deploy && !os.is_executable(adb) {
-		adb = os.find_abs_path_of_executable('adb')!
-	}
-	mut selector := []string{}
-	if serial := os.getenv_opt('ANDROID_SERIAL') {
-		if serial != '' {
-			selector << ['-s', serial]
-		}
-	}
+	device := if deploy { android_device(sdk)! } else { AndroidDevice{} }
 	mut abi_name := os.getenv('ANDROID_ABI')
 	if abi_name == '' && deploy {
-		mut query := selector.clone()
-		query << ['shell', 'getprop', 'ro.product.cpu.abi']
-		abi_name = output(adb, query)!.trim_space()
+		abi_name = device.abi()!
 	}
 	abi := supported_abis[abi_name] or {
 		return error('Set ANDROID_ABI to armeabi-v7a, arm64-v8a or x86_64')
@@ -136,7 +153,7 @@ fn android_tools(deploy bool, compile_widgets bool) !AndroidTools {
 			return error('Cannot find the NDK Clang target for ${abi.name}')
 		}
 	}
-	return AndroidTools{abi, adb, selector, toolchain, build_tools, os.join_path(platform, 'android.jar'), clang}
+	return AndroidTools{abi, device, toolchain, build_tools, os.join_path(platform, 'android.jar'), clang}
 }
 
 fn configure_android(root string, build string, tools AndroidTools, accessible bool, appui bool) ! {
@@ -271,8 +288,9 @@ fn deploy_android(tools AndroidTools, apk string) ! {
 	if package == '' || activity == '' {
 		return error('The APK must declare a launcher activity')
 	}
-	command(tools.adb, tools.device_args(['install', '-r', apk]))!
-	command(tools.adb, tools.device_args(['shell', 'am', 'start', '-n', '${package}/${activity}']))!
+	command(tools.device.adb, tools.device.args(['install', '-r', apk]))!
+	command(tools.device.adb, tools.device.args(['shell', 'am', 'start', '-n',
+		'${package}/${activity}']))!
 	println('Use adb logcat -s vimgui-android-demo:I to inspect lifecycle and taps.')
 }
 
@@ -346,13 +364,13 @@ pub fn android_accessibility_test(root string, args []string) ! {
 	add_apk_entries(aapt, stage, unsigned, ['classes.dex'])!
 	sign_apk(tools, os.join_path(build, 'debug.keystore'), unsigned,
 		os.join_path(stage, 'aligned.apk'), test_apk)!
-	command(tools.adb, tools.device_args(['install', '-r', apk]))!
-	command(tools.adb, tools.device_args(['install', '-r', test_apk]))!
+	command(tools.device.adb, tools.device.args(['install', '-r', apk]))!
+	command(tools.device.adb, tools.device.args(['install', '-r', test_apk]))!
 	keycode_wakeup := '224'
-	command(tools.adb, tools.device_args(['shell', 'input', 'keyevent', keycode_wakeup]))!
-	command(tools.adb, tools.device_args(['shell', 'wm', 'dismiss-keyguard']))!
-	mut invocation := [tools.adb]
-	invocation << tools.device_args(['shell', 'am', 'instrument', '-w',
+	command(tools.device.adb, tools.device.args(['shell', 'input', 'keyevent', keycode_wakeup]))!
+	command(tools.device.adb, tools.device.args(['shell', 'wm', 'dismiss-keyguard']))!
+	mut invocation := [tools.device.adb]
+	invocation << tools.device.args(['shell', 'am', 'instrument', '-w',
 		'io.antono2.vimgui.accessible.test/io.antono2.vimgui.accessible.test.AccessibilitySmoke'])
 	result := os.exec(invocation)
 	log_path := os.join_path(build, 'instrumentation.log')
