@@ -59,7 +59,7 @@ emulator and physical-device tests are separate from the required matrix.
 
 [The mobile parity workflow](.github/workflows/mobile-parity.yml) compares
 hand-maintained mobile integration on `master` and `standard` weekly and on
-manual dispatch. Run `./scripts/check_mobile_parity.sh` locally after
+manual dispatch. Run `v run scripts/check_mobile_parity.vsh` locally after
 coordinated changes to both branches. Generated APIs, upstream submodules and
 variant-specific Vulkan bindings are deliberately excluded.
 
