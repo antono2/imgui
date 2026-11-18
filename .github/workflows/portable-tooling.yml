@@ -84,6 +84,7 @@ jobs:
           ./scripts/extract_zip.vsh --help
           ./scripts/setup_vulkan_ci.vsh --help
           test -x scripts/check_mobile_parity.sh
+          v run scripts/check_mobile_parity.vsh HEAD HEAD
           v test scripts/tooling
       - name: Test the same scripts on Windows
         if: runner.os == 'Windows'
