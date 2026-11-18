@@ -28,12 +28,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
+      - uses: prantlf/setup-v-action@92f20bea50d2c9931a28c96bb4997a3c7357baf0 # v4
+        with:
+          version: 0.5.2
+          install-dependencies: false
       - name: Check script and variant without modifying sources
         run: |
           set -euo pipefail
           bash -n scripts/update_upstream.sh
           python3 scripts/test_update_whitespace.py
-          python3 scripts/test_publish_generated_branch.py
+          v run scripts/publish_generated_branch.vsh --self-test
           variant=$(tr -d '[:space:]' < UPSTREAM_VARIANT)
           scripts/update_upstream.sh "$variant" --check-only
           git diff --exit-code
@@ -209,7 +213,7 @@ jobs:
             fi
           fi
           before=$(git rev-parse HEAD)
-          python3 scripts/publish_generated_branch.py "$UPDATE_BRANCH" "Update $VARIANT ImGui and ImPlot bindings"
+          v run scripts/publish_generated_branch.vsh "$UPDATE_BRANCH" "Update $VARIANT ImGui and ImPlot bindings"
           pushed=false
           if [[ $(git rev-parse HEAD) != "$before" ]]; then pushed=true; fi
           # Even after a no-op push, recover a missing PR without editing an existing one.
