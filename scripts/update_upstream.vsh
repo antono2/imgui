@@ -1,7 +1,7 @@
 // Update upstream gitlinks after validating both fast-forwards, then regenerate bindings.
 import os
 
-const usage = 'Usage: v run scripts/update_upstream.vsh standard|docking [--check-only] [--regenerate-c] [--worktree PATH]'
+const usage = 'Usage: v run scripts/update_upstream.vsh standard|docking|current [--check-only] [--github-output FILE] [--regenerate-c] [--worktree PATH]'
 
 struct Upstream {
 	name   string
@@ -63,9 +63,17 @@ fn run_script(path string, args []string) ! {
 	}
 }
 
-fn update(root string, variant string, check_only bool, regenerate_c bool) ! {
+fn update(root string, variant string, check_only bool, regenerate_c bool, github_output string) ! {
 	os.chdir(root)!
-	cimgui_branch := if variant == 'standard' { 'master' } else { 'docking_inter' }
+	mut selected := variant
+	if variant == 'current' || github_output != '' {
+		recorded := os.read_file('UPSTREAM_VARIANT')!.bytes().filter(!it.is_space()).bytestr()
+		if recorded !in ['docking', 'standard'] || (variant != 'current' && variant != recorded) {
+			return error('Expected ${variant} variant in ${root}/UPSTREAM_VARIANT, got "${recorded}"')
+		}
+		selected = recorded
+	}
+	cimgui_branch := if selected == 'standard' { 'master' } else { 'docking_inter' }
 	modules := [upstream('cimgui', cimgui_branch)!, upstream('cimplot', 'master')!]
 	mut changed := false
 	for dependency in modules {
@@ -73,7 +81,13 @@ fn update(root string, variant string, check_only bool, regenerate_c bool) ! {
 			changed = true
 		}
 	}
-	println('changed=${changed}')
+	result := 'changed=${changed}'
+	println(result)
+	if github_output != '' {
+		mut output := os.open_append(github_output)!
+		defer { output.close() }
+		output.writeln(result)!
+	}
 	if check_only {
 		return
 	}
@@ -88,12 +102,12 @@ fn update(root string, variant string, check_only bool, regenerate_c bool) ! {
 		print(git(dependency.name, 'switch', '--detach', dependency.head)!)
 		print(git(dependency.name, 'submodule', 'update', '--init', '--recursive')!)
 	}
-	os.write_file('UPSTREAM_VARIANT', variant + '\n')!
-	run_script('scripts/configure_variant.vsh', [variant])!
+	os.write_file('UPSTREAM_VARIANT', selected + '\n')!
+	run_script('scripts/configure_variant.vsh', [selected])!
 	run_script('generate.vsh', if regenerate_c { ['--regenerate-c'] } else { []string{} })!
 	cimgui := git('cimgui', 'rev-parse', '--short', 'HEAD')!.trim_space()
 	cimplot := git('cimplot', 'rev-parse', '--short', 'HEAD')!.trim_space()
-	println('Updated ${variant} bindings: cimgui=${cimgui} cimplot=${cimplot}')
+	println('Updated ${selected} bindings: cimgui=${cimgui} cimplot=${cimplot}')
 }
 
 fn main() {
@@ -102,18 +116,27 @@ fn main() {
 		println(usage)
 		return
 	}
-	if args.len == 0 || args[0] !in ['standard', 'docking'] {
+	if args.len == 0 || args[0] !in ['standard', 'docking', 'current'] {
 		eprintln(usage)
 		exit(2)
 	}
 	mut root := os.dir(@DIR)
 	mut check_only := false
 	mut regenerate_c := false
+	mut github_output := ''
 	mut index := 1
 	for index < args.len {
 		match args[index] {
 			'--check-only' { check_only = true }
 			'--regenerate-c' { regenerate_c = true }
+			'--github-output' {
+				index++
+				if index >= args.len || args[index] == '' {
+					eprintln(usage)
+					exit(2)
+				}
+				github_output = os.abs_path(args[index])
+			}
 			'--worktree' {
 				index++
 				if index >= args.len {
@@ -130,7 +153,11 @@ fn main() {
 		}
 		index++
 	}
-	update(root, args[0], check_only, regenerate_c) or {
+	if !check_only && (args[0] == 'current' || github_output != '') {
+		eprintln(usage)
+		exit(2)
+	}
+	update(root, args[0], check_only, regenerate_c, github_output) or {
 		eprintln(err)
 		exit(1)
 	}
