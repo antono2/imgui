@@ -28,14 +28,11 @@ jobs:
           v run "checkout with spaces/scripts/compatibility.vsh" --self-test
           v run "checkout with spaces/scripts/doctor.vsh" --self-test
           v run "checkout with spaces/scripts/compatibility.vsh" --github-output "$GITHUB_OUTPUT"
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          repository: antono2/vulkan
-          ref: ${{ steps.compat.outputs.module_vulkan }}
-          path: ci-inputs/vulkan
       - name: Install CI Vulkan runtime
-        shell: bash
-        run: bash ci-inputs/vulkan/.github/scripts/setup-vulkan-ci.sh ${{ steps.compat.outputs.ci_sdk }} ${{ steps.compat.outputs.ci_runtime }}
+        uses: antono2/vulkan/.github/actions/setup-vulkan-ci@04620525bab9fd843ad3b9046171aaff4dfe3d3c
+        with:
+          sdk-version: ${{ steps.compat.outputs.ci_sdk }}
+          artifact-tag: ${{ steps.compat.outputs.ci_runtime }}
       - name: Exercise the documented PowerShell bootstrap
         shell: powershell
         working-directory: checkout with spaces

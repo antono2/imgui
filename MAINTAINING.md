@@ -27,12 +27,14 @@ bindings can require roughly 11 GiB of memory; the demo build uses V's
 To advance upstream revisions, run the matching command on the matching branch:
 
 ```sh
-./scripts/update_upstream.sh docking
+v run scripts/update_upstream.vsh docking
 # On standard only:
-./scripts/update_upstream.sh standard
+v run scripts/update_upstream.vsh standard
 ```
 
 Use `--check-only` for a read-only `changed=true` or `changed=false` report.
+Run `v run scripts/update_upstream.vsh current --check-only` to read the
+variant from `UPSTREAM_VARIANT` and check its upstream revisions.
 The updater refuses dirty submodules and non-fast-forward upstream changes.
 Review the generated diff, variant, native build and V checks before merging.
 
@@ -41,10 +43,17 @@ Review the generated diff, variant, native build and V checks before merging.
 [The upstream update workflow](.github/workflows/update-upstream.yml) checks
 both variants weekly or on manual dispatch. When cimgui or cimplot advances,
 it regenerates with pinned V and C2V revisions, validates the generated API and
-native library and opens or updates a draft pull request. It does not merge
-automatically. Pull requests also regenerate both bindings with the pinned
-toolchain and compare them byte-for-byte with committed output; translator or
-cleanup changes must therefore be reviewed as API changes.
+native library and opens or updates a draft pull request for human review.
+A matching generated tree reuses its branch commit and can recover a missing
+draft. Repository-token publication dispatches CI after a push or draft
+creation. Personal-token publication uses GitHub's normal PR triggers.
+Pull requests regenerate both bindings with the pinned toolchain and compare
+them byte-for-byte with committed output. Review translator and cleanup changes
+as API changes.
+
+Run `v run scripts/publish_generated_branch.vsh --self-test` to exercise draft
+creation, recovery, no-ops, lease conflicts and CI dispatch with a local
+Git remote and a simulated GitHub client.
 
 ## CI and release artifacts
 
@@ -59,7 +68,7 @@ emulator and physical-device tests are separate from the required matrix.
 
 [The mobile parity workflow](.github/workflows/mobile-parity.yml) compares
 hand-maintained mobile integration on `master` and `standard` weekly and on
-manual dispatch. Run `./scripts/check_mobile_parity.sh` locally after
+manual dispatch. Run `v run scripts/check_mobile_parity.vsh` locally after
 coordinated changes to both branches. Generated APIs, upstream submodules and
 variant-specific Vulkan bindings are deliberately excluded.
 
@@ -67,7 +76,9 @@ variant-specific Vulkan bindings are deliberately excluded.
 x86_64 and Windows 10/11 x64 artifacts. The source path remains
 `scripts/run_demo.vsh`; prebuilding a demo is not a requirement for every
 release. Keep the archive variant marker and the pinned demo/compiler revisions
-aligned when changing release packaging.
+aligned when changing release packaging. The Ubuntu packager writes the ZIP
+in V and compares every archived file against the staged package.
+Run `v run scripts/package_ubuntu_demo.vsh --help` for local packaging options.
 
 ## Source map and file introductions
 

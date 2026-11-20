@@ -144,7 +144,7 @@ connected Vulkan-capable tablet:
 ```sh
 export ANDROID_SDK_ROOT=/path/to/android-sdk
 export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
-scripts/run_android_demo.sh
+v run scripts/run_android_demo.vsh
 ```
 
 The script selects the device ABI, builds the native host and V UI, packages,
@@ -155,6 +155,12 @@ and pass `--build-only`.
 Tap the button, enter committed text, change UI zoom, rotate the tablet and
 background/resume the app. `adb logcat -s vimgui-android-demo:I` reports
 initialization, swapchain recreation, tap counts and keyboard visibility.
+
+Use `v run scripts/run_android_accessible.vsh --build-only` with the same SDK
+and ABI settings to package the native accessibility fixture. To build, install
+and exercise it on the selected device, run
+`v run scripts/test_android_accessible.vsh`. Set `VIMGUI_ANDROID_BUILD_DIR` to
+choose a build directory and keep the instrumentation log with its APK.
 
 ## iOS and macOS Metal lifecycle
 
@@ -249,11 +255,18 @@ background/resume and committed IME input. iOS Simulator tests cannot replace
 validation of real Apple hardware, keyboard languages, candidate placement
 or GPU behavior. The CI matrix is documented in [Maintaining](../MAINTAINING.md).
 
+On macOS with an iPhone Simulator runtime installed, run
+`v run scripts/run_ios_simulator_smoke.vsh build/ci-apple/vimgui_ios_demo.app`
+against the Simulator build. It signs and installs the sample, then checks
+keyboard input, text composition, and overflow fallback through Metal.
+
 For the connected-device checks, set `ANDROID_NDK_HOME` and run
-`scripts/run_android_probes.sh`. It builds the device's reported ABI, stages only
-the two probe executables and `libvimgui.so` under
-`/data/local/tmp/io.antono2.vimgui.probe` and executes both. Set
-`ANDROID_SERIAL` when more than one device is connected.
+`v run scripts/run_android_probes.vsh`. It builds for the device's reported ABI,
+stages the two probes and `libvimgui.so` under
+`/data/local/tmp/io.antono2.vimgui.probe`, runs both, and removes the staged files.
+Set `ANDROID_SERIAL` when more than one device is connected. Use
+`ANDROID_ABI` and `--build-only` to cross-build without a connected device.
+Use `VIMGUI_ANDROID_BUILD_DIR` to choose a build directory.
 
 ## Application forms and touch scrolling
 
@@ -278,7 +291,7 @@ UI and manifest:
 ```sh
 VIMGUI_ANDROID_UI_SOURCE=/absolute/path/to/ui.v \
 VIMGUI_ANDROID_MANIFEST=/absolute/path/to/AndroidManifest.xml \
-ANDROID_ABI=arm64-v8a scripts/run_android_demo.sh --build-only
+ANDROID_ABI=arm64-v8a v run scripts/run_android_demo.vsh --build-only
 ```
 
 A source directory is also accepted. The UI must export

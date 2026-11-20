@@ -79,7 +79,7 @@ jobs:
         shell: bash
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install native dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config xvfb zip
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config mesa-vulkan-drivers xauth xvfb
       - name: Verify generated upstream variant
         working-directory: source/modules/antono2/imgui
         run: |
@@ -89,16 +89,6 @@ jobs:
           ./scripts/check_upstream_variant.vsh
           ./cleanup_imgui_implot.vsh --self-test
           ./scripts/configure_variant.vsh --self-test
-      - name: Select package variant
-        id: variant
-        working-directory: source/modules/antono2/imgui
-        run: |
-          variant=$(tr -d '[:space:]' < UPSTREAM_VARIANT)
-          case "$variant" in
-            docking|standard) ;;
-            *) echo "Unsupported ImGui variant: $variant" >&2; exit 1 ;;
-          esac
-          echo "name=$variant" >> "$GITHUB_OUTPUT"
       - name: Check native build entry point
         working-directory: source/modules/antono2/imgui
         run: |
@@ -108,33 +98,11 @@ jobs:
           ./source/modules/antono2/imgui/scripts/run_demo.vsh --build-only --demo-directory "$GITHUB_WORKSPACE/source/demo"
           cp source/modules/antono2/imgui/build/desktop-demo/v_imgui_demo "$RUNNER_TEMP/v_imgui_demo"
       - name: Package and verify
-        run: |
-          set -euo pipefail
-          variant='${{ steps.variant.outputs.name }}'
-          package="$RUNNER_TEMP/v-imgui-demo-${variant}-ubuntu24-amd64"
-          install -d "$package/lib"
-          install -m 0755 "$RUNNER_TEMP/v_imgui_demo" "$package/v_imgui_demo"
-          install -m 0755 source/modules/antono2/imgui/lib/libvimgui.so "$package/lib/libvimgui.so"
-          install -m 0755 /usr/lib/x86_64-linux-gnu/libglfw.so.3 "$package/lib/libglfw.so.3"
-          install -m 0755 /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "$package/lib/libstdc++.so.6"
-          install -m 0755 /lib/x86_64-linux-gnu/libgcc_s.so.1 "$package/lib/libgcc_s.so.1"
-          install -m 0755 source/modules/antono2/imgui/packaging/demo/ubuntu24/run.sh "$package/run.sh"
-          install -m 0644 source/modules/antono2/imgui/packaging/demo/ubuntu24/README.txt "$package/README.txt"
-          install -m 0644 source/modules/antono2/imgui/UPSTREAM_VARIANT "$package/VARIANT.txt"
-          strip --strip-unneeded "$package/v_imgui_demo" "$package/lib/libvimgui.so"
-          patchelf --set-rpath '$ORIGIN/lib' "$package/v_imgui_demo"
-          patchelf --set-rpath '$ORIGIN' "$package/lib/libvimgui.so"
-          test "$(patchelf --print-rpath "$package/v_imgui_demo")" = '$ORIGIN/lib'
-          test "$(patchelf --print-rpath "$package/lib/libvimgui.so")" = '$ORIGIN'
-          ldd "$package/v_imgui_demo" | tee "$RUNNER_TEMP/ldd.txt"
-          ! grep -q 'not found' "$RUNNER_TEMP/ldd.txt"
-          for library in libvimgui.so libglfw.so.3 libstdc++.so.6 libgcc_s.so.1; do
-            grep -F "$package/lib/$library" "$RUNNER_TEMP/ldd.txt"
-          done
-          archive="$(basename "$package").zip"
-          (cd "$RUNNER_TEMP" && zip -qr "$archive" "$(basename "$package")")
-          unzip -t "$RUNNER_TEMP/$archive" >/dev/null
-          sha256sum "$RUNNER_TEMP/$archive"
+        id: variant
+        working-directory: source/modules/antono2/imgui
+        run: >-
+          v run scripts/package_ubuntu_demo.vsh --player "$RUNNER_TEMP/v_imgui_demo"
+          --output-directory "$RUNNER_TEMP" --github-output "$GITHUB_OUTPUT" --smoke
       - name: Upload Ubuntu demo package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -206,8 +174,10 @@ jobs:
         shell: bash
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install Vulkan SDK and SwiftShader test artifacts
-        shell: pwsh
-        run: v run source/modules/antono2/imgui/scripts/setup_vulkan_ci.vsh ${{ steps.compat.outputs.ci_sdk }} ${{ steps.compat.outputs.ci_runtime }}
+        uses: antono2/vulkan/.github/actions/setup-vulkan-ci@04620525bab9fd843ad3b9046171aaff4dfe3d3c
+        with:
+          sdk-version: ${{ steps.compat.outputs.ci_sdk }}
+          artifact-tag: ${{ steps.compat.outputs.ci_runtime }}
       - name: Install matching Volk header
         shell: pwsh
         run: |
