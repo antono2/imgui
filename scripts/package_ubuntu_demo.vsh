@@ -40,7 +40,11 @@ fn check_bundle(player string, library string, library_directory string) ! {
 	}
 }
 
-fn check_render(player string) ! {
+fn check_render(player string, directory string) ! {
+	// ImGui saves window settings in the working directory.
+	previous := os.getwd()
+	os.chdir(directory)!
+	defer { os.chdir(previous) or {} }
 	// A bounded draw run exercises the actual executable with the package loader paths.
 	log := command(['env', '-u', 'LD_LIBRARY_PATH', 'VIMGUI_SMOKE_FRAMES=60', 'timeout', '60s',
 		'xvfb-run', '-a', player])!
@@ -91,7 +95,7 @@ fn package_demo(root string, output string, player string, imgui string, smoke b
 	command(['patchelf', '--set-rpath', r'$ORIGIN', staged_imgui])!
 	check_bundle(staged_player, staged_imgui, libraries)!
 	if smoke {
-		check_render(staged_player)!
+		check_render(staged_player, stage)!
 	}
 	archive_name := name + '.zip'
 	temporary_archive := os.join_path(stage, archive_name)
