@@ -79,7 +79,7 @@ jobs:
         shell: bash
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install native dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config mesa-vulkan-drivers xauth xvfb zip
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config mesa-vulkan-drivers xauth xvfb
       - name: Verify generated upstream variant
         working-directory: source/modules/antono2/imgui
         run: |

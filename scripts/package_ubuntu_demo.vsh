@@ -3,6 +3,7 @@ import crypto.sha256
 import flag
 import os
 import rand
+import tooling
 
 const demo_executable = 'v_imgui_demo'
 const system_libraries = '/usr/lib/x86_64-linux-gnu'
@@ -39,7 +40,11 @@ fn check_bundle(player string, library string, library_directory string) ! {
 	}
 }
 
-fn check_render(player string) ! {
+fn check_render(player string, directory string) ! {
+	// ImGui saves window settings in the working directory.
+	previous := os.getwd()
+	os.chdir(directory)!
+	defer { os.chdir(previous) or {} }
 	// A bounded draw run exercises the actual executable with the package loader paths.
 	log := command(['env', '-u', 'LD_LIBRARY_PATH', 'VIMGUI_SMOKE_FRAMES=60', 'timeout', '60s',
 		'xvfb-run', '-a', player])!
@@ -63,7 +68,7 @@ fn package_demo(root string, output string, player string, imgui string, smoke b
 	}
 	os.mkdir_all(output)!
 	stage := os.join_path(output, '.imgui-demo-' + rand.uuid_v4())
-	os.mkdir(stage)!
+	os.mkdir(stage, mode: 0o700)!
 	defer { os.rmdir_all(stage) or {} }
 	name := 'v-imgui-demo-${variant}-ubuntu24-amd64'
 	directory := os.join_path(stage, name)
@@ -80,20 +85,33 @@ fn package_demo(root string, output string, player string, imgui string, smoke b
 	stage_file(os.join_path(root, 'packaging', 'demo', 'ubuntu24', 'README.txt'), os.join_path(directory,
 		'README.txt'), data_mode)!
 	stage_file(variant_file, os.join_path(directory, 'VARIANT.txt'), data_mode)!
+	launcher := os.join_path(root, 'packaging', 'demo', 'ubuntu24', 'run.sh')
+	// Keep the compatibility launcher for branches that ship it.
+	if os.is_file(launcher) {
+		stage_file(launcher, os.join_path(directory, 'run.sh'), executable_mode)!
+	}
 	command(['strip', '--strip-unneeded', staged_player, staged_imgui])!
 	command(['patchelf', '--set-rpath', r'$ORIGIN/lib', staged_player])!
 	command(['patchelf', '--set-rpath', r'$ORIGIN', staged_imgui])!
 	check_bundle(staged_player, staged_imgui, libraries)!
-	previous := os.getwd()
-	os.chdir(stage)!
-	defer { os.chdir(previous) or {} }
 	if smoke {
-		check_render(staged_player)!
+		check_render(staged_player, stage)!
 	}
 	archive_name := name + '.zip'
 	temporary_archive := os.join_path(stage, archive_name)
-	command(['zip', '-qr', temporary_archive, name])!
-	command(['unzip', '-t', temporary_archive])!
+	mut files := []tooling.ZipFile{}
+	mut paths := os.walk_ext(directory, '')
+	paths.sort()
+	for path in paths {
+		info := os.stat(path)!
+		files << tooling.ZipFile{
+			name: name + '/' + path[directory.len + 1..]
+			path: path
+			mode: info.mode
+		}
+	}
+	tooling.write_zip(temporary_archive, files)!
+	tooling.verify_written_zip(temporary_archive, files, os.join_path(stage, 'verify-entry'))!
 	checksum := sha256.sum(os.read_bytes(temporary_archive)!).hex()
 	os.mv(temporary_archive, os.join_path(output, archive_name))!
 	println('${checksum}  ${archive_name}')
