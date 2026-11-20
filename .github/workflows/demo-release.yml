@@ -157,11 +157,6 @@ jobs:
           repository: vlang/vc
           ref: ${{ steps.compat.outputs.vc }}
           path: toolchain/v/vc
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          repository: zeux/volk
-          ref: ${{ steps.compat.outputs.volk }}
-          path: source/third_party/volk
       - name: Build official V compiler
         shell: cmd
         working-directory: toolchain/v
@@ -174,16 +169,11 @@ jobs:
         shell: bash
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install Vulkan SDK and SwiftShader test artifacts
-        uses: antono2/vulkan/.github/actions/setup-vulkan-ci@04620525bab9fd843ad3b9046171aaff4dfe3d3c
+        uses: antono2/vulkan/.github/actions/setup-vulkan-ci@0c2a5f832ea6792df3f34a6e1ef7390743162bd1
         with:
           sdk-version: ${{ steps.compat.outputs.ci_sdk }}
           artifact-tag: ${{ steps.compat.outputs.ci_runtime }}
-      - name: Install matching Volk header
-        shell: pwsh
-        run: |
-          $Destination = Join-Path $env:VULKAN_SDK "Include\volk"
-          New-Item -ItemType Directory -Force $Destination | Out-Null
-          Copy-Item source/third_party/volk/volk.h, source/third_party/volk/volk.c $Destination
+          volk-revision: ${{ steps.compat.outputs.volk }}
       - name: Select package variant
         id: variant
         shell: pwsh
@@ -359,23 +349,10 @@ jobs:
           echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev pkg-config
-      - name: Install headers matching Vulkan master
-        run: |
-          set -euo pipefail
-          vulkan_root="$GITHUB_WORKSPACE/source/modules/antono2/vulkan"
-          registry_commit=$(tr -d '\r\n' < "$vulkan_root/REGISTRY_COMMIT")
-          headers_checkout="$RUNNER_TEMP/Vulkan-Headers"
-          git init -q "$headers_checkout"
-          git -C "$headers_checkout" remote add origin https://github.com/KhronosGroup/Vulkan-Headers.git
-          git -C "$headers_checkout" fetch --depth 1 origin "$registry_commit"
-          git -C "$headers_checkout" checkout --detach FETCH_HEAD
-          test "$(git -C "$headers_checkout" rev-parse HEAD)" = "$registry_commit"
-          sudo cp -R "$headers_checkout/include/." "$VULKAN_SDK/include/"
-          volk_commit=$(tr -d '\r\n' < "$vulkan_root/VOLK_COMMIT")
-          curl --fail --silent --show-error --location \
-            "https://raw.githubusercontent.com/zeux/volk/$volk_commit/volk.h" \
-            --output "$RUNNER_TEMP/volk.h"
-          sudo install -m 0644 "$RUNNER_TEMP/volk.h" "$VULKAN_SDK/include/volk.h"
+      - name: Stage headers matching Vulkan master
+        uses: antono2/vulkan/.github/actions/stage-vulkan-headers@0c2a5f832ea6792df3f34a6e1ef7390743162bd1
+        with:
+          bindings-path: source/modules/antono2/vulkan
       - name: Check generated bindings with V3
         working-directory: source/modules/antono2/imgui
         run: |
