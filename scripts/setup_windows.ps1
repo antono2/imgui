@@ -59,18 +59,25 @@ Get-WindowsSetupCheckout 'https://github.com/vlang/v.git' $Pins.v $VDirectory
 Get-WindowsSetupCheckout 'https://github.com/vlang/vc.git' $Pins.vc (Join-Path $VDirectory 'vc')
 Get-WindowsSetupCheckout 'https://github.com/vlang/tccbin.git' $Pins.tcc (Join-Path $VDirectory 'thirdparty\tcc')
 $VExecutable = Join-Path $VDirectory 'v.exe'
-if (-not (Test-Path -LiteralPath $VExecutable)) {
-    Push-Location $VDirectory
-    # Use the pinned bootstrap compiler, regardless of unrelated Clang/GCC
-    # installations on PATH. The demo itself is compiled with MSVC below.
-    try { Invoke-WindowsSetupCommand (Join-Path $VDirectory 'makev.bat') @('-tcc', '--local') } finally { Pop-Location }
+$PreviousVexe = $env:VEXE
+try {
+    # A parent V script can export VEXE pointing at a different compiler and vlib.
+    $env:VEXE = $null
+    if (-not (Test-Path -LiteralPath $VExecutable)) {
+        Push-Location $VDirectory
+        # Use the pinned TCC checkout to bootstrap V before the MSVC demo build.
+        try { Invoke-WindowsSetupCommand (Join-Path $VDirectory 'makev.bat') @('-tcc', '--local') } finally { Pop-Location }
+    }
+    $env:VEXE = $VExecutable
+    $env:V_BIN = $VExecutable
+    $env:Path = "$VDirectory;$(Join-Path $env:VULKAN_SDK 'Bin');$env:Path"
+    if ($PrepareOnly) {
+        Write-Host "Prepared upstream V compiler: $VExecutable"
+        return
+    }
+    $Options = @('-cc', 'msvc', 'run', (Join-Path $PSScriptRoot 'setup_windows_demo.vsh'))
+    if ($Run) { $Options += '--run' }
+    Invoke-WindowsSetupCommand $VExecutable $Options
+} finally {
+    $env:VEXE = $PreviousVexe
 }
-$env:V_BIN = $VExecutable
-$env:Path = "$VDirectory;$(Join-Path $env:VULKAN_SDK 'Bin');$env:Path"
-if ($PrepareOnly) {
-    Write-Host "Prepared upstream V compiler: $VExecutable"
-    return
-}
-$Options = @('-cc', 'msvc', 'run', (Join-Path $PSScriptRoot 'setup_windows_demo.vsh'))
-if ($Run) { $Options += '--run' }
-Invoke-WindowsSetupCommand $VExecutable $Options
