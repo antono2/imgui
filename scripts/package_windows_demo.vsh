@@ -6,6 +6,7 @@ import tooling
 
 const runtime_files = ['v_imgui_demo.exe', 'vimgui.dll', 'glfw3.dll']
 const runtime_file_mode = 0o755
+const private_directory_mode = 0o700
 
 fn package_demo(root string, output string, runtime string) !string {
 	variant := tooling.demo_variant(root)!
@@ -32,7 +33,7 @@ fn package_demo(root string, output string, runtime string) !string {
 	}
 	os.mkdir_all(output)!
 	stage := os.join_path(output, '.imgui-demo-' + rand.uuid_v4())
-	os.mkdir(stage, mode: 0o700)!
+	os.mkdir(stage, mode: private_directory_mode)!
 	defer { os.rmdir_all(stage) or {} }
 	tooling.publish_demo_archive(output, stage, name, files)!
 	return variant
