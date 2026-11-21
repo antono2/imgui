@@ -1,8 +1,11 @@
 #!/usr/bin/env -S v run
-// Builds the application-widget host and its platform accessibility dependencies.
 
+// Builds the application-widget host and its platform accessibility dependencies.
 import os
 import tooling
+
+// Limit native compile jobs on shared runners.
+const native_build_parallel_jobs = 2
 
 fn run() ! {
 	if os.args[1..] == ['--help'] || os.args[1..] == ['-h'] {
@@ -15,7 +18,8 @@ fn run() ! {
 		'-DCMAKE_BUILD_TYPE=Release']
 	options << os.args[1..]
 	tooling.command('cmake', options)!
-	tooling.command('cmake', ['--build', build, '--config', 'Release', '--parallel', '2'])!
+	tooling.command('cmake',
+		['--build', build, '--config', 'Release', '--parallel', native_build_parallel_jobs.str()])!
 }
 
 fn main() {
