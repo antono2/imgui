@@ -3,7 +3,8 @@ import os
 import tooling
 
 const usage = 'Usage: v run scripts/check_native.vsh COMMAND [ARGS...]
-  compiler SOURCE [clang]
+  compiler SOURCE [clang|master]
+  compiler-path SOURCE
   linux-build BUILD_DIRECTORY
   linux-probes BUILD_DIRECTORY
   linux-callback BUILD_DIRECTORY SCRATCH
@@ -30,15 +31,23 @@ struct AppleTarget {
 	backend  string
 }
 
-fn build_compiler(source string, use_clang bool) ! {
+fn build_compiler(source string, mode string) ! {
 	// Make must write the source compiler locally. v run sets VEXE to the bootstrap.
 	os.unsetenv('VEXE')
-	mut args := ['-C', source, 'local=1']
-	if use_clang {
+	mut args := ['-C', source]
+	if mode != 'master' {
+		args << 'local=1'
+	}
+	if mode == 'clang' {
 		args << 'VFLAGS=-cc clang'
 	}
 	tooling.command('make', args)!
-	tooling.command(os.join_path(source, 'v'), ['version'])!
+	register_compiler(source)!
+}
+
+fn register_compiler(source string) ! {
+	name := $if windows { 'v.exe' } $else { 'v' }
+	tooling.command(os.join_path(source, name), ['version'])!
 	output := os.getenv('GITHUB_PATH')
 	if output != '' {
 		if source.contains_any('\r\n') {
@@ -225,10 +234,13 @@ fn run(args []string) ! {
 	root := os.dir(@DIR)
 	match true {
 		args.len == 2 && args[0] == 'compiler' {
-			build_compiler(os.abs_path(args[1]), false)!
+			build_compiler(os.abs_path(args[1]), '')!
 		}
-		args.len == 3 && args[0] == 'compiler' && args[2] == 'clang' {
-			build_compiler(os.abs_path(args[1]), true)!
+		args.len == 3 && args[0] == 'compiler' && args[2] in ['clang', 'master'] {
+			build_compiler(os.abs_path(args[1]), args[2])!
+		}
+		args.len == 2 && args[0] == 'compiler-path' {
+			register_compiler(os.abs_path(args[1]))!
 		}
 		args.len == 2 && args[0] == 'linux-build' {
 			linux_build(root, os.abs_path(args[1]))!
