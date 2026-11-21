@@ -1,4 +1,4 @@
-# Checked downloads and Git checkouts used by the isolated Windows bootstrap.
+# Checked Git checkouts used by the isolated Windows bootstrap.
 function Invoke-WindowsSetupCommand([string]$Command, [string[]]$Arguments) {
     & $Command @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$Command failed with exit code ${LASTEXITCODE}: $($Arguments -join ' ')" }
@@ -42,73 +42,4 @@ function Remove-WindowsSetupStagingDirectory([string]$Staging, [string]$Destinat
         throw "Refusing staging cleanup outside the tool cache: $Resolved"
     }
     if (Test-Path -LiteralPath $Resolved) { Remove-Item -LiteralPath $Resolved -Recurse -Force }
-}
-
-function Expand-WindowsSetupVerifiedArchive([string]$Archive, [string]$Hash, [string]$Directory) {
-    if ((Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash -ne $Hash) {
-        throw "Download checksum mismatch: $Archive. Remove this cached archive and retry."
-    }
-    Expand-Archive -LiteralPath $Archive -DestinationPath $Directory -Force
-}
-
-function Get-WindowsSetupArchive([string]$Url, [string]$Hash, [string]$Archive, [string]$Directory, [string]$Executable) {
-    $ProgressPreference = 'SilentlyContinue'
-    $Marker = Join-Path $Directory '.archive-sha256'
-    if (Test-Path -LiteralPath $Marker) {
-        if ((Get-Content -LiteralPath $Marker -Raw).Trim() -ne $Hash -or
-            -not (Test-Path -LiteralPath (Join-Path $Directory $Executable))) {
-            throw "Incomplete or mismatched tool cache: $Directory. Choose another -CacheDirectory."
-        }
-        return
-    }
-    if (Test-Path -LiteralPath $Directory) {
-        throw "Unverified tool directory: $Directory. Preserve its contents and choose another -CacheDirectory."
-    }
-    if (-not (Test-Path -LiteralPath $Archive)) {
-        Write-Host "Downloading $Url"
-        $Download = "$Archive.download.zip"
-        try {
-            if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
-                Invoke-WindowsSetupCommand curl.exe @('--fail', '--location', '--retry', '3', '--connect-timeout', '30', '--max-time', '900', '--silent', '--show-error', '--output', $Download, $Url)
-            } else {
-                Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $Download -TimeoutSec 120
-            }
-        } catch {
-            throw "Download failed for ${Url}. Retry setup; existing installed tools are preserved. $($_.Exception.Message)"
-        }
-        if ((Get-FileHash -LiteralPath $Download -Algorithm SHA256).Hash -ne $Hash) {
-            throw "Download checksum mismatch: $Url. Retry setup to download again."
-        }
-        Move-Item -LiteralPath $Download -Destination $Archive -Force
-    }
-    $Staging = "$Directory.setup-$([Guid]::NewGuid().ToString('N'))"
-    try {
-        Expand-WindowsSetupVerifiedArchive $Archive $Hash $Staging
-        if (-not (Test-Path -LiteralPath (Join-Path $Staging $Executable))) {
-            throw "Downloaded tool is missing ${Executable}: $Archive. Check the archive/pin before retrying."
-        }
-        $Hash | Set-Content -LiteralPath (Join-Path $Staging '.archive-sha256') -Encoding ascii
-        [IO.Directory]::Move([IO.Path]::GetFullPath($Staging), [IO.Path]::GetFullPath($Directory))
-    } finally {
-        Remove-WindowsSetupStagingDirectory $Staging $Directory
-    }
-}
-
-# Install manifest-pinned repositories directly: old VPM versions refuse repeat
-# installs into a VMODULES directory containing spaces, even at the right pin.
-function Install-WindowsSetupModules([string]$ManifestDirectory, [string]$ModulesDirectory, [hashtable]$Checked) {
-    $Manifest = Get-Content -LiteralPath (Join-Path $ManifestDirectory 'v.mod') -Raw
-    foreach ($Match in [regex]::Matches($Manifest, "'antono2\.([a-z0-9_]+)@([^']+)'")) {
-        $Name = $Match.Groups[1].Value
-        $Tag = $Match.Groups[2].Value
-        if ($Checked.ContainsKey($Name)) {
-            if ($Checked[$Name] -ne $Tag) { throw "Conflicting dependency pins for $Name" }
-            continue
-        }
-        $Checked[$Name] = $Tag
-        $Repository = if ($Name -eq 'vkmemalloc') { 'vulkan_memory_allocator' } else { $Name }
-        $Directory = Join-Path $ModulesDirectory "antono2\$Name"
-        Get-WindowsSetupCheckout "https://github.com/antono2/$Repository.git" $Tag $Directory
-        Install-WindowsSetupModules $Directory $ModulesDirectory $Checked
-    }
 }
