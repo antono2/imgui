@@ -38,23 +38,9 @@ jobs:
       - name: Install Linux native dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libglfw3-dev libvulkan-dev libfreetype-dev mesa-vulkan-drivers
       - name: Compile Linux backend and Vulkan GPU test
-        run: |
-          cmake -S . -B build/ci-linux -G Ninja \
-            -DVIMGUI_PROFILE=desktop \
-            -DIMGUI_FREETYPE=ON \
-            -DVIMGUI_FREETYPE_PROVIDER=system \
-            -DVIMGUI_BUILD_SMOKE_TESTS=ON \
-            -DSTATIC_BUILD=OFF \
-            -DCMAKE_BUILD_TYPE=Release
-          cmake --build build/ci-linux --parallel 4
+        run: v run scripts/check_native.vsh linux-build build/ci-linux
       - name: Render an offscreen ImGui frame with Lavapipe
-        run: |
-          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
-          if [ ! -f "$VK_ICD_FILENAMES" ]; then export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json; fi
-          build/ci-linux/vimgui_vulkan_offscreen_probe
-          build/ci-linux/vimgui_touch_tracker_test
-          build/ci-linux/vimgui_text_offsets_test
-          build/ci-linux/vimgui_gamepad_values_test
+        run: v run scripts/check_native.vsh linux-probes build/ci-linux
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
@@ -71,18 +57,9 @@ jobs:
           ref: ${{ steps.compat.outputs.linux_tcc }}
           path: toolchain/v/thirdparty/tcc
       - name: Build V compiler
-        working-directory: toolchain/v
-        run: |
-          make local=1
-          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+        run: v run scripts/check_native.vsh compiler toolchain/v
       - name: Run V InputText selection callback smoke test
-        run: |
-          mkdir -p "$RUNNER_TEMP/vmodules/antono2" lib/freetype
-          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
-          cp build/ci-linux/lib/libvimgui.so lib/freetype/libvimgui.so
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -d use_freetype \
-            -o "$RUNNER_TEMP/vimgui-input-text-callback" tests/input_text_callback.v
-          "$RUNNER_TEMP/vimgui-input-text-callback"
+        run: v run scripts/check_native.vsh linux-callback build/ci-linux "${{ runner.temp }}"
 
   android:
     name: Android Vulkan / ${{ matrix.abi }}
@@ -123,22 +100,9 @@ jobs:
           ref: ${{ steps.compat.outputs.linux_tcc }}
           path: toolchain/v/thirdparty/tcc
       - name: Build V compiler
-        working-directory: toolchain/v
-        run: |
-          make local=1
-          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+        run: v run scripts/check_native.vsh compiler toolchain/v
       - name: Check V mobile APIs
-        run: |
-          mkdir -p "$RUNNER_TEMP/vmodules/antono2"
-          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
-          case '${{ matrix.abi }}' in
-            armeabi-v7a) arch=arm ;;
-            arm64-v8a) arch=arm64 ;;
-            x86_64) arch=amd64 ;;
-          esac
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os android -arch "$arch" -d use_freetype -shared -check .
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os android -arch "$arch" -shared -check impl_android
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os android -arch "$arch" -shared -check impl_mobile
+        run: v run scripts/check_native.vsh android-api "${{ runner.temp }}" "${{ matrix.abi }}"
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
         with:
           packages: platform-tools
@@ -258,30 +222,9 @@ jobs:
           ref: ${{ steps.compat.outputs.macos_x64_tcc }} # thirdparty-macos-amd64
           path: toolchain/v/thirdparty/tcc
       - name: Build V compiler
-        working-directory: toolchain/v
-        run: |
-          make local=1 VFLAGS='-cc clang'
-          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+        run: v run scripts/check_native.vsh compiler toolchain/v clang
       - name: Check V Apple APIs
-        run: |
-          mkdir -p "$RUNNER_TEMP/vmodules/antono2"
-          ln -s "$GITHUB_WORKSPACE" "$RUNNER_TEMP/vmodules/antono2/imgui"
-          if [ '${{ matrix.sdk }}' = macosx ]; then
-            os_name=macos
-            platform_module=impl_osx
-            profile_flag=imgui_metal
-          else
-            os_name=ios
-            platform_module=impl_ios
-            profile_flag=imgui_ios_simulator
-          fi
-          if [ '${{ matrix.sdk }}' = iphoneos ]; then profile_flag=imgui_ios_device; fi
-          arch='${{ matrix.arch }}'
-          if [ "$arch" = x86_64 ]; then arch=amd64; fi
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os "$os_name" -arch "$arch" -d "$profile_flag" -d use_freetype -shared -check .
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os "$os_name" -arch "$arch" -shared -check impl_metal
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os "$os_name" -arch "$arch" -shared -check "$platform_module"
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" -os "$os_name" -arch "$arch" -shared -check impl_mobile
+        run: v run scripts/check_native.vsh apple-api "${{ runner.temp }}" "${{ matrix.sdk }}" "${{ matrix.arch }}"
       - name: Inspect selected Apple SDK
         run: |
           xcodebuild -version

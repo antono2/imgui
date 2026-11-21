@@ -65,6 +65,19 @@ runners may lack a usable Metal device; passing it does not validate real Apple
 hardware or IMEs. Android emulator and physical-device tests are separate from
 the required matrix.
 
+To reproduce the Linux lane, install CMake, Ninja, GLFW, Vulkan, FreeType, and
+Mesa Lavapipe. Use the released V compiler for the native build and the pinned
+compiler from `compatibility.json` for the callback check.
+
+```sh
+v run scripts/check_native.vsh linux-build build/ci-linux
+v run scripts/check_native.vsh linux-probes build/ci-linux
+v run scripts/check_native.vsh linux-callback build/ci-linux /tmp/imgui-native-check
+```
+
+The same driver accepts an Android ABI or an Apple SDK and architecture for
+frontend checks. Run `v run scripts/check_native.vsh --help` for those commands.
+
 [The mobile parity workflow](.github/workflows/mobile-parity.yml) compares
 hand-maintained mobile integration on `master` and `standard` weekly and on
 manual dispatch. Run `v run scripts/check_mobile_parity.vsh` locally after
