@@ -78,6 +78,23 @@ v run scripts/check_native.vsh linux-callback build/ci-linux /tmp/imgui-native-c
 The same driver accepts an Android ABI or an Apple SDK and architecture for
 frontend checks. Run `v run scripts/check_native.vsh --help` for those commands.
 
+To reproduce the Android build and package checks, set `ANDROID_SDK_ROOT` and put
+the SDK command-line tools, a JDK, CMake, and Ninja on `PATH`. Use the V compiler
+pinned in `compatibility.json`.
+
+```sh
+export ANDROID_ABI=x86_64
+v run scripts/check_android.vsh install
+v run scripts/check_android.vsh java /tmp/imgui-java
+v run scripts/check_android.vsh probes
+v run scripts/check_android.vsh demo
+v run scripts/check_android.vsh accessible
+```
+
+The driver checks the required APK entries and native exports. The
+`arm-link SCRATCH` command checks the 32-bit ARM output after a `probes` build
+with `ANDROID_ABI=armeabi-v7a`.
+
 [The mobile parity workflow](.github/workflows/mobile-parity.yml) compares
 hand-maintained mobile integration on `master` and `standard` weekly and on
 manual dispatch. Run `v run scripts/check_mobile_parity.vsh` locally after

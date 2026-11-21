@@ -69,6 +69,9 @@ jobs:
       fail-fast: false
       matrix:
         abi: [armeabi-v7a, arm64-v8a, x86_64]
+    env:
+      ANDROID_ABI: ${{ matrix.abi }}
+      ANDROID_NDK_HOME: ''
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -107,66 +110,23 @@ jobs:
         with:
           packages: platform-tools
       - name: Install pinned Android NDK and API
-        run: sdkmanager --install 'ndk;27.3.13750724' 'platforms;android-36'
+        run: v run scripts/check_android.vsh install
       - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: temurin
           java-version: '17'
       - name: Compile Android IME Java bridge
-        run: |
-          mkdir -p "$RUNNER_TEMP/vimgui-java"
-          javac -source 8 -target 8 \
-            -cp "$ANDROID_SDK_ROOT/platforms/android-36/android.jar" \
-            -d "$RUNNER_TEMP/vimgui-java" \
-            android/java/io/antono2/imgui/ImGuiInputView.java
-      - name: Cross-build Android native bindings and device probes
-        env:
-          ANDROID_ABI: ${{ matrix.abi }}
-        run: |
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
-          export VIMGUI_ANDROID_BUILD_DIR="$GITHUB_WORKSPACE/build/ci-android"
-          v run scripts/run_android_probes.vsh --build-only
-      - name: Check packaged native symbols
-        run: |
-          test -f build/ci-android/lib/libvimgui.so
-          test -f build/ci-android/libvimgui_android_link_smoke.so
-          test -f build/ci-android/vimgui_android_device_probe
-          test -f build/ci-android/vimgui_vulkan_offscreen_probe
-          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_init
-          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_set_clipboard_context
-          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep vimgui_android_apply_text_edit
-          "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D build/ci-android/lib/libvimgui.so | grep Java_io_antono2_imgui_ImGuiInputView_nativeCommitText
+        run: v run scripts/check_android.vsh java "${{ runner.temp }}/vimgui-java"
+      - name: Cross-build Android native bindings and verify probe exports
+        run: v run scripts/check_android.vsh probes
       - name: Cross-link a V Android app
         if: matrix.abi == 'armeabi-v7a'
-        run: |
-          mkdir -p lib/android-vulkan/armeabi-v7a/freetype
-          cp build/ci-android/lib/libvimgui.so lib/android-vulkan/armeabi-v7a/freetype/libvimgui.so
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" \
-            -os android -arch arm \
-            -cc "$ANDROID_SDK_ROOT/ndk/27.3.13750724/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi24-clang" \
-            -d use_freetype -gc none -no-memory-limit \
-            -o "$RUNNER_TEMP/vimgui-v-android-smoke" \
-            tests/android/v_api_link_smoke.v
-          file "$RUNNER_TEMP/vimgui-v-android-smoke" | grep 'ELF 32-bit.*ARM'
-      - name: Cross-build V UI and package Android NativeActivity APK
-        run: |
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
-          export ANDROID_ABI='${{ matrix.abi }}'
-          export VIMGUI_ANDROID_BUILD_DIR="$GITHUB_WORKSPACE/build/ci-android"
-          v run scripts/run_android_demo.vsh --build-only
-          v run scripts/check_zip_files.vsh "build/ci-android/vimgui-demo-$ANDROID_ABI.apk" \
-            classes.dex "lib/$ANDROID_ABI/libvimgui_android_demo.so" "lib/$ANDROID_ABI/libvimgui_android_ui.so"
-          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D \
-            build/ci-android/libvimgui_android_ui.so | grep vimgui_android_demo_draw_ui
-      - name: Build and sign the native accessibility fixture
+        run: v run scripts/check_android.vsh arm-link "${{ runner.temp }}"
+      - name: Cross-build V UI and verify Android NativeActivity APK
+        run: v run scripts/check_android.vsh demo
+      - name: Build and verify the signed native accessibility fixture
         if: matrix.abi == 'x86_64'
-        env:
-          ANDROID_ABI: x86_64
-        run: |
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
-          v -check scripts/test_android_accessible.vsh
-          v run scripts/run_android_accessible.vsh --build-only
-          v run scripts/check_zip_files.vsh build/android-accessible-x86_64/accessible-x86_64.apk classes.dex
+        run: v run scripts/check_android.vsh accessible
 
   apple:
     name: ${{ matrix.sdk }} / ${{ matrix.arch }} Metal
