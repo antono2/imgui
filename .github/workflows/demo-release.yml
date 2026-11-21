@@ -34,12 +34,7 @@ jobs:
           version: 0.5.2
       - name: Resolve tested demo compatibility
         id: compat
-        shell: bash
-        working-directory: ${{ github.workspace }}
-        run: |
-          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --self-test
-          v run "source/modules/antono2/imgui/scripts/doctor.vsh" --self-test
-          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --github-output "$GITHUB_OUTPUT"
+        run: v run source/modules/antono2/imgui/scripts/check_demo_release.vsh compatibility
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
@@ -71,37 +66,20 @@ jobs:
           ref: ${{ steps.compat.outputs.linux_tcc }}
           path: toolchain/v/thirdparty/tcc
       - name: Build official V compiler
-        working-directory: toolchain/v
-        run: |
-          make local=1
-          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+        run: v run source/modules/antono2/imgui/scripts/check_native.vsh compiler toolchain/v
       - name: Verify the declared dependency graph
-        shell: bash
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev patchelf pkg-config mesa-vulkan-drivers xauth xvfb
-      - name: Verify generated upstream variant
-        working-directory: source/modules/antono2/imgui
-        run: |
-          ./setup.vsh --check
-          ./generate.vsh --help
-          ./generate.vsh --self-test
-          ./scripts/check_upstream_variant.vsh
-          ./cleanup_imgui_implot.vsh --self-test
-          ./scripts/configure_variant.vsh --self-test
-      - name: Check native build entry point
-        working-directory: source/modules/antono2/imgui
-        run: |
-          ./build_vimgui.vsh --help
+      - name: Verify generated upstream variant and build entry points
+        run: v run source/modules/antono2/imgui/scripts/check_demo_release.vsh variant
       - name: Compile V demo
-        run: |
-          ./source/modules/antono2/imgui/scripts/run_demo.vsh --build-only --demo-directory "$GITHUB_WORKSPACE/source/demo"
-          cp source/modules/antono2/imgui/build/desktop-demo/v_imgui_demo "$RUNNER_TEMP/v_imgui_demo"
+        run: v run source/modules/antono2/imgui/scripts/run_demo.vsh --build-only --demo-directory source/demo
       - name: Package and verify
         id: variant
         working-directory: source/modules/antono2/imgui
         run: >-
-          v run scripts/package_ubuntu_demo.vsh --player "$RUNNER_TEMP/v_imgui_demo"
+          v run scripts/package_ubuntu_demo.vsh
           --output-directory "$RUNNER_TEMP" --github-output "$GITHUB_OUTPUT" --smoke
       - name: Upload Ubuntu demo package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -126,12 +104,7 @@ jobs:
           version: 0.5.2
       - name: Resolve tested demo compatibility
         id: compat
-        shell: bash
-        working-directory: ${{ github.workspace }}
-        run: |
-          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --self-test
-          v run "source/modules/antono2/imgui/scripts/doctor.vsh" --self-test
-          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --github-output "$GITHUB_OUTPUT"
+        run: v run source/modules/antono2/imgui/scripts/check_demo_release.vsh compatibility
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
@@ -162,11 +135,8 @@ jobs:
         working-directory: toolchain/v
         run: makev.bat -msvc --local
       - name: Add V compiler to PATH
-        shell: pwsh
-        run: |
-          "$env:GITHUB_WORKSPACE\toolchain\v" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        run: v run source/modules/antono2/imgui/scripts/check_native.vsh compiler-path toolchain/v
       - name: Verify the declared dependency graph
-        shell: bash
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Install Vulkan SDK and SwiftShader test artifacts
         uses: antono2/vulkan/.github/actions/setup-vulkan-ci@0c2a5f832ea6792df3f34a6e1ef7390743162bd1
@@ -174,15 +144,6 @@ jobs:
           sdk-version: ${{ steps.compat.outputs.ci_sdk }}
           artifact-tag: ${{ steps.compat.outputs.ci_runtime }}
           volk-revision: ${{ steps.compat.outputs.volk }}
-      - name: Select package variant
-        id: variant
-        shell: pwsh
-        run: |
-          $Variant = (Get-Content source/modules/antono2/imgui/UPSTREAM_VARIANT -Raw).Trim()
-          if ($Variant -notin @("docking", "standard")) {
-            throw "Unsupported ImGui variant: $Variant"
-          }
-          "name=$Variant" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Build Windows demo and native libraries
         shell: pwsh
         run: |
@@ -194,33 +155,11 @@ jobs:
           v -check-syntax ./source/modules/antono2/imgui/setup.vsh
           v run ./source/modules/antono2/imgui/scripts/run_demo.vsh --build-only --demo-directory "$env:GITHUB_WORKSPACE\source\demo"
       - name: Package and verify
-        shell: pwsh
-        run: |
-          $Variant = '${{ steps.variant.outputs.name }}'
-          $Source = "$env:GITHUB_WORKSPACE\source\modules\antono2\imgui"
-          $Runtime = "$Source\build\windows-demo"
-          $PackageName = "v-imgui-demo-$Variant-windows-x64"
-          $Package = Join-Path $env:RUNNER_TEMP $PackageName
-          New-Item -ItemType Directory -Force $Package | Out-Null
-          Copy-Item "$Runtime\v_imgui_demo.exe" $Package
-          Copy-Item "$Runtime\vimgui.dll" $Package
-          Copy-Item "$Runtime\glfw3.dll" $Package
-          Copy-Item "$Source\packaging\demo\windows\README.txt" $Package
-          Copy-Item "$Source\UPSTREAM_VARIANT" "$Package\VARIANT.txt"
-          foreach ($File in @("v_imgui_demo.exe", "vimgui.dll", "glfw3.dll", "README.txt", "VARIANT.txt")) {
-            if (-not (Test-Path (Join-Path $Package $File))) { throw "Missing package file: $File" }
-          }
-          if ((Get-Content "$Package\VARIANT.txt" -Raw).Trim() -ne $Variant) {
-            throw "Packaged variant marker does not match $Variant"
-          }
-          $Archive = Join-Path $env:RUNNER_TEMP "$PackageName.zip"
-          Compress-Archive -Path $Package -DestinationPath $Archive
-          $Extracted = Join-Path $env:RUNNER_TEMP "verify-$PackageName"
-          Expand-Archive -Path $Archive -DestinationPath $Extracted
-          foreach ($File in @("v_imgui_demo.exe", "vimgui.dll", "glfw3.dll", "README.txt", "VARIANT.txt")) {
-            if (-not (Test-Path "$Extracted\$PackageName\$File")) { throw "Archive is missing: $File" }
-          }
-          Get-FileHash -Algorithm SHA256 $Archive
+        id: variant
+        working-directory: source/modules/antono2/imgui
+        run: >-
+          v run scripts/package_windows_demo.vsh --output-directory "$env:RUNNER_TEMP"
+          --github-output "$env:GITHUB_OUTPUT"
       - name: Upload Windows demo package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -248,12 +187,7 @@ jobs:
           version: 0.5.2
       - name: Resolve tested demo compatibility
         id: compat
-        shell: bash
-        working-directory: ${{ github.workspace }}
-        run: |
-          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --self-test
-          v run "source/modules/antono2/imgui/scripts/doctor.vsh" --self-test
-          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --github-output "$GITHUB_OUTPUT"
+        run: v run source/modules/antono2/imgui/scripts/check_demo_release.vsh compatibility
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
@@ -285,17 +219,11 @@ jobs:
           ref: ${{ steps.compat.outputs.v3_tcc }}
           path: toolchain/v/thirdparty/tcc
       - name: Build pinned V3 compiler
-        run: |
-          make -C toolchain/v local=1
-          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+        run: v run source/modules/antono2/imgui/scripts/check_native.vsh compiler toolchain/v
       - name: Verify the declared dependency graph
-        shell: bash
         run: v run source/modules/antono2/imgui/scripts/check_installed_deps.vsh
       - name: Check generated bindings and demo
-        run: |
-          v -new-compiler -check-syntax source/modules/antono2/imgui/imgui.v
-          v -new-compiler -check-syntax source/modules/antono2/imgui/implot/implot.v
-          v -new-compiler -check -path "$VMODULES/antono2|@vlib|@vmodules" source/demo
+        run: v run source/modules/antono2/imgui/scripts/check_demo_release.vsh frontend source/demo
 
   linux-v-master:
     name: Advisory current V master and dependency masters
@@ -317,12 +245,7 @@ jobs:
           version: 0.5.2
       - name: Resolve tested demo compatibility
         id: compat
-        shell: bash
-        working-directory: ${{ github.workspace }}
-        run: |
-          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --self-test
-          v run "source/modules/antono2/imgui/scripts/doctor.vsh" --self-test
-          v run "source/modules/antono2/imgui/scripts/compatibility.vsh" --github-output "$GITHUB_OUTPUT"
+        run: v run source/modules/antono2/imgui/scripts/check_demo_release.vsh compatibility
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: antono2/vulkan
@@ -344,9 +267,7 @@ jobs:
           ref: master
           path: toolchain/v
       - name: Build current V master
-        run: |
-          make -C toolchain/v
-          echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
+        run: v run source/modules/antono2/imgui/scripts/check_native.vsh compiler toolchain/v master
       - name: Install native dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential cmake libglfw3-dev libvulkan-dev libvulkan-volk-dev pkg-config
       - name: Stage headers matching Vulkan master
@@ -361,14 +282,7 @@ jobs:
       - name: Check demo APIs against dependency masters
         run: v -new-compiler -check -path "$VMODULES/antono2|@vlib|@vmodules" source/demo
       - name: Build and link moving-dependency consumer
-        run: |
-          cd source/modules/antono2/imgui
-          ./build_vimgui.vsh --linkage shared --glfw system
-          cd "$GITHUB_WORKSPACE"
-          v -new-compiler -no-memory-limit -path "$VMODULES/antono2|@vlib|@vmodules" \
-            -cc gcc -o "$RUNNER_TEMP/v_imgui_moving_deps" \
-            source/modules/antono2/imgui/tests/desktop/moving_dependencies_smoke.v
-          "$RUNNER_TEMP/v_imgui_moving_deps"
+        run: v run source/modules/antono2/imgui/scripts/check_demo_release.vsh moving-consumer "$RUNNER_TEMP"
 
   required-checks:
     if: always()
