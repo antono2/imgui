@@ -119,9 +119,12 @@ variant-specific Vulkan bindings are deliberately excluded.
 x86_64 and Windows 10/11 x64 artifacts. The source path remains
 `scripts/run_demo.vsh`; prebuilding a demo is not a requirement for every
 release. Keep the archive variant marker and the pinned demo/compiler revisions
-aligned when changing release packaging. The Ubuntu packager writes the ZIP
-in V and compares every archived file against the staged package.
-Run `v run scripts/package_ubuntu_demo.vsh --help` for local packaging options.
+aligned when changing release packaging. Both packagers write the ZIP in V
+and compare every archived file against its source. Run
+`v run scripts/package_ubuntu_demo.vsh --help` or
+`v run scripts/package_windows_demo.vsh --help` for local packaging options.
+The Windows packager takes a directory containing the built EXE and its two
+DLLs and can verify a prebuilt runtime without a Windows host.
 
 ## Source map and file introductions
 
