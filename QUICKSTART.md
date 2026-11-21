@@ -66,12 +66,19 @@ From ordinary 64-bit PowerShell in the checkout, run:
 powershell -ExecutionPolicy Bypass -File scripts\setup_windows.ps1
 ```
 
-The helper discovers Visual Studio x64 tools and builds the tested upstream V
-compiler in a versioned cache, so a separately installed V compiler is optional.
-It prepares isolated V modules, downloads GLFW 3.4 through CMake, checks out the
-tested demo and builds it. Use `-Run` to launch after building, `-Check` for
-read-only prerequisite checks, or `-PrepareOnly` to prepare only the compiler.
-`-CacheDirectory` chooses another compiler-cache location. Existing checkouts
+The PowerShell bootstrap discovers Visual Studio x64 tools and builds the
+tested upstream V compiler in a versioned cache. V then installs isolated
+modules, downloads GLFW 3.4 through CMake, checks out the tested demo and
+builds it.
+
+| Option | Effect |
+| --- | --- |
+| `-Run` | Launch the demo after building. |
+| `-Check` | Check native prerequisites without creating a compiler cache. |
+| `-PrepareOnly` | Prepare the compiler without building the demo. |
+| `-CacheDirectory PATH` | Select a compiler-cache location. |
+
+Existing checkouts
 with local changes or wrong revisions are rejected rather than reset. Native
 GPU rendering still requires a Vulkan-capable driver and desktop session.
 
@@ -80,6 +87,10 @@ After building, check rendering and clean shutdown with a bounded 60-frame run:
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\smoke_windows_demo.ps1
 ```
+
+If your shell already has V, use `v run scripts/smoke_windows_demo.vsh`
+directly. Run it with `--help` for the demo directory, frame count, and
+timeout options. The smoke check saves stdout and stderr beside the demo.
 
 Windows CI uses a software Vulkan driver for this smoke test; it does not
 establish support for every physical GPU.

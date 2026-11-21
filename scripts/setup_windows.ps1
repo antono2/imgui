@@ -71,35 +71,6 @@ if ($PrepareOnly) {
     Write-Host "Prepared upstream V compiler: $VExecutable"
     return
 }
-# Keep VPM staging and module installs on the checkout's drive, even when the
-# compiler cache or Windows TEMP is elsewhere. The user's VPM directory is retained.
-$BuildDirectory = Join-Path $ProjectDirectory 'build'
-$env:VMODULES = Join-Path $BuildDirectory 'windows-modules'
-$env:VTMP = Join-Path (Join-Path $BuildDirectory '.vtmp') ([Guid]::NewGuid().ToString('N').Substring(0, 8))
-New-Item -ItemType Directory -Force -Path $env:VMODULES, $env:VTMP | Out-Null
-$ExistingCount = $env:GIT_CONFIG_COUNT
-$Count = 0
-if ($ExistingCount -and (-not [int]::TryParse($ExistingCount, [ref]$Count) -or $Count -lt 0)) {
-    throw 'GIT_CONFIG_COUNT must be a nonnegative integer.'
-}
-$SavedGitEnvironment = @{}
-foreach ($Name in @('GIT_CONFIG_COUNT', "GIT_CONFIG_KEY_$Count", "GIT_CONFIG_VALUE_$Count")) {
-    $SavedGitEnvironment[$Name] = [Environment]::GetEnvironmentVariable($Name, 'Process')
-}
-Push-Location $ProjectDirectory
-try {
-    [Environment]::SetEnvironmentVariable("GIT_CONFIG_KEY_$Count", 'core.longpaths', 'Process')
-    [Environment]::SetEnvironmentVariable("GIT_CONFIG_VALUE_$Count", 'true', 'Process')
-    $env:GIT_CONFIG_COUNT = ($Count + 1).ToString()
-    Install-WindowsSetupModules $ProjectDirectory $env:VMODULES @{}
-    Invoke-WindowsSetupCommand $VExecutable @('-cc', 'msvc', 'run', 'scripts/check_installed_deps.vsh')
-    Invoke-WindowsSetupCommand $VExecutable @('-old-compiler', '-check-syntax', 'imgui.v')
-    $Options = @('-cc', 'msvc', 'run', 'scripts/run_demo.vsh')
-    if (-not $Run) { $Options += '--build-only' }
-    Invoke-WindowsSetupCommand $VExecutable $Options
-} finally {
-    Pop-Location
-    foreach ($Name in $SavedGitEnvironment.Keys) {
-        [Environment]::SetEnvironmentVariable($Name, $SavedGitEnvironment[$Name], 'Process')
-    }
-}
+$Options = @('-cc', 'msvc', 'run', (Join-Path $PSScriptRoot 'setup_windows_demo.vsh'))
+if ($Run) { $Options += '--run' }
+Invoke-WindowsSetupCommand $VExecutable $Options
