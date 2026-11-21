@@ -95,6 +95,19 @@ The driver checks the required APK entries and native exports. The
 `arm-link SCRATCH` command checks the 32-bit ARM output after a `probes` build
 with `ANDROID_ABI=armeabi-v7a`.
 
+On macOS with Xcode and Ninja, use the same driver as the Apple workflow.
+Initialize the repository submodules first. This example uses an arm64 simulator.
+
+```sh
+v run scripts/check_native.vsh apple-build build/apple iphonesimulator arm64
+v run scripts/check_native.vsh apple-link build/apple build/apple-scratch iphonesimulator arm64
+v run scripts/check_native.vsh apple-verify build/apple iphonesimulator arm64
+```
+
+Use the same SDK and architecture for all three commands. The link step stages the
+shared library and links a V consumer. The verification step checks the output
+architecture and exports, plus the app bundle and GameController linkage for iOS.
+
 [The mobile parity workflow](.github/workflows/mobile-parity.yml) compares
 hand-maintained mobile integration on `master` and `standard` weekly and on
 manual dispatch. Run `v run scripts/check_mobile_parity.vsh` locally after
