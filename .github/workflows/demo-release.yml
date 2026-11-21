@@ -130,6 +130,8 @@ jobs:
           repository: vlang/vc
           ref: ${{ steps.compat.outputs.vc }}
           path: toolchain/v/vc
+      - name: Set up MSVC x64
+        uses: antono2/vulkan/.github/actions/setup-msvc@23ec75dc6015776f3012880148ca90e66f63010a
       - name: Build official V compiler
         shell: cmd
         working-directory: toolchain/v
@@ -144,16 +146,12 @@ jobs:
           sdk-version: ${{ steps.compat.outputs.ci_sdk }}
           artifact-tag: ${{ steps.compat.outputs.ci_runtime }}
           volk-revision: ${{ steps.compat.outputs.volk }}
+      - name: Check Windows setup entry point syntax
+        working-directory: source/modules/antono2/imgui
+        run: v -check-syntax setup.vsh
       - name: Build Windows demo and native libraries
-        shell: pwsh
-        run: |
-          $VsWhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-          $InstallPath = & $VsWhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-          if (-not $InstallPath) { throw 'Visual Studio C++ tools were not found' }
-          Import-Module (Join-Path $InstallPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
-          Enter-VsDevShell -VsInstallPath $InstallPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
-          v -check-syntax ./source/modules/antono2/imgui/setup.vsh
-          v run ./source/modules/antono2/imgui/scripts/run_demo.vsh --build-only --demo-directory "$env:GITHUB_WORKSPACE\source\demo"
+        working-directory: source/modules/antono2/imgui
+        run: v run scripts/run_demo.vsh --build-only --demo-directory "$env:GITHUB_WORKSPACE\source\demo"
       - name: Package and verify
         id: variant
         working-directory: source/modules/antono2/imgui

@@ -7,11 +7,18 @@ import hash.crc32
 
 const zip_record_limit = 65_535
 const zip32_limit = u64(0xffffffff)
-const deflate_version = u16(20)
-const unix_creator = u16(0x0314)
+const deflate_version = u16(20) // ZIP specification version 2.0
+const unix_creator = u16(0x0314) // Unix host system and ZIP version 2.0
 const utf8_names = u16(0x0800)
 const deflate_method = u16(8)
 const minimum_dos_date = u16(0x0021) // 1980-01-01
+const local_file_header_signature = u32(0x04034b50)
+const central_directory_header_signature = u32(0x02014b50)
+const end_of_central_directory_signature = u32(0x06054b50)
+const unix_mode_shift = 16 // Unix modes occupy the upper half of external attributes.
+const unix_regular_file = u32(0o100000)
+const unix_permissions_mask = u32(0o777)
+const default_file_mode = u32(0o644)
 
 struct ZipEntry {
 	name       string
@@ -79,17 +86,17 @@ fn (mut zip ZipWriter) add(name string, bytes []u8, mode u32) ! {
 		mode:       mode
 	}
 	mut header := []u8{}
-	le32(mut header, 0x04034b50)
+	le32(mut header, local_file_header_signature)
 	le16(mut header, deflate_version)
 	le16(mut header, utf8_names)
 	le16(mut header, deflate_method)
-	le16(mut header, 0)
+	le16(mut header, 0) // Midnight in DOS time.
 	le16(mut header, minimum_dos_date)
 	le32(mut header, entry.crc)
 	le32(mut header, entry.compressed)
 	le32(mut header, entry.original)
 	le16(mut header, u16(name.len))
-	le16(mut header, 0)
+	le16(mut header, 0) // Extra field length.
 	header << name.bytes()
 	zip.write(header)!
 	zip.write(compressed)!
@@ -100,36 +107,36 @@ fn (mut zip ZipWriter) finish() ! {
 	central_offset := u32(zip.offset)
 	for entry in zip.entries {
 		mut header := []u8{}
-		le32(mut header, 0x02014b50)
+		le32(mut header, central_directory_header_signature)
 		le16(mut header, unix_creator)
 		le16(mut header, deflate_version)
 		le16(mut header, utf8_names)
 		le16(mut header, deflate_method)
-		le16(mut header, 0)
+		le16(mut header, 0) // Midnight in DOS time.
 		le16(mut header, minimum_dos_date)
 		le32(mut header, entry.crc)
 		le32(mut header, entry.compressed)
 		le32(mut header, entry.original)
 		le16(mut header, u16(entry.name.len))
-		le16(mut header, 0)
-		le16(mut header, 0)
-		le16(mut header, 0)
-		le16(mut header, 0)
-		le32(mut header, entry.mode << 16)
+		le16(mut header, 0) // Extra field length.
+		le16(mut header, 0) // File comment length.
+		le16(mut header, 0) // Entry starts on the first disk.
+		le16(mut header, 0) // Internal file attributes.
+		le32(mut header, entry.mode << unix_mode_shift)
 		le32(mut header, entry.offset)
 		header << entry.name.bytes()
 		zip.write(header)!
 	}
 	central_size := u32(zip.offset) - central_offset
 	mut end := []u8{}
-	le32(mut end, 0x06054b50)
-	le16(mut end, 0)
-	le16(mut end, 0)
+	le32(mut end, end_of_central_directory_signature)
+	le16(mut end, 0) // This disk.
+	le16(mut end, 0) // Disk with the start of the central directory.
 	le16(mut end, u16(zip.entries.len))
 	le16(mut end, u16(zip.entries.len))
 	le32(mut end, central_size)
 	le32(mut end, central_offset)
-	le16(mut end, 0)
+	le16(mut end, 0) // Archive comment length.
 	zip.write(end)!
 }
 
@@ -137,7 +144,7 @@ pub struct ZipFile {
 pub:
 	name string
 	path string
-	mode u32 = 0o644
+	mode u32 = default_file_mode
 }
 
 pub fn write_zip(path string, files []ZipFile) ! {
@@ -149,7 +156,7 @@ pub fn write_zip(path string, files []ZipFile) ! {
 			return error('Duplicate ZIP entry: ${file.name}')
 		}
 		seen[file.name] = true
-		zip.add(file.name, os.read_bytes(file.path)!, u32(0o100000) | (file.mode & 0o777))!
+		zip.add(file.name, os.read_bytes(file.path)!, unix_regular_file | (file.mode & unix_permissions_mask))!
 	}
 	zip.finish()!
 }
