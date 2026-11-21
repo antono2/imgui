@@ -185,79 +185,12 @@ jobs:
         run: v run scripts/check_native.vsh compiler toolchain/v clang
       - name: Check V Apple APIs
         run: v run scripts/check_native.vsh apple-api "${{ runner.temp }}" "${{ matrix.sdk }}" "${{ matrix.arch }}"
-      - name: Inspect selected Apple SDK
-        run: |
-          xcodebuild -version
-          xcrun --sdk '${{ matrix.sdk }}' --show-sdk-path
-      - name: Configure Apple native bindings
-        run: |
-          system_arg=()
-          demo_arg=()
-          if [ '${{ matrix.sdk }}' != macosx ]; then
-            system_arg=(-DCMAKE_SYSTEM_NAME=iOS)
-            demo_arg=(-DVIMGUI_BUILD_IOS_DEMO=ON)
-          fi
-          cmake -S . -B build/ci-apple -G Ninja \
-            "${system_arg[@]}" \
-            "${demo_arg[@]}" \
-            -DCMAKE_OSX_SYSROOT='${{ matrix.sdk }}' \
-            -DCMAKE_OSX_ARCHITECTURES='${{ matrix.arch }}' \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET="$(if [ '${{ matrix.sdk }}' = macosx ]; then echo 11.0; else echo 13.0; fi)" \
-            -DVIMGUI_PROFILE=apple-metal \
-            -DIMGUI_FREETYPE=ON \
-            -DVIMGUI_FREETYPE_PROVIDER=bundled \
-            -DVIMGUI_BUILD_SMOKE_TESTS=ON \
-            -DSTATIC_BUILD=OFF \
-            -DCMAKE_BUILD_TYPE=Release
-      - name: Compile and link Apple Metal smoke test
-        run: cmake --build build/ci-apple --parallel 4
+      - name: Build Apple native bindings and Metal smoke test
+        run: v run scripts/check_native.vsh apple-build build/ci-apple "${{ matrix.sdk }}" "${{ matrix.arch }}"
       - name: Cross-link a V Apple consumer
-        run: |
-          sdk='${{ matrix.sdk }}'
-          arch='${{ matrix.arch }}'
-          profile="lib/apple-metal/$sdk/$arch/freetype"
-          mkdir -p "$profile"
-          cp build/ci-apple/lib/libvimgui.dylib "$profile/libvimgui.dylib"
-          if [ "$sdk" = macosx ]; then
-            os_name=macos
-            profile_flag=imgui_metal
-            smoke=tests/apple/macos_v_api_link_smoke.v
-          else
-            os_name=ios
-            profile_flag=imgui_ios_simulator
-            smoke=tests/apple/ios_v_api_link_smoke.v
-          fi
-          if [ "$sdk" = iphoneos ]; then profile_flag=imgui_ios_device; fi
-          v_arch="$arch"
-          if [ "$arch" = x86_64 ]; then v_arch=amd64; fi
-          sdk_path="$(xcrun --sdk "$sdk" --show-sdk-path)"
-          target_flags=""
-          if [ "$sdk" = iphonesimulator ]; then
-            target_flags="-target $arch-apple-ios13.0-simulator"
-          elif [ "$sdk" = iphoneos ]; then
-            target_flags="-target $arch-apple-ios13.0"
-          fi
-          v -path "$RUNNER_TEMP/vmodules|@vlib|@vmodules" \
-            -os "$os_name" -arch "$v_arch" -cc "$(xcrun --sdk "$sdk" --find clang)" \
-            -cflags "$target_flags -isysroot $sdk_path" \
-            -ldflags "$target_flags -isysroot $sdk_path" -skip-running \
-            -d "$profile_flag" -d use_freetype -gc none -no-memory-limit \
-            -o "$RUNNER_TEMP/vimgui-v-apple-smoke" "$smoke"
-          xcrun lipo -info "$RUNNER_TEMP/vimgui-v-apple-smoke" | grep "$arch"
+        run: v run scripts/check_native.vsh apple-link build/ci-apple "${{ runner.temp }}" "${{ matrix.sdk }}" "${{ matrix.arch }}"
       - name: Verify architecture and wrapper export
-        run: |
-          test -f build/ci-apple/lib/libvimgui.dylib
-          test -f build/ci-apple/libvimgui_apple_link_smoke.dylib
-          xcrun lipo -info build/ci-apple/lib/libvimgui.dylib | grep '${{ matrix.arch }}'
-          xcrun nm -gU build/ci-apple/lib/libvimgui.dylib | grep _vimgui_metal_init
-          if [ '${{ matrix.sdk }}' != macosx ]; then
-            xcrun otool -L build/ci-apple/lib/libvimgui.dylib | grep GameController
-            xcrun nm -gU build/ci-apple/lib/libvimgui.dylib | grep _vimgui_ios_keyboard_create
-            xcrun nm -gU build/ci-apple/lib/libvimgui.dylib | grep _vimgui_ios_text_view_apply_edit
-            test -f build/ci-apple/vimgui_ios_demo.app/vimgui_ios_demo
-            test -f build/ci-apple/vimgui_ios_demo.app/Frameworks/libvimgui.dylib
-            xcrun lipo -info build/ci-apple/vimgui_ios_demo.app/vimgui_ios_demo | grep '${{ matrix.arch }}'
-          fi
+        run: v run scripts/check_native.vsh apple-verify build/ci-apple "${{ matrix.sdk }}" "${{ matrix.arch }}"
       - name: Attempt an iOS Simulator Metal frame
         if: matrix.sdk == 'iphonesimulator' && ((matrix.arch == 'x86_64' && runner.arch == 'X64') || (matrix.arch == 'arm64' && runner.arch == 'ARM64'))
         continue-on-error: true
