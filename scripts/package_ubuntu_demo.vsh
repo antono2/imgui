@@ -6,9 +6,13 @@ import tooling
 
 const demo_executable = 'v_imgui_demo'
 const system_libraries = '/usr/lib/x86_64-linux-gnu'
-const bundled_libraries = ['libvimgui.so', 'libglfw.so.3', 'libstdc++.so.6', 'libgcc_s.so.1']
+const imgui_library = 'libvimgui.so'
+const system_runtime_libraries = ['libglfw.so.3', 'libstdc++.so.6', 'libgcc_s.so.1']
 const executable_mode = 0o755
 const data_mode = 0o644
+const private_directory_mode = 0o700
+const smoke_frames = 60
+const smoke_timeout_seconds = 60
 
 fn command(args []string) !string {
 	result := os.exec(args)
@@ -32,6 +36,8 @@ fn check_bundle(player string, library string, library_directory string) ! {
 	if loader.contains('not found') {
 		return error('The demo has unresolved libraries:\n${loader}')
 	}
+	mut bundled_libraries := [imgui_library]
+	bundled_libraries << system_runtime_libraries
 	for name in bundled_libraries {
 		if !loader.contains(os.join_path(library_directory, name)) {
 			return error('The demo does not load ${name} from its package')
@@ -45,10 +51,10 @@ fn check_render(player string, directory string) ! {
 	os.chdir(directory)!
 	defer { os.chdir(previous) or {} }
 	// A bounded draw run exercises the actual executable with the package loader paths.
-	log := command(['env', '-u', 'LD_LIBRARY_PATH', 'VIMGUI_SMOKE_FRAMES=60', 'timeout', '60s',
-		'xvfb-run', '-a', player])!
-	print(log)
-	diagnostics := log.to_lower()
+	render_log := command(['env', '-u', 'LD_LIBRARY_PATH', 'VIMGUI_SMOKE_FRAMES=${smoke_frames}',
+		'timeout', '${smoke_timeout_seconds}s', 'xvfb-run', '-a', player])!
+	print(render_log)
+	diagnostics := render_log.to_lower()
 	for failure in ['vuid-', 'validation error', 'segmentation', 'assert', 'fatal'] {
 		if diagnostics.contains(failure) {
 			return error('The packaged demo reported a rendering failure: ${failure}')
@@ -64,17 +70,17 @@ fn package_demo(root string, output string, player string, imgui string, smoke b
 	}
 	os.mkdir_all(output)!
 	stage := os.join_path(output, '.imgui-demo-' + rand.uuid_v4())
-	os.mkdir(stage, mode: 0o700)!
+	os.mkdir(stage, mode: private_directory_mode)!
 	defer { os.rmdir_all(stage) or {} }
 	name := 'v-imgui-demo-${variant}-ubuntu24-amd64'
 	directory := os.join_path(stage, name)
 	libraries := os.join_path(directory, 'lib')
 	os.mkdir_all(libraries)!
 	staged_player := os.join_path(directory, demo_executable)
-	staged_imgui := os.join_path(libraries, 'libvimgui.so')
+	staged_imgui := os.join_path(libraries, imgui_library)
 	stage_file(player, staged_player, executable_mode)!
 	stage_file(imgui, staged_imgui, executable_mode)!
-	for library_name in bundled_libraries[1..] {
+	for library_name in system_runtime_libraries {
 		stage_file(os.join_path(system_libraries, library_name), os.join_path(libraries,
 			library_name), executable_mode)!
 	}
@@ -115,12 +121,12 @@ fn run() ! {
 	parser.description('Package a prebuilt GLFW/Vulkan demo for Ubuntu 24.04.')
 	player := parser.string('player', 0, os.join_path(root, 'build', 'desktop-demo',
 		demo_executable), 'prebuilt demo executable')
-	library := parser.string('imgui-library', 0, os.join_path(root, 'lib', 'libvimgui.so'),
+	library := parser.string('imgui-library', 0, os.join_path(root, 'lib', imgui_library),
 		'compiled native ImGui library')
 	output := parser.string('output-directory', 0, os.getwd(), 'directory for the finished ZIP')
 	github_output := parser.string('github-output', 0, '',
 		'append the selected variant to this GitHub Actions output file')
-	smoke := parser.bool('smoke', 0, false, 'render 60 frames on a private Xvfb display')
+	smoke := parser.bool('smoke', 0, false, 'render ${smoke_frames} frames on a private Xvfb display')
 	if parser.bool('help', `h`, false, 'show this help') {
 		println(parser.usage())
 		return
