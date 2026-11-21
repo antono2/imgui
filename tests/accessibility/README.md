@@ -1,4 +1,21 @@
-# Windows text checks
+# Accessibility checks
+
+## Linux application host
+
+Run the same build and checks as the Linux workflow with V, TinyCC, Xvfb,
+D-Bus, and Mesa Lavapipe installed.
+
+```sh
+v run scripts/build_appui.vsh
+v run scripts/check_appui.vsh startup build/appui/startup-check
+v run scripts/check_appui.vsh render
+```
+
+The startup check saves its probe binaries and logs in the directory you
+provide. The render check exercises the application host under software Vulkan
+in an isolated X11 and D-Bus session.
+
+## Windows text checks
 
 `accessibility_windows_text_test` reads document and selected ranges through
 the native `IUIAutomation` client in a separate process. It repeats selected
