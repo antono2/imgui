@@ -20,5 +20,11 @@ $Arguments = @('run', (Join-Path $PSScriptRoot 'smoke_windows_demo.vsh'))
 if ($DemoDirectory) { $Arguments += @('--demo-directory', $DemoDirectory) }
 if ($PSBoundParameters.ContainsKey('Frames')) { $Arguments += @('--frames', $Frames.ToString()) }
 if ($PSBoundParameters.ContainsKey('TimeoutSeconds')) { $Arguments += @('--timeout-seconds', $TimeoutSeconds.ToString()) }
-& $Compiler @Arguments
-if ($LASTEXITCODE -ne 0) { throw "Demo smoke check failed with exit code $LASTEXITCODE." }
+$PreviousVexe = $env:VEXE
+try {
+    $env:VEXE = $Compiler
+    & $Compiler @Arguments
+    if ($LASTEXITCODE -ne 0) { throw "Demo smoke check failed with exit code $LASTEXITCODE." }
+} finally {
+    $env:VEXE = $PreviousVexe
+}
