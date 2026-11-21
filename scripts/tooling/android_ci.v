@@ -1,6 +1,7 @@
 // Run the Android CI package, architecture, and export checks with the installed SDK.
 module tooling
 
+import encoding.binary
 import os
 
 const ci_android_api = '36'
@@ -9,6 +10,14 @@ const ci_arm_abi = 'armeabi-v7a'
 const apk_bytecode_entry = 'classes.dex'
 const android_ci_usage_status = 2
 const android_ci_usage = 'Usage: v run scripts/check_android.vsh install | java SCRATCH | probes | arm-link SCRATCH | demo | accessible'
+// ELF identification bytes and the e_machine field from the ELF header.
+const elf_magic = [u8(0x7f), `E`, `L`, `F`]
+const elf_class_index = 4
+const elf_data_index = 5
+const elf_machine_offset = 18
+const elf_class_32 = 1
+const elf_data_little_endian = 1
+const elf_machine_arm = 40
 
 fn require_artifacts(build string, names []string) ! {
 	for name in names {
@@ -48,10 +57,11 @@ fn arm_link(root string, build string, scratch string, tools AndroidTools) ! {
 	command(compiler(), ['-path', modules, '-os', 'android', '-arch', tools.abi.v_arch, '-cc',
 		tools.clang, '-d', 'use_freetype', '-gc', 'none', '-no-memory-limit', '-o', probe,
 		os.join_path(root, 'tests', 'android', 'v_api_link_smoke.v')])!
-	header := output(os.join_path(os.dir(tools.clang), 'llvm-readelf'), ['-h', probe])!
-	lines := header.split_into_lines().map(it.trim_space())
-	if !lines.any(it.starts_with('Class:') && it.all_after(':').trim_space() == 'ELF32')
-		|| !lines.any(it.starts_with('Machine:') && it.all_after(':').trim_space() == 'ARM') {
+	header := os.read_bytes(probe)!
+	if header.len < elf_machine_offset + sizeof(u16) || header[..elf_magic.len] != elf_magic
+		|| header[elf_class_index] != elf_class_32
+		|| header[elf_data_index] != elf_data_little_endian
+		|| binary.little_endian_u16(header[elf_machine_offset..]) != elf_machine_arm {
 		return error('Expected a 32-bit ARM executable: ${probe}')
 	}
 	println('Verified 32-bit ARM executable: ${probe}')
