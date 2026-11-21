@@ -1,5 +1,4 @@
 // Assemble and optionally render-test the relocatable Ubuntu demo archive.
-import crypto.sha256
 import flag
 import os
 import rand
@@ -59,10 +58,7 @@ fn check_render(player string, directory string) ! {
 
 fn package_demo(root string, output string, player string, imgui string, smoke bool) !string {
 	variant_file := os.join_path(root, 'UPSTREAM_VARIANT')
-	variant := os.read_file(variant_file)!.trim_space()
-	if variant !in ['docking', 'standard'] {
-		return error('Unsupported ImGui variant: ${variant}')
-	}
+	variant := tooling.demo_variant(root)!
 	if os.user_os() != 'linux' {
 		return error('Ubuntu demo packaging requires Linux')
 	}
@@ -97,8 +93,6 @@ fn package_demo(root string, output string, player string, imgui string, smoke b
 	if smoke {
 		check_render(staged_player, stage)!
 	}
-	archive_name := name + '.zip'
-	temporary_archive := os.join_path(stage, archive_name)
 	mut files := []tooling.ZipFile{}
 	mut paths := os.walk_ext(directory, '')
 	paths.sort()
@@ -110,11 +104,7 @@ fn package_demo(root string, output string, player string, imgui string, smoke b
 			mode: info.mode
 		}
 	}
-	tooling.write_zip(temporary_archive, files)!
-	tooling.verify_written_zip(temporary_archive, files, os.join_path(stage, 'verify-entry'))!
-	checksum := sha256.sum(os.read_bytes(temporary_archive)!).hex()
-	os.mv(temporary_archive, os.join_path(output, archive_name))!
-	println('${checksum}  ${archive_name}')
+	tooling.publish_demo_archive(output, stage, name, files)!
 	return variant
 }
 
@@ -140,11 +130,7 @@ fn run() ! {
 	}
 	variant := package_demo(root, os.abs_path(output), os.abs_path(player), os.abs_path(library),
 		smoke)!
-	if github_output != '' {
-		mut receipt := os.open_append(github_output)!
-		defer { receipt.close() }
-		receipt.writeln('name=${variant}')!
-	}
+	tooling.write_demo_variant(github_output, variant)!
 }
 
 run() or {
