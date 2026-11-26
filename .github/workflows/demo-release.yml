@@ -278,7 +278,7 @@ jobs:
           v -check-syntax imgui.v
           v -check-syntax implot/implot.v
       - name: Check demo APIs against dependency masters
-        run: v -new-compiler -check -path "$VMODULES/antono2|@vlib|@vmodules" source/demo
+        run: v -check -path "$VMODULES/antono2|@vlib|@vmodules" source/demo
       - name: Build and link moving-dependency consumer
         run: v run source/modules/antono2/imgui/scripts/check_demo_release.vsh moving-consumer "$RUNNER_TEMP"
 
