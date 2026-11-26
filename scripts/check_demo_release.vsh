@@ -56,7 +56,8 @@ fn build_moving_consumer(root string, scratch string) ! {
 	tooling.command(compiler, ['run', 'build_vimgui.vsh', '--linkage', 'shared', '--glfw', 'system'])!
 	os.chdir(previous)!
 	binary := os.join_path(scratch, 'v_imgui_moving_deps')
-	tooling.command(compiler, ['-new-compiler', '-no-memory-limit', '-path', path, '-cc', 'gcc',
+	// This advisory check uses current V, where V3 is the default frontend.
+	tooling.command(compiler, ['-no-memory-limit', '-path', path, '-cc', 'gcc',
 		'-o', binary, os.join_path(root, 'tests', 'desktop', 'moving_dependencies_smoke.v')])!
 	tooling.command(binary, [])!
 }
