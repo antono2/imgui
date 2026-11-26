@@ -52,17 +52,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/v
-          ref: c9b806b294234408af3794f419439599a293a0ea
+          ref: c0bb94990c4c2cd080b27b4e2cbc88a347c6bb4c
           path: toolchain/v
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/vc
-          ref: 21490f7811a2dd366c3daa39bef8e53c1e3e5727
+          ref: 1bf1afbd0423212c7555801f5c9c0f56cb8558ab
           path: toolchain/v/vc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: vlang/tccbin
-          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          ref: 60d606e37e6afe1ac5801fd88c55036a56b7caae
           path: toolchain/v/thirdparty/tcc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -75,11 +75,11 @@ jobs:
         run: |
           set -euo pipefail
           make -C toolchain/v local=1
-          make -C toolchain/v v1
-          v1_root=$(< toolchain/v/v1_fallback.vroot)
-          "$v1_root/v" -o toolchain/c2v/c2v toolchain/c2v
+          toolchain/v/v -o toolchain/c2v/c2v toolchain/c2v
           echo "$GITHUB_WORKSPACE/toolchain/v" >> "$GITHUB_PATH"
           echo "C2V_BIN=$GITHUB_WORKSPACE/toolchain/c2v/c2v" >> "$GITHUB_ENV"
+      - name: Check C2V pointer, typedef, callback and C++ fixtures
+        run: v run tests/toolchain/c2v_check.vsh toolchain/c2v
       - name: Regenerate and compare committed bindings
         run: |
           set -euo pipefail
@@ -138,19 +138,19 @@ jobs:
         if: steps.upstream.outputs.changed == 'true'
         with:
           repository: vlang/v
-          ref: c9b806b294234408af3794f419439599a293a0ea
+          ref: c0bb94990c4c2cd080b27b4e2cbc88a347c6bb4c
           path: toolchain/v
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: steps.upstream.outputs.changed == 'true'
         with:
           repository: vlang/vc
-          ref: 21490f7811a2dd366c3daa39bef8e53c1e3e5727
+          ref: 1bf1afbd0423212c7555801f5c9c0f56cb8558ab
           path: toolchain/v/vc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: steps.upstream.outputs.changed == 'true'
         with:
           repository: vlang/tccbin
-          ref: d6e7ac1b1bcc98aed734a6ecbfa8509f24606c74
+          ref: 60d606e37e6afe1ac5801fd88c55036a56b7caae
           path: toolchain/v/thirdparty/tcc
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         if: steps.upstream.outputs.changed == 'true'
@@ -171,12 +171,10 @@ jobs:
         if: steps.upstream.outputs.changed == 'true'
         run: |
           set -euo pipefail
-          make -C toolchain/v v1
           # The fallback binary needs its matching 0.5.2 vlib, not the
           # adjacent V3 checkout's vlib. The installer records that root.
-          v1_root=$(< toolchain/v/v1_fallback.vroot)
-          test -x "$v1_root/v"
-          "$v1_root/v" -o toolchain/c2v/c2v toolchain/c2v
+          test -x toolchain/v/v
+          toolchain/v/v -o toolchain/c2v/c2v toolchain/c2v
           toolchain/c2v/c2v --version
           echo "C2V_BIN=$GITHUB_WORKSPACE/toolchain/c2v/c2v" >> "$GITHUB_ENV"
       - name: Regenerate and validate bindings

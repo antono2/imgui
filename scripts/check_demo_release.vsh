@@ -43,9 +43,9 @@ fn module_path() !string {
 fn frontend(root string, demo string) ! {
 	compiler := tooling.compiler()
 	for file in ['imgui.v', 'implot/implot.v'] {
-		tooling.command(compiler, ['-new-compiler', '-check-syntax', os.join_path(root, file)])!
+		tooling.command(compiler, ['-check-syntax', os.join_path(root, file)])!
 	}
-	tooling.command(compiler, ['-new-compiler', '-check', '-path', module_path()!, demo])!
+	tooling.command(compiler, ['-check', '-path', module_path()!, demo])!
 }
 
 fn build_moving_consumer(root string, scratch string) ! {
