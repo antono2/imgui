@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Choreographer;
 import android.view.View;
+import android.view.ViewParent;
 import android.view.accessibility.AccessibilityEvent;
 import android.util.Log;
 import android.graphics.Rect;
@@ -36,7 +37,10 @@ public final class ImGuiAccessibility implements AutoCloseable {
             (int)Math.ceil(node.optDouble("y")+node.optDouble("height")));
     }
     private void event(int id,int type) {
-        org.json.JSONObject node=nodes.get(id);if(node==null||host.getParent()==null)return;
+        org.json.JSONObject node=nodes.get(id);
+        ViewParent parent=host.getParent();
+        AccessibilityManager manager=host.getContext().getSystemService(AccessibilityManager.class);
+        if(node==null||parent==null||manager==null||!manager.isEnabled())return;
         AccessibilityEvent event=AccessibilityEvent.obtain(type);
         event.setSource(host,id);event.setPackageName(host.getContext().getPackageName());
         event.setClassName(className(node.optInt("role")));
@@ -45,7 +49,11 @@ public final class ImGuiAccessibility implements AutoCloseable {
         if(type==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)event.setContentChangeTypes(AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE);
         if(node.optInt("role")==5){String text=node.optString("value");event.getText().add(text);event.setItemCount(text.length());
             event.setFromIndex(utf16Offset(text,node.optInt("anchor")));event.setToIndex(utf16Offset(text,node.optInt("focus")));}
-        host.getParent().requestSendAccessibilityEvent(host,event);
+        try {
+            parent.requestSendAccessibilityEvent(host,event);
+        } catch(IllegalStateException disabledDuringDispatch) {
+            if(manager.isEnabled())throw disabledDuringDispatch;
+        }
     }
     private String className(int role) {
         switch(role) {
