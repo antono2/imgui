@@ -52,7 +52,7 @@ fn run(args []string) ! {
 	tooling.prepare_pinned_modules(root, modules)!
 	compiler := tooling.compiler()
 	tooling.command(compiler, ['-cc', 'msvc', 'run', 'scripts/check_installed_deps.vsh'])!
-	tooling.command(compiler, ['-old-compiler', '-check-syntax', 'imgui.v'])!
+	tooling.command(compiler, ['-check-syntax', 'imgui.v'])!
 	mut options := ['-cc', 'msvc', 'run', 'scripts/run_demo.vsh']
 	if args.len == 0 {
 		options << '--build-only'

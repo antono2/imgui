@@ -1,4 +1,5 @@
 #!/usr/bin/env -S v run
+
 // Prepares and launches the desktop demo with the chosen native-library configuration.
 
 import os
@@ -112,8 +113,8 @@ fn run() ! {
 	os.mkdir_all(runtime)!
 	demo_binary := os.join_path(runtime, 'v_imgui_demo' + extension)
 	module_path := tooling.demo_module_path(root, runtime)!
-	tooling.command(tooling.compiler(), ['-old-compiler', '-path', module_path, '-cc', cc, '-o',
-		demo_binary, demo_source])!
+	tooling.command(tooling.compiler(), ['-path', module_path, '-cc', cc, '-o', demo_binary,
+		demo_source])!
 	println('Built ${demo_binary}')
 	if !build_only { tooling.command(demo_binary, [])! }
 }

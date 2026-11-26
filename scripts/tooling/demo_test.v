@@ -25,7 +25,7 @@ fn test_demo_resolves_renamed_checkout_and_submodules() {
 	os.write_file(main, 'import antono2.imgui\nimport antono2.imgui.backend\nfn main() { assert imgui.value() == 17; assert backend.value() == 23 }\n') or { panic(err) }
 	path := demo_module_path(root, runtime) or { panic(err) }
 	assert demo_module_path(root, runtime) or { panic(err) } == path
-	command(compiler(), ['-old-compiler', '-path', path, 'run', main]) or { panic(err) }
+	command(compiler(), ['-path', path, 'run', main]) or { panic(err) }
 	other := os.join_path(workspace, 'another checkout')
 	os.mkdir_all(other) or { panic(err) }
 	demo_module_path(other, runtime) or {

@@ -40,9 +40,9 @@ the ignored `build/` directory. It installs the pinned V dependencies through
 VPM and resolves `antono2.imgui` to this checkout, including when the clone has
 a custom directory name. The build directory holds a local module link (a
 junction on Windows); existing installed ImGui copies are not replaced. It does
-not regenerate these bindings. The demo uses V’s compatibility compiler
-(`-old-compiler`), which has passed the rendering smoke test. V3 compilation
-is checked separately in CI; its Vulkan rendering path is not yet supported.
+not regenerate these bindings. The demo uses the tested compiler's default
+frontend. The compiler and bootstrap revisions are recorded in
+`compatibility.json`; CI checks the rendered Vulkan demo as well as the APIs.
 
 ## Fedora
 
